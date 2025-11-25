@@ -2582,7 +2582,8 @@ function createPixelPattern(colors, type) {
              pCtx.fillRect(Math.random() * size, Math.random() * size, 3, 3);
         }
     }
-
+return ctx.createPattern(pCanvas, 'repeat');
+}
 function drawSprite(ctx, type, x, y, size, time) {
     const cx = x + size/2; const cy = y + size/2;
     
