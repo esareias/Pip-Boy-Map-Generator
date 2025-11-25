@@ -2582,6 +2582,7 @@ function createPixelPattern(colors, type) {
              pCtx.fillRect(Math.random() * size, Math.random() * size, 3, 3);
         }
     }
+    
     return ctx.createPattern(pCanvas, 'repeat');
 }
 
