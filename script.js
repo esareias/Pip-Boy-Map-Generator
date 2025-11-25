@@ -2601,6 +2601,7 @@ function createPixelPattern(colors, type) {
 function drawSprite(ctx, type, x, y, size, time) {
     const cx = x + size/2; const cy = y + size/2;
     
+    // --- Initial Shadow and Palette Setup ---
     // Enhanced Soft Shadow
     const shadowG = ctx.createRadialGradient(cx + 2, cy + size*0.4, 0, cx + 2, cy + size*0.4, size*0.3);
     shadowG.addColorStop(0, 'rgba(0,0,0,0.6)');
@@ -2608,7 +2609,87 @@ function drawSprite(ctx, type, x, y, size, time) {
     ctx.fillStyle = shadowG;
     ctx.fillRect(x, y + size*0.3, size, size*0.3);
 
-    if (type === 'tree' || type === 'joshua_tree') {
+    // Safely get current palette based on map mode
+    const pal = PALETTES[config.mapType] || PALETTES.vault;
+    
+    // --- 1. NEW BUILDING/RUINS STRUCTURE LOGIC ---
+    // This draws the walls, windows, and holes for buildings in ruins/interiors.
+    if (type === 'building_shell' || type === 'interior_ruins') {
+        let colors = (type === 'interior_ruins') ? PALETTES.interior_ruins.floor : pal.floor;
+        let floorColor = pal.floor.base; // Use the base floor color for 'holes'
+        
+        // Draw the Base Pattern 
+        const pattern = patternCache[type] || createPixelPattern(colors, type);
+        ctx.fillStyle = pattern;
+        ctx.fillRect(x, y, size, size);
+
+        const detailColor = colors.dark; 
+
+        // 1. Windows: Simple rectangular cutouts
+        const numWindows = Math.floor(Math.random() * 3) + 2; 
+        for (let i = 0; i < numWindows; i++) {
+            const winW = Math.floor(Math.random() * 10) + 10; 
+            const winH = Math.floor(Math.random() * 10) + 10; 
+            const winX = x + Math.random() * (size - winW - 10) + 5; 
+            const winY = y + Math.random() * (size - winH - 10) + 5; 
+            
+            ctx.fillStyle = detailColor;
+            ctx.fillRect(winX, winY, winW, winH);
+        }
+
+        // 2. Door/Entrance: One per building, placed somewhat centrally on one side
+        if (Math.random() < 0.8) { 
+            const doorW = Math.floor(Math.random() * 12) + 15; 
+            const doorH = Math.floor(Math.random() * 15) + 20; 
+            const doorSide = Math.floor(Math.random() * 4); 
+
+            ctx.fillStyle = detailColor;
+
+            if (doorSide === 0) { // Top
+                ctx.fillRect(x + (size - doorW) / 2, y, doorW, doorH);
+            } else if (doorSide === 1) { // Right
+                ctx.fillRect(x + size - doorW, y + (size - doorH) / 2, doorW, doorH);
+            } else if (doorSide === 2) { // Bottom
+                ctx.fillRect(x + (size - doorW) / 2, y + size - doorH, doorW, doorH);
+            } else { // Left
+                ctx.fillRect(x, y + (size - doorH) / 2, doorW, doorH);
+            }
+        }
+
+        // 3. Crumbling/Damaged Edges & Interior Holes
+        if (type === 'interior_ruins' || Math.random() < 0.6) { 
+            const numBreaks = Math.floor(Math.random() * 3) + 1; 
+            
+            // Use the determined floor color to draw the holes
+            ctx.fillStyle = floorColor; 
+
+            for (let i = 0; i < numBreaks; i++) {
+                const breakSize = Math.floor(Math.random() * 20) + 10; 
+                const edge = Math.floor(Math.random() * 4); 
+
+                if (edge === 0) { // Top edge
+                    ctx.fillRect(x + Math.random() * (size - breakSize), y, breakSize, Math.random() * 5 + 5);
+                } else if (edge === 1) { // Right edge
+                    ctx.fillRect(x + size - (Math.random() * 5 + 5), y + Math.random() * (size - breakSize), Math.random() * 5 + 5, breakSize);
+                } else if (edge === 2) { // Bottom edge
+                    ctx.fillRect(x + Math.random() * (size - breakSize), y + size - (Math.random() * 5 + 5), breakSize, Math.random() * 5 + 5);
+                } else { // Left edge
+                    ctx.fillRect(x, y + Math.random() * (size - breakSize), Math.random() * 5 + 5, breakSize);
+                }
+
+                // Inner damage spots 
+                if (Math.random() < 0.5) { 
+                    const holeW = Math.floor(Math.random() * 10) + 5;
+                    const holeH = Math.floor(Math.random() * 10) + 5;
+                    ctx.fillRect(x + Math.random() * (size - holeW - 10) + 5, y + Math.random() * (size - holeH - 10) + 5, holeW, holeH);
+                }
+            }
+        }
+    } 
+    // --- END NEW LOGIC ---
+    
+    // START OF ORIGINAL SPRITES, NOW WRAPPED IN ELSE IF
+    else if (type === 'tree' || type === 'joshua_tree') {
         const trunkW = size*0.12;
         const trunkH = size*0.5;
         ctx.fillStyle = '#3e2723'; ctx.fillRect(cx-trunkW/2, y+size*0.4, trunkW, trunkH);
