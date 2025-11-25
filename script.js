@@ -2675,17 +2675,27 @@ function drawSprite(ctx, type, x, y, size, time) {
 // Safely get current palette based on map mode
 const pal = PALETTES[config.mapType] || PALETTES.vault;
 
-// 1. DRAW NEW BUILDING SHELL
-if (type === 'ruin_building' || type === 'interior_ruins') {
-    let colors = (type === 'interior_ruins') ? PALETTES.interior_ruins.floor : pal.floor;
-    let floorColor = pal.floor.base; 
-    
-    // Draw the Base Pattern (This calls createPixelPattern)
-    const pattern = patternCache[type] || createPixelPattern(colors, type);
-    ctx.fillStyle = pattern;
-    ctx.fillRect(x, y, size, size);
+// 1. DRAW NEW BUILDING SHELL// Function: drawSprite (around line 2732)
 
-    const detailColor = colors.dark; 
+// --- 1. NEW BUILDING/RUINS STRUCTURE LOGIC ---
+if (type === 'ruin_building' || type === 'interior_ruins') {
+    const isInterior = (type === 'interior_ruins');
+    let colors = isInterior ? PALETTES.interior_ruins.wall : pal.wall;
+    let floorColor = pal.floor.base; // Used for "holes"
+    
+    // VITAL ADDITION: Draw the textured wall shading first.
+    // This gives the building its 2.5D height and depth.
+    const wallHeight = size / 2;
+    ctx.fillStyle = colors.front;
+    ctx.fillRect(x, y + size - wallHeight, size, wallHeight);
+    
+    ctx.fillStyle = colors.top;
+    ctx.fillRect(x, y, size, size - wallHeight);
+    
+    ctx.fillStyle = colors.highlight;
+    ctx.fillRect(x, y, size, 2);	
+    ctx.fillRect(x, y, 2, size - wallHeight);
+    // END VITAL ADDITION. Now features can be drawn on top.
 
     // 1. Windows: Simple rectangular cutouts
     const numWindows = Math.floor(Math.random() * 3) + 2; 
