@@ -367,7 +367,8 @@ const NON_ENTERABLE = [ "Street", "Crater", "Park", "Alley", "Overpass", "Catwal
 const PALETTES = {
     vault: {	
         bg: '#050505',	
-        floor: { base: '#1e2522', dark: '#141816', light: '#2c3632', noise: '#3d4d47' },
+        // NEW FLOOR COLORS: Brighter base, higher contrast noise, cleaner lines
+        floor: { base: '#2b3330', dark: '#1e2522', light: '#4d5953', noise: '#6f8179' }, 
         wall: { top: '#546e7a', front: '#37474f', outline: '#263238', highlight: '#78909c' },
         accent: '#fbbf24',	
         shadow: 'rgba(0,0,0,0.6)'
@@ -2464,14 +2465,13 @@ const NAMES = {
 function createPixelPattern(colors, type) {
     const pCanvas = document.createElement('canvas');	
     const pCtx = pCanvas.getContext('2d');
-    const size = 128; // Increased Texture Resolution
+    const size = 128; 
     pCanvas.width = size; pCanvas.height = size;
     
-    // Base
+    // 1. Base Layer and Noise
     pCtx.fillStyle = colors.base;	
     pCtx.fillRect(0, 0, size, size);
     
-    // High-Res Noise
     for(let i=0; i<800; i++) {
         pCtx.fillStyle = (Math.random() > 0.5) ? colors.dark : colors.light;
         pCtx.globalAlpha = 0.05;
@@ -2483,23 +2483,47 @@ function createPixelPattern(colors, type) {
     pCtx.globalAlpha = 1.0;
 
     if (type === 'vault' || type === 'interior_ruins') {
-        // Grid Lines
-        pCtx.strokeStyle = colors.noise;
+        // --- VAULT ENHANCEMENTS ---
+        const spacing = 32;
+
+        // A. Primary Grid Lines (Structural)
+        pCtx.strokeStyle = colors.noise; // '#6f8179'
         pCtx.lineWidth = 1;
         pCtx.beginPath();
-        for(let i=0; i<=size; i+=32) {
+        for(let i=0; i<=size; i+=spacing) {
             pCtx.moveTo(i, 0); pCtx.lineTo(i, size);
             pCtx.moveTo(0, i); pCtx.lineTo(size, i);
         }
         pCtx.stroke();
-        
-        // Rivets
-        pCtx.fillStyle = colors.light;
-        for(let y=0; y<=size; y+=32) {
-            for(let x=0; x<=size; x+=32) {
+
+        // B. Diamond Plate Texture (Diagonal Highlights)
+        pCtx.strokeStyle = colors.light; // Highlights
+        pCtx.lineWidth = 1;
+        pCtx.globalAlpha = 0.4;
+        pCtx.beginPath();
+        for(let i=0; i<=size*2; i+=8) {
+            // Diagonal Lines 1
+            pCtx.moveTo(i, 0); pCtx.lineTo(0, i);
+            // Diagonal Lines 2 (Opposite direction)
+            pCtx.moveTo(size - i, 0); pCtx.lineTo(size, i);
+        }
+        pCtx.stroke();
+        pCtx.globalAlpha = 1.0;
+
+        // C. Rivets (Shadowed for depth)
+        pCtx.fillStyle = colors.dark; 
+        for(let y=0; y<=size; y+=spacing) {
+            for(let x=0; x<=size; x+=spacing) {
                 pCtx.fillRect(x-1, y-1, 3, 3);
             }
         }
+        pCtx.fillStyle = colors.light; // Highlight dot
+        for(let y=0; y<=size; y+=spacing) {
+            for(let x=0; x<=size; x+=spacing) {
+                pCtx.fillRect(x-1, y-2, 1, 1);
+            }
+        }
+
     } else if (type === 'cave') {
         // Organic Texture
         pCtx.fillStyle = colors.dark;
@@ -2509,6 +2533,7 @@ function createPixelPattern(colors, type) {
             pCtx.arc(Math.random()*size, Math.random()*size, Math.random()*15 + 5, 0, Math.PI*2);
             pCtx.fill();
         }
+        pCtx.globalAlpha = 1.0;
     } else if (type === 'ruins') {
         // Cracks and Debris
         pCtx.strokeStyle = colors.dark;
@@ -2521,6 +2546,7 @@ function createPixelPattern(colors, type) {
             pCtx.lineTo(sx + (Math.random()-0.5)*40, sy + (Math.random()-0.5)*40);
             pCtx.stroke();
         }
+        pCtx.globalAlpha = 1.0;
     }
     
     return ctx.createPattern(pCanvas, 'repeat');
