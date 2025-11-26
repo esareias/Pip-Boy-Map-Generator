@@ -2620,6 +2620,325 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#fafafa';	
         ctx.fillRect(x+6, y+6, size-12, size*0.15);
     }
+     else if (type === 'safe') {
+        // Heavy metal safe
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(x+size*0.2, y+size*0.2, size*0.6, size*0.7);
+        
+        // Door highlight
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(x+size*0.2, y+size*0.2, size*0.6, size*0.05);
+        
+        // Lock dial
+        ctx.fillStyle = '#475569';
+        ctx.beginPath();
+        ctx.arc(cx, cy, size*0.15, 0, Math.PI*2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.arc(cx, cy, size*0.1, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Handle
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(cx+size*0.2, cy-2, size*0.15, 4);
+    }
+    else if (type === 'locker') {
+        // Tall metal locker
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(x+size*0.25, y, size*0.5, size*0.9);
+        
+        // Door lines
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(x+size*0.25, y+size*0.3, size*0.5, 2);
+        ctx.fillRect(x+size*0.25, y+size*0.6, size*0.5, 2);
+        
+        // Vents
+        for(let i=0; i<5; i++) {
+            ctx.fillRect(x+size*0.3, y+size*0.1 + i*4, size*0.4, 2);
+        }
+        
+        // Handle
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(cx-2, cy, 4, size*0.15);
+    }
+    else if (type === 'toolbox') {
+        // Red toolbox
+        ctx.fillStyle = '#991b1b';
+        ctx.fillRect(x+size*0.2, y+size*0.4, size*0.6, size*0.45);
+        
+        // Top/lid
+        ctx.fillStyle = '#b91c1c';
+        ctx.fillRect(x+size*0.2, y+size*0.25, size*0.6, size*0.15);
+        
+        // Handle
+        ctx.strokeStyle = '#374151';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, y+size*0.25, size*0.15, Math.PI, 0);
+        ctx.stroke();
+        
+        // Latch
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx-3, y+size*0.4, 6, 4);
+    }
+    else if (type === 'medkit' || type === 'first_aid') {
+        // White medical box with red cross
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(x+size*0.2, y+size*0.3, size*0.6, size*0.5);
+        
+        // Red cross
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(cx-2, cy-size*0.2, 4, size*0.4);
+        ctx.fillRect(cx-size*0.15, cy-2, size*0.3, 4);
+        
+        // Handle
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(cx-size*0.1, y+size*0.25, size*0.2, size*0.08);
+    }
+    else if (type === 'footlocker') {
+        // Military footlocker
+        ctx.fillStyle = '#14532d';
+        ctx.fillRect(x+size*0.15, y+size*0.35, size*0.7, size*0.5);
+        
+        // Metal bands
+        ctx.fillStyle = '#374151';
+        ctx.fillRect(x+size*0.15, y+size*0.35, size*0.7, 3);
+        ctx.fillRect(x+size*0.15, y+size*0.6, size*0.7, 3);
+        ctx.fillRect(x+size*0.15, y+size*0.82, size*0.7, 3);
+        
+        // Lock
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx-4, cy, 8, 6);
+    }
+    else if (type === 'file_cabinet') {
+        // Office file cabinet
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(x+size*0.25, y+size*0.1, size*0.5, size*0.8);
+        
+        // Drawers
+        for(let i=0; i<3; i++) {
+            const dy = y+size*0.15 + i*size*0.25;
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(x+size*0.25, dy, size*0.5, 2);
+            
+            // Handles
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(cx-6, dy+4, 12, 3);
+        }
+    }
+    else if (type === 'desk') {
+        // Office desk - existing code is good, keeping it
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(x+2, y+size*0.4, size-4, size*0.3);
+        ctx.fillStyle = '#a16207'; 
+        ctx.fillRect(x+2, y+size*0.4, size-4, 2);	
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(x+2, y+size*0.7, 6, size*0.2);
+        ctx.fillRect(x+size-8, y+size*0.7, 6, size*0.2);
+    }
+    else if (type === 'ammo_box') {
+        // Military ammo crate
+        ctx.fillStyle = '#14532d';
+        ctx.fillRect(x+size*0.2, y+size*0.4, size*0.6, size*0.45);
+        
+        // Yellow warning stripe
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(x+size*0.2, y+size*0.55, size*0.6, size*0.08);
+        
+        // Stencil text effect
+        ctx.fillStyle = '#052e16';
+        ctx.fillRect(x+size*0.25, y+size*0.45, 3, 6);
+        ctx.fillRect(x+size*0.35, y+size*0.45, 3, 6);
+        ctx.fillRect(x+size*0.45, y+size*0.45, 3, 6);
+        
+        // Handles
+        ctx.strokeStyle = '#166534';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x+size*0.25, y+size*0.4);
+        ctx.lineTo(x+size*0.25, y+size*0.35);
+        ctx.lineTo(x+size*0.35, y+size*0.35);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x+size*0.75, y+size*0.4);
+        ctx.lineTo(x+size*0.75, y+size*0.35);
+        ctx.lineTo(x+size*0.65, y+size*0.35);
+        ctx.stroke();
+    }
+    else if (type === 'duffel_bag') {
+        // Canvas duffel bag
+        ctx.fillStyle = '#78716c';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy+size*0.1, size*0.35, size*0.25, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Bag body
+        ctx.fillStyle = '#57534e';
+        ctx.fillRect(x+size*0.25, cy, size*0.5, size*0.35);
+        
+        // Strap
+        ctx.strokeStyle = '#44403c';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy-size*0.1, size*0.2, 0.3, Math.PI-0.3);
+        ctx.stroke();
+    }
+    else if (type === 'corpse') {
+        // Skeleton corpse (reusing existing skeleton code)
+        ctx.fillStyle = '#e5e5e5';
+        ctx.beginPath(); 
+        ctx.arc(cx, cy-2, size*0.12, 0, Math.PI*2); 
+        ctx.fill();	
+        ctx.fillStyle = '#000'; 
+        ctx.fillRect(cx-2, cy-3, 1, 1); 
+        ctx.fillRect(cx+1, cy-3, 1, 1);	
+        ctx.strokeStyle = '#e5e5e5'; 
+        ctx.lineWidth=2;
+        ctx.beginPath(); 
+        ctx.moveTo(cx-3, cy+2); 
+        ctx.lineTo(cx+3, cy+2); 
+        ctx.stroke();
+        ctx.beginPath(); 
+        ctx.moveTo(cx-3, cy+5); 
+        ctx.lineTo(cx+3, cy+5); 
+        ctx.stroke();
+        
+        // Add some bones scattered around
+        ctx.fillStyle = '#d4d4d4';
+        ctx.fillRect(cx+4, cy+3, 6, 2);
+        ctx.fillRect(cx-8, cy+6, 5, 2);
+    }
+    else if (type === 'sack') {
+        // Burlap sack
+        ctx.fillStyle = '#a16207';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy+size*0.2, size*0.3, size*0.35, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Tie at top
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(cx, cy-size*0.05, size*0.15, Math.PI, 0);
+        ctx.stroke();
+        
+        // Texture lines
+        ctx.strokeStyle = '#92400e';
+        ctx.lineWidth = 1;
+        for(let i=0; i<4; i++) {
+            ctx.beginPath();
+            ctx.moveTo(cx-size*0.25, cy+i*4);
+            ctx.lineTo(cx+size*0.25, cy+i*4);
+            ctx.stroke();
+        }
+    }
+    else if (type === 'hollow_rock') {
+        // Rock with dark opening
+        ctx.fillStyle = '#78716c';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, size*0.4, size*0.3, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Darker opening/shadow
+        ctx.fillStyle = '#1c1917';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, size*0.2, size*0.15, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Highlight
+        ctx.fillStyle = '#a8a29e';
+        ctx.beginPath();
+        ctx.ellipse(cx-size*0.15, cy-size*0.1, size*0.1, size*0.08, 0, 0, Math.PI*2);
+        ctx.fill();
+    }
+    else if (type === 'dumpster') {
+        // Large trash dumpster
+        ctx.fillStyle = '#14532d';
+        ctx.fillRect(x+size*0.1, y+size*0.3, size*0.8, size*0.55);
+        
+        // Lid (slightly open)
+        ctx.fillStyle = '#166534';
+        ctx.beginPath();
+        ctx.moveTo(x+size*0.1, y+size*0.3);
+        ctx.lineTo(x+size*0.2, y+size*0.15);
+        ctx.lineTo(x+size*0.9, y+size*0.15);
+        ctx.lineTo(x+size*0.9, y+size*0.3);
+        ctx.fill();
+        
+        // Wheels
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(x+size*0.25, y+size*0.88, size*0.08, 0, Math.PI*2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x+size*0.75, y+size*0.88, size*0.08, 0, Math.PI*2);
+        ctx.fill();
+    }
+    else if (type === 'register' || type === 'cashier') {
+        // Cash register
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(x+size*0.2, y+size*0.4, size*0.6, size*0.4);
+        
+        // Display screen
+        ctx.fillStyle = '#14532d';
+        ctx.fillRect(x+size*0.25, y+size*0.25, size*0.5, size*0.2);
+        
+        // Green display glow
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(x+size*0.28, y+size*0.28, size*0.44, size*0.14);
+        
+        // Keys
+        ctx.fillStyle = '#e2e8f0';
+        for(let row=0; row<2; row++) {
+            for(let col=0; col<3; col++) {
+                ctx.fillRect(x+size*0.25 + col*size*0.15, y+size*0.5 + row*size*0.12, size*0.1, size*0.08);
+            }
+        }
+        
+        // Cash drawer
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(x+size*0.2, y+size*0.75, size*0.6, size*0.1);
+    }
+    else if (type === 'cooler') {
+        // Ice chest/cooler
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(x+size*0.15, y+size*0.35, size*0.7, size*0.5);
+        
+        // White lid
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(x+size*0.15, y+size*0.25, size*0.7, size*0.12);
+        
+        // Handle
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(cx, y+size*0.25, size*0.15, Math.PI, 0);
+        ctx.stroke();
+        
+        // Latch
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx-4, y+size*0.35, 8, 4);
+    }
+    else if (type === 'doctors_bag') {
+        // Classic doctor's bag
+        ctx.fillStyle = '#7c2d12';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy+size*0.1, size*0.35, size*0.3, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Brass clasp
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx-size*0.15, cy-size*0.1, size*0.3, size*0.08);
+        
+        // Handle
+        ctx.strokeStyle = '#92400e';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(cx, cy-size*0.15, size*0.2, 0.5, Math.PI-0.5);
+        ctx.stroke();
+    }
     else if (type === 'vending_machine') {
         // NUKA-COLA MACHINE (The Classic Red)
         // Body
@@ -3027,9 +3346,34 @@ function drawCurrentLevel(time = 0) {
         if (config.fogEnabled && !isLocationRevealed(data, item.x, item.y)) continue;
         const px = item.x * gs; const py = item.y * gs;
         
-        const typeMap = { "Safe": "vending_machine", "Locker": "vending_machine", "Desk": "desk", "Ammo Box": "ammo_crate", "File Cabinet": "desk", "Footlocker": "crate", "Doctor's Bag": "crate", "Medkit": "crate", "First Aid": "crate", "Toolbox": "crate" };
+       const typeMap = { 
+            "Safe": "safe", 
+            "Locker": "locker", 
+            "Desk": "desk", 
+            "Ammo Box": "ammo_box", 
+            "File Cabinet": "file_cabinet", 
+            "Footlocker": "footlocker", 
+            "Doctor's Bag": "doctors_bag", 
+            "Medkit": "medkit", 
+            "First Aid": "first_aid", 
+            "Toolbox": "toolbox",
+            "Duffel Bag": "duffel_bag",
+            "Corpse": "corpse",
+            "Hollow Rock": "hollow_rock",
+            "Sack": "sack",
+            "Crate": "crate",
+            "Dumpster": "dumpster",
+            "Register": "register",
+            "Cashier": "cashier",
+            "Cooler": "cooler"
+        };
         let sType = "crate";
-        for(let key in typeMap) if(item.containerName.includes(key)) sType = typeMap[key];
+        for(let key in typeMap) {
+            if(item.containerName.includes(key)) {
+                sType = typeMap[key];
+                break;
+            }
+        }
         
         if (item.looted) {
              ctx.globalAlpha = 0.4;
