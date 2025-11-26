@@ -3551,42 +3551,6 @@ function drawCurrentLevel(time = 0) {
             ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
         }
     }
-
-    // --- DYNAMIC SHADOWS FROM OBJECTS ---
-    ctx.globalCompositeOperation = 'source-over';
-    
-    // Cast shadows from decorations away from light sources
-    if (data.decorations) {
-        for (let deco of data.decorations) {
-            if (config.fogEnabled && !isLocationRevealed(data, deco.x, deco.y)) continue;
-            
-            const dx = deco.x * gs + gs/2;
-            const dy = deco.y * gs + gs/2;
-            
-            // Calculate shadow direction (away from flashlight)
-            const shadowDirX = dx - lightX;
-            const shadowDirY = dy - lightY;
-            const dist = Math.sqrt(shadowDirX*shadowDirX + shadowDirY*shadowDirY);
-            
-            if (dist < 200 && dist > 10) { // Only cast shadows for nearby objects
-                const normalX = shadowDirX / dist;
-                const normalY = shadowDirY / dist;
-                
-                // Shadow length based on distance from light
-                const shadowLength = Math.min(60, 200 - dist);
-                
-                // Draw elongated shadow
-                ctx.fillStyle = 'rgba(0,0,0,0.4)';
-                ctx.beginPath();
-                ctx.moveTo(dx, dy);
-                ctx.lineTo(dx + normalX * shadowLength, dy + normalY * shadowLength);
-                ctx.lineTo(dx + normalX * shadowLength + 8, dy + normalY * shadowLength);
-                ctx.lineTo(dx + 8, dy);
-                ctx.closePath();
-                ctx.fill();
-            }
-        }
-    }
     
     ctx.globalCompositeOperation = 'source-over';
     drawCRTEffects(ctx, config.width, config.height);
@@ -3700,3 +3664,4 @@ window.handleMouseUp = handleMouseUp;
 // --------------------------------------------------
 
 window.onload = init;
+
