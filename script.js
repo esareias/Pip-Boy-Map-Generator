@@ -1519,11 +1519,14 @@ function generateInterior(key, name) {
         effectiveArchKey = (Math.random() < 0.7) ? 'NATURAL' : 'BUNKER';
         log(`SUB-LEVEL THEME: FORCED [${effectiveArchKey}]`, 'var(--pip-amber)');
     } else if (config.mapType === 'vault') {
-        // Vault interior, maintain Vault theme
-        effectiveArchKey = 'VAULT';
-    }
-    
-    const archKey = effectiveArchKey;
+        // Vault interior, maintain Vault theme
+        effectiveArchKey = 'VAULT';
+    } else if (config.mapType === 'ruins' && currentLevelIndex === 0) { // <-- NEW CLAUSE
+        // Ruins Ground Level: Use the Archetype derived from the building name
+        effectiveArchKey = getArchetype(name);
+    }
+    
+    const archKey = effectiveArchKey;
 
     let sizeMod = 1.0;	
     if (archKey === 'RETAIL' || archKey === 'GENERIC') sizeMod = 0.5;
@@ -2024,341 +2027,342 @@ function generateLoot(data, type) {
 }
 
 function generateDecorations(data, type, density) {
-    let baseChance = density / 1000;	
-    if (type !== 'vault') baseChance = baseChance * 0.7;	
+    let baseChance = density / 1000;	
+    if (type !== 'vault') baseChance = baseChance * 0.7;	
 
-    // Determine indoors/outdoors status
-    const isIndoors = (type === 'vault' || type === 'interior' || currentLevelIndex < 0);
+    // Determine indoors/outdoors status
+    const isIndoors = (type === 'vault' || type === 'interior' || currentLevelIndex < 0);
 
-    // Dynamic pool selection based on map type and level
-    let poolKey = '';
-    if (type === 'cave') {
-        poolKey = (currentLevelIndex >= 0) ? 'wasteland_surface' : 'wasteland_cave';
-    } else if (type === 'ruins') {
-        poolKey = (currentLevelIndex >= 0) ? 'city_street' : 'city_interior';
-    } else if (type === 'vault') {
-        poolKey = 'vault';
-    } else if (type === 'interior') {
-        const parentType = floorData[currentLevelIndex]?.mapType || 'ruins';	
-        poolKey = (parentType === 'cave') ? 'wasteland_cave' : 'city_interior';
-    } else {
-        poolKey = 'city_interior'; // Default fallback
-    }
+    // Dynamic pool selection based on map type and level
+    let poolKey = '';
+    if (type === 'cave') {
+        poolKey = (currentLevelIndex >= 0) ? 'wasteland_surface' : 'wasteland_cave';
+    } else if (type === 'ruins') {
+        poolKey = (currentLevelIndex >= 0) ? 'city_street' : 'city_interior';
+    } else if (type === 'vault') {
+        poolKey = 'vault';
+    } else if (type === 'interior') {
+        const parentType = floorData[currentLevelIndex]?.mapType || 'ruins';	
+        poolKey = (parentType === 'cave') ? 'wasteland_cave' : 'city_interior';
+    } else {
+        poolKey = 'city_interior'; // Default fallback
+    }
 
-    let pool = DECO_POOLS[poolKey] || DECO_POOLS.vault;
-    
-    // Stricter filtering based on indoors/outdoors
-    if (isIndoors) {
-        // Must not appear indoors
-        pool = pool.filter(d => !['joshua_tree', 'brahmin_skull', 'boulder', 'car', 'tire_pile', 'traffic_cone', 'broken_pole', 'street_sign'].includes(d));
-    } else {
-        // Must not appear outdoors
-        pool = pool.filter(d => !['server_rack', 'vr_pod', 'wall_terminal', 'vent_grate', 'filing_cabinet', 'diner_booth', 'auto_doc', 'blood_stain'].includes(d));
-    }
-    
-    // Common decorations acceptable almost anywhere
-    const COMMON_DECOS = ['fire_barrel', 'radio', 'skeleton', 'rubble', 'crate'];
+    let pool = DECO_POOLS[poolKey] || DECO_POOLS.vault;
+    
+    // --- FIX: Removed redundant/aggressive filtering (Lines 1251-1259 removed) ---
+    
+    // Common decorations acceptable almost anywhere
+    const COMMON_DECOS = ['fire_barrel', 'radio', 'skeleton', 'rubble', 'crate'];
 
-    // Ensure Vending Machines and Fire Barrels work indoors/outdoors
-    if ((poolKey.includes('city') || poolKey.includes('vault')) && !pool.includes('vending_machine')) {
-         pool.push('vending_machine');
-    }
-    if ((poolKey.includes('wasteland') || poolKey.includes('city_street')) && !pool.includes('fire_barrel')) {
-         pool.push('fire_barrel');
-    }
+    // Ensure Vending Machines and Fire Barrels work indoors/outdoors
+    if ((poolKey.includes('city') || poolKey.includes('vault')) && !pool.includes('vending_machine')) {
+         pool.push('vending_machine');
+    }
+    if ((poolKey.includes('wasteland') || poolKey.includes('city_street')) && !pool.includes('fire_barrel')) {
+         pool.push('fire_barrel');
+    }
 
 
-    if (type === 'vault') {
-        // Existing Vault overhead light generation logic
-        for(let r of data.rooms) {
-            if (Math.random() > 0.3) {
-                data.decorations.push({x: Math.floor(r.x + r.w/2), y: Math.floor(r.y + r.h/2), type: 'overhead_light'});
-            }
-        }
-    }
+    if (type === 'vault') {
+        // Existing Vault overhead light generation logic
+        for(let r of data.rooms) {
+            if (Math.random() > 0.3) {
+                data.decorations.push({x: Math.floor(r.x + r.w/2), y: Math.floor(r.y + r.h/2), type: 'overhead_light'});
+            }
+        }
+    }
 
-    for (let x = 1; x < config.cols - 1; x++) {
-        for (let y = 1; y < config.rows - 1; y++) {
-            if (data.grid[x][y] === 1 && Math.random() < baseChance && !isOccupied(data, x, y)) {
-                
-                let decoType = pool[Math.floor(Math.random() * pool.length)];
-                
-                // --- Specific Chance Weighting (existing logic preserved) ---
-                if (decoType === 'radio' && Math.random() > 0.05) continue;	
-                if (decoType === 'gore_bag' && Math.random() > 0.1) continue;
-                if (decoType === 'campfire' && Math.random() > 0.3) continue;	
-                if (decoType === 'fire_barrel' && Math.random() > 0.4) continue;	
-                if (decoType === 'server_rack' && Math.random() > 0.15) continue;
-                if (decoType === 'vr_pod' && Math.random() > 0.15) continue;
-                if (decoType === 'auto_doc' && Math.random() > 0.05) continue;
-                // ------------------------------------------------------------
-                
-                data.decorations.push({x, y, type: decoType});
-                
-                if (['joshua_tree', 'rubble', 'glowing_fungus', 'server_rack'].includes(decoType)) {
-                    if (Math.random() < 0.4) {	
-                        let nx = x + (Math.random() > 0.5 ? 1 : -1);
-                        let ny = y + (Math.random() > 0.5 ? 1 : -1);
-                        if (data.grid[nx][ny] === 1 && !isOccupied(data, nx, ny)) {
-                             data.decorations.push({x: nx, y: ny, type: decoType});
-                        }
-                    }
-                }
-            }
-        }
-    }
+    for (let x = 1; x < config.cols - 1; x++) {
+        for (let y = 1; y < config.rows - 1; y++) {
+            if (data.grid[x][y] === 1 && Math.random() < baseChance && !isOccupied(data, x, y)) {
+                
+                let decoType = pool[Math.floor(Math.random() * pool.length)];
+                
+                // --- Specific Chance Weighting (existing logic preserved) ---
+                if (decoType === 'radio' && Math.random() > 0.05) continue;	
+                if (decoType === 'gore_bag' && Math.random() > 0.1) continue;
+                if (decoType === 'campfire' && Math.random() > 0.3) continue;	
+                if (decoType === 'fire_barrel' && Math.random() > 0.4) continue;	
+                if (decoType === 'server_rack' && Math.random() > 0.15) continue;
+                if (decoType === 'vr_pod' && Math.random() > 0.15) continue;
+                if (decoType === 'auto_doc' && Math.random() > 0.05) continue;
+                // ------------------------------------------------------------
+                
+                data.decorations.push({x, y, type: decoType});
+                
+                if (['joshua_tree', 'rubble', 'glowing_fungus', 'server_rack'].includes(decoType)) {
+                    if (Math.random() < 0.4) {	
+                        let nx = x + (Math.random() > 0.5 ? 1 : -1);
+                        let ny = y + (Math.random() > 0.5 ? 1 : -1);
+                        if (data.grid[nx][ny] === 1 && !isOccupied(data, nx, ny)) {
+                             data.decorations.push({x: nx, y: ny, type: decoType});
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 function isOccupied(data, x, y) {
-    for(let s of data.stairs) if(s.x === x && s.y === y) return true;
-    for(let l of data.loot) if(l.x === x && l.y === y) return true;
-    if (data.exit && data.exit.x === x && data.exit.y === y) return true;
-    for(let d of data.doors) if(d.x === x && d.y === y) return true;
-    for(let d of data.decorations) if(d.x === x && d.y === y) return true;
-    return false;
+    for(let s of data.stairs) if(s.x === x && s.y === y) return true;
+    for(let l of data.loot) if(l.x === x && l.y === y) return true;
+    if (data.exit && data.exit.x === x && data.exit.y === y) return true;
+    for(let d of data.doors) if(d.x === x && d.y === y) return true;
+    for(let d of data.decorations) if(d.x === x && d.y === y) return true;
+    return false;
 }
 
 function getSmartName(category, sourceName) {
-    const candidates = NAMES[category];
-    if (!candidates) return "UNKNOWN SECTOR";
-    if (!sourceName) return candidates[Math.floor(Math.random() * candidates.length)];
-    let bestName = candidates[0];
-    let bestScore = -Infinity;
-    const sourceLogic = ROOM_LOGIC[sourceName] || { tags: [] };
-    const sourceTags = sourceLogic.tags || [];
-    const linkTarget = sourceLogic.link;
-    for(let i=0; i<15; i++) {
-        const candidate = candidates[Math.floor(Math.random() * candidates.length)];
-        const logic = ROOM_LOGIC[candidate] || { tags: [], avoid: [] };
-        let score = 0;
-        const isSourceClean = sourceTags.includes("Clean");
-        const isCandDirty = logic.tags && logic.tags.includes("Dirty");
-        if (isSourceClean && isCandDirty) score -= 100;
-        if (linkTarget === candidate) score += 50;
-        if (logic.link === sourceName) score += 50;
-        if (logic.avoid) { for(let avoidTag of logic.avoid) { if (sourceTags.includes(avoidTag)) score -= 50; } }
-        if (candidate === "Entrance Airlock" && currentLevelIndex !== 0) score -= 1000;
-        if (candidate === "Reactor Core" && currentLevelIndex > -2) score -= 50;
-        if (candidate === "Penthouse" && currentLevelIndex < 2) score -= 100;
-        score += Math.random() * 20;
-        if (score > bestScore) { bestScore = score; bestName = candidate; }
-    }
-    return bestName;
+    const candidates = NAMES[category];
+    if (!candidates) return "UNKNOWN SECTOR";
+    if (!sourceName) return candidates[Math.floor(Math.random() * candidates.length)];
+    let bestName = candidates[0];
+    let bestScore = -Infinity;
+    const sourceLogic = ROOM_LOGIC[sourceName] || { tags: [] };
+    const sourceTags = sourceLogic.tags || [];
+    const linkTarget = sourceLogic.link;
+    for(let i=0; i<15; i++) {
+        const candidate = candidates[Math.floor(Math.random() * candidates.length)];
+        const logic = ROOM_LOGIC[candidate] || { tags: [], avoid: [] };
+        let score = 0;
+        const isSourceClean = sourceTags.includes("Clean");
+        const isCandDirty = logic.tags && logic.tags.includes("Dirty");
+        if (isSourceClean && isCandDirty) score -= 100;
+        if (linkTarget === candidate) score += 50;
+        if (logic.link === sourceName) score += 50;
+        if (logic.avoid) { for(let avoidTag of logic.avoid) { if (sourceTags.includes(avoidTag)) score -= 50; } }
+        if (candidate === "Entrance Airlock" && currentLevelIndex !== 0) score -= 1000;
+        if (candidate === "Reactor Core" && currentLevelIndex > -2) score -= 50;
+        if (candidate === "Penthouse" && currentLevelIndex < 2) score -= 100;
+        score += Math.random() * 20;
+        if (score > bestScore) { bestScore = score; bestName = candidate; }
+    }
+    return bestName;
 }
 
 function generateVault(data, density, anchors) {
-    data.grid = Array(config.cols).fill().map(() => Array(config.rows).fill(0));
-    const targetRoomCount = Math.floor(density / 3) + 5;	
-    const rooms = []; const BUFFER = 2;	
-    
-    anchors.forEach(anchor => {	
-        const room = { x: Math.max(1, Math.min(config.cols - 6 - 1, anchor.x - 3)), y: Math.max(1, Math.min(config.rows - 6 - 1, anchor.y - 3)), w: 6, h: 6, visited: true };	
-        createRoom(data.grid, room, config);	
-        const name = getSmartName('vault', anchor.upperName);	
-        room.name = name;
-        const safeSpot = findSafeLabelSpot(room.x, room.y, room.w, room.h, name, data.stairs);
-        addLabelToData(data, safeSpot.x, safeSpot.y, name);
-        rooms.push(room); data.rooms.push(room);	
-    });
-    
-    for (let i = 0; i < rooms.length - 1; i++) createCorridor(data.grid, rooms[i].x + 3, rooms[i].y + 3, rooms[i+1].x + 3, rooms[i+1].y + 3, config);
-    
-    if (currentLevelIndex === 0 && anchors.length === 0) {
-         const entryRoom = { x: Math.floor(config.cols/2)-3, y: config.rows-8, w: 6, h: 6, visited: true, name: "ENTRANCE AIRLOCK (START)" };
-         createRoom(data.grid, entryRoom, config);
-         addLabelToData(data, entryRoom.x + 3, entryRoom.y + 3, "ENTRANCE AIRLOCK (START)");
-         rooms.push(entryRoom); data.rooms.push(entryRoom);
-         data.doors.push({x: Math.floor(entryRoom.x + 3), y: entryRoom.y + 6, locked: true, keyColor: '#3b82f6'});	
-    }
+    data.grid = Array(config.cols).fill().map(() => Array(config.rows).fill(0));
+    const targetRoomCount = Math.floor(density / 3) + 5;	
+    const rooms = []; const BUFFER = 2;	
+    
+    anchors.forEach(anchor => {	
+        const room = { x: Math.max(1, Math.min(config.cols - 6 - 1, anchor.x - 3)), y: Math.max(1, Math.min(config.rows - 6 - 1, anchor.y - 3)), w: 6, h: 6, visited: true };	
+        createRoom(data.grid, room, config);	
+        const name = getSmartName('vault', anchor.upperName);	
+        room.name = name;
+        const safeSpot = findSafeLabelSpot(room.x, room.y, room.w, room.h, name, data.stairs);
+        addLabelToData(data, safeSpot.x, safeSpot.y, name);
+        rooms.push(room); data.rooms.push(room);	
+    });
+    
+    for (let i = 0; i < rooms.length - 1; i++) createCorridor(data.grid, rooms[i].x + 3, rooms[i].y + 3, rooms[i+1].x + 3, rooms[i+1].y + 3, config);
+    
+    if (currentLevelIndex === 0 && anchors.length === 0) {
+         const entryRoom = { x: Math.floor(config.cols/2)-3, y: config.rows-8, w: 6, h: 6, visited: true, name: "ENTRANCE AIRLOCK (START)" };
+         createRoom(data.grid, entryRoom, config);
+         addLabelToData(data, entryRoom.x + 3, entryRoom.y + 3, "ENTRANCE AIRLOCK (START)");
+         rooms.push(entryRoom); data.rooms.push(entryRoom);
+         data.doors.push({x: Math.floor(entryRoom.x + 3), y: entryRoom.y + 6, locked: true, keyColor: '#3b82f6'});	
+    }
 
-    let attempts = 0;
-    const maxAttempts = 1000;
-    while (rooms.length < targetRoomCount && attempts < maxAttempts) {	
-        attempts++;
-        let w = Math.floor(Math.random() * 7) + 4;	
-        let h = Math.floor(Math.random() * 7) + 4;	
-        let x, y;
-        let sourceRoom = null;
-        if (rooms.length > 0) {	
-            sourceRoom = rooms[Math.floor(Math.random() * rooms.length)];	
-            const dir = Math.floor(Math.random() * 4);	
-            const dist = Math.floor(Math.random() * 6) + 3;	
-            x = sourceRoom.x; y = sourceRoom.y;	
-            if(dir === 0) y -= (dist + h); if(dir === 1) x += (sourceRoom.w + dist); if(dir === 2) y += (sourceRoom.h + dist); if(dir === 3) x -= (dist + w);
-        } else { x = Math.floor(Math.random() * (config.cols - w - 2)) + 1; y = Math.floor(Math.random() * (config.rows - h - 2)) + 1; }
+    let attempts = 0;
+    const maxAttempts = 1000;
+    while (rooms.length < targetRoomCount && attempts < maxAttempts) {	
+        attempts++;
+        let w = Math.floor(Math.random() * 7) + 4;	
+        let h = Math.floor(Math.random() * 7) + 4;	
+        let x, y;
+        let sourceRoom = null;
+        if (rooms.length > 0) {	
+            sourceRoom = rooms[Math.floor(Math.random() * rooms.length)];	
+            const dir = Math.floor(Math.random() * 4);	
+            const dist = Math.floor(Math.random() * 6) + 3;	
+            x = sourceRoom.x; y = sourceRoom.y;	
+            if(dir === 0) y -= (dist + h); if(dir === 1) x += (sourceRoom.w + dist); if(dir === 2) y += (sourceRoom.h + dist); if(dir === 3) x -= (dist + w);
+        } else { x = Math.floor(Math.random() * (config.cols - w - 2)) + 1; y = Math.floor(Math.random() * (config.rows - h - 2)) + 1; }
 
-        x = Math.max(BUFFER, Math.min(config.cols - w - BUFFER, x)); y = Math.max(BUFFER, Math.min(config.rows - h - BUFFER, y));	
-        const newRoom = { x, y, w, h, visited: false };	
-        let failed = false;	
-        for (let other of rooms) {
-            if (x < other.x + other.w + BUFFER && x + w + BUFFER > other.x && y < other.y + other.h + BUFFER && y + h + BUFFER > other.y) { failed = true; break; }
-        }
+        x = Math.max(BUFFER, Math.min(config.cols - w - BUFFER, x)); y = Math.max(BUFFER, Math.min(config.rows - h - BUFFER, y));	
+        const newRoom = { x, y, w, h, visited: false };	
+        let failed = false;	
+        for (let other of rooms) {
+            if (x < other.x + other.w + BUFFER && x + w + BUFFER > other.x && y < other.y + other.h + BUFFER && y + h + BUFFER > other.y) { failed = true; break; }
+        }
 
-        if (!failed) {	
-            createRoom(data.grid, newRoom, config);	
-            let roomName = getRoomDecision('VAULT', rooms, sourceRoom ? sourceRoom.name : null);
-            if (roomName === "Entrance Airlock" && currentLevelIndex !== 0) roomName = "Storage Closet";
-            newRoom.name = roomName;
-            const safeSpot = findSafeLabelSpot(newRoom.x, newRoom.y, newRoom.w, newRoom.h, roomName, data.stairs);
-            addLabelToData(data, safeSpot.x, safeSpot.y, roomName);	
-            if (sourceRoom) {	
-                createCorridor(data.grid, sourceRoom.x + Math.floor(sourceRoom.w/2), sourceRoom.y + Math.floor(sourceRoom.h/2), newRoom.x + Math.floor(newRoom.w/2), newRoom.y + Math.floor(newRoom.h/2), config);	
-            }	
-            rooms.push(newRoom); data.rooms.push(newRoom);	
-        }
-    }
+        if (!failed) {	
+            createRoom(data.grid, newRoom, config);	
+            let roomName = getRoomDecision('VAULT', rooms, sourceRoom ? sourceRoom.name : null);
+            if (roomName === "Entrance Airlock" && currentLevelIndex !== 0) roomName = "Storage Closet";
+            newRoom.name = roomName;
+            const safeSpot = findSafeLabelSpot(newRoom.x, newRoom.y, newRoom.w, newRoom.h, roomName, data.stairs);
+            addLabelToData(data, safeSpot.x, safeSpot.y, roomName);	
+            if (sourceRoom) {	
+                createCorridor(data.grid, sourceRoom.x + Math.floor(sourceRoom.w/2), sourceRoom.y + Math.floor(sourceRoom.h/2), newRoom.x + Math.floor(newRoom.w/2), newRoom.y + Math.floor(newRoom.h/2), config);	
+            }	
+            rooms.push(newRoom); data.rooms.push(newRoom);	
+        }
+    }
 }
 
 function generateRuins(data, density, anchors) {
-    const buildings = []; const BUFFER = 3; const maxRandomLabels = 4;
-    
-    // If on a sub-level (basement/sewer)
-    if (currentLevelIndex < 0) {
-        data.grid = Array(config.cols).fill().map(() => Array(config.rows).fill(0));	
-        // ... (rest of the basement/sewer logic remains the same)
-        // ...
-        
-    // If on a ground level (0), generate the city layout
-    } else {
-        // VITAL: Start by filling the entire map with open ground (1).
-        data.grid = Array(config.cols).fill().map(() => Array(config.rows).fill(1));	
-        
-        // Ensure map edges are 'void' (0) for correct rendering/walls
-        for (let x = 0; x < config.cols; x++) { data.grid[x][0] = 0; data.grid[x][config.rows - 1] = 0; }
-        for (let y = 0; y < config.rows; y++) { data.grid[0][y] = 0; data.grid[config.cols - 1][y] = 0; }
-        
-        const numBuildings = Math.floor(density / 3) + 5;
-        let buildingsPlaced = 0;
-        let bAttempts = 0;
-        
-        while (buildingsPlaced < numBuildings && bAttempts < 1000) {	
-            bAttempts++;
-            const w = Math.floor(Math.random() * 6) + 3; const h = Math.floor(Math.random() * 6) + 3;	
-            let x = Math.floor(Math.random() * (config.cols - w - BUFFER * 2)) + BUFFER;	
-            let y = Math.floor(Math.random() * (config.rows - h - BUFFER * 2)) + BUFFER;	
-            let failed = false;
-            for (let other of buildings) if (x < other.x + other.w + BUFFER && x + w + BUFFER > other.x && y < other.y + other.h + BUFFER && y + h + BUFFER > other.y) failed = true;	
-            for(let anchor of anchors) if (x < anchor.x + 1 && x + w > anchor.x && y < anchor.y + 1 && y + h > anchor.y) failed = true;	
-            if(!failed) {
-                // ACTION 1: Fill the building area with 0 (void/wall space)
-                for (let bx = x; bx < x + w; bx++) for (let by = y; by < y + h; by++) data.grid[bx][by] = 0;	
+    const buildings = []; const BUFFER = 3; const maxRandomLabels = 4;
+    
+    // If on a sub-level (basement/sewer)
+    if (currentLevelIndex < 0) {
+        data.grid = Array(config.cols).fill().map(() => Array(config.rows).fill(0));	
+        // ... (rest of the basement/sewer logic remains the same)
+        // ...
+        
+    // If on a ground level (0), generate the city layout
+    } else {
+        // VITAL: Start by filling the entire map with open ground (1).
+        data.grid = Array(config.cols).fill().map(() => Array(config.rows).fill(1));	
+        
+        // Ensure map edges are 'void' (0) for correct rendering/walls
+        for (let x = 0; x < config.cols; x++) { data.grid[x][0] = 0; data.grid[x][config.rows - 1] = 0; }
+        for (let y = 0; y < config.rows; y++) { data.grid[0][y] = 0; data.grid[config.cols - 1][y] = 0; }
+        
+        const numBuildings = Math.floor(density / 3) + 5;
+        let buildingsPlaced = 0;
+        let bAttempts = 0;
+        
+        while (buildingsPlaced < numBuildings && bAttempts < 1000) {	
+            bAttempts++;
+            const w = Math.floor(Math.random() * 6) + 3; const h = Math.floor(Math.random() * 6) + 3;	
+            let x = Math.floor(Math.random() * (config.cols - w - BUFFER * 2)) + BUFFER;	
+            let y = Math.floor(Math.random() * (config.rows - h - BUFFER * 2)) + BUFFER;	
+            let failed = false;
+            for (let other of buildings) if (x < other.x + other.w + BUFFER && x + w + BUFFER > other.x && y < other.y + other.h + BUFFER && y + h + BUFFER > other.y) failed = true;	
+            for(let anchor of anchors) if (x < anchor.x + 1 && x + w > anchor.x && y < anchor.y + 1 && y + h > anchor.y) failed = true;	
+            if(!failed) {
+                // ACTION 1: Fill the building area with 0 (void/wall space)
+                for (let bx = x; bx < x + w; bx++) for (let by = y; by < y + h; by++) data.grid[bx][by] = 0;	
+                
+                const name = getRandomName('ruins_street');
+                const safeSpot = findSafeLabelSpot(x, y, w, h, name, data.stairs);
+                addLabelToData(data, safeSpot.x, safeSpot.y, name);	
+                
+                // ACTION 2: **VITAL!** Tell the drawing engine to put a detailed sprite here.
+                data.decorations.push({ x: x, y: y, type: 'ruin_building' });
                 
-                const name = getRandomName('ruins_street');
-                const safeSpot = findSafeLabelSpot(x, y, w, h, name, data.stairs);
-                addLabelToData(data, safeSpot.x, safeSpot.y, name);	
-                
-                // ACTION 2: **VITAL!** Tell the drawing engine to put a detailed sprite here.
-                data.decorations.push({ x: x, y: y, type: 'ruin_building' });
+                // --- FIX: ACTION 3: Create Room Object for Fog/Loot/Interaction ---
+                data.rooms.push({
+                    x: x, y: y, w: w, h: h, 
+                    visited: false, 
+                    name: name
+                });
+                // ------------------------------------------------------------------
 
-                buildingsPlaced++;
-            }
-        }
-    }
+                buildingsPlaced++;
+            }
+        }
+    }
 }
 
 function generateCaves(data, density, anchors) {
-    // 1. Cellular Automata Generation
-    for (let x = 0; x < config.cols; x++) for (let y = 0; y < config.rows; y++) data.grid[x][y] = (x === 0 || x === config.cols - 1 || y === 0 || y === config.rows - 1) ? 0 : (Math.random() * 100 < density) ? 1 : 0;
-    for (let i = 0; i < 4; i++) {	
-        let newGrid = JSON.parse(JSON.stringify(data.grid));	
-        for (let x = 1; x < config.cols - 1; x++) for (let y = 1; y < config.rows - 1; y++) {	
-            let neighbors = getWallCount(data.grid, x, y);	
-            if (neighbors > 4) newGrid[x][y] = 0; else if (neighbors < 4) newGrid[x][y] = 1;	
-        }	
-        data.grid = newGrid;	
-    }
-    
-    // 2. Ensure Anchors are Clear
-    anchors.forEach(anchor => { for(let dx = -2; dx <= 2; dx++) for(let dy = -2; dy <= 2; dy++) if (anchor.x+dx > 0 && anchor.x+dx < config.cols-1 && anchor.y+dy > 0 && anchor.y+dy < config.rows-1) data.grid[anchor.x+dx][anchor.y+dy] = 1; });
-    
-    // 3. CONNECTIVITY FIX (Flood Fill + Tunneling)
-    const visited = new Set();
-    const regions = [];
-    
-    for (let x = 1; x < config.cols - 1; x++) {
-        for (let y = 1; y < config.rows - 1; y++) {
-            if (data.grid[x][y] === 1 && !visited.has(`${x},${y}`)) {
-                const region = [];
-                const queue = [{x,y}];
-                visited.add(`${x},${y}`);
-                while(queue.length > 0) {
-                    const curr = queue.pop();
-                    region.push(curr);
-                    const neighbors = [{x: curr.x+1, y: curr.y}, {x: curr.x-1, y: curr.y}, {x: curr.x, y: curr.y+1}, {x: curr.x, y: curr.y-1}];
-                    for(let n of neighbors) {
-                        if (n.x > 0 && n.x < config.cols-1 && n.y > 0 && n.y < config.rows-1 && data.grid[n.x][n.y] === 1 && !visited.has(`${n.x},${n.y}`)) {
-                            visited.add(`${n.x},${n.y}`);
-                            queue.push(n);
-                        }
-                    }
-                }
-                regions.push(region);
-            }
-        }
-    }
+    // 1. Cellular Automata Generation
+    for (let x = 0; x < config.cols; x++) for (let y = 0; y < config.rows; y++) data.grid[x][y] = (x === 0 || x === config.cols - 1 || y === 0 || y === config.rows - 1) ? 0 : (Math.random() * 100 < density) ? 1 : 0;
+    for (let i = 0; i < 4; i++) {	
+        let newGrid = JSON.parse(JSON.stringify(data.grid));	
+        for (let x = 1; x < config.cols - 1; x++) for (let y = 1; y < config.rows - 1; y++) {	
+            let neighbors = getWallCount(data.grid, x, y);	
+            if (neighbors > 4) newGrid[x][y] = 0; else if (neighbors < 4) newGrid[x][y] = 1;	
+        }	
+        data.grid = newGrid;	
+    }
+    
+    // 2. Ensure Anchors are Clear
+    anchors.forEach(anchor => { for(let dx = -2; dx <= 2; dx++) for(let dy = -2; dy <= 2; dy++) if (anchor.x+dx > 0 && anchor.x+dx < config.cols-1 && anchor.y+dy > 0 && anchor.y+dy < config.rows-1) data.grid[anchor.x+dx][anchor.y+dy] = 1; });
+    
+    // 3. CONNECTIVITY FIX (Flood Fill + Tunneling)
+    const visited = new Set();
+    const regions = [];
+    
+    for (let x = 1; x < config.cols - 1; x++) {
+        for (let y = 1; y < config.rows - 1; y++) {
+            if (data.grid[x][y] === 1 && !visited.has(`${x},${y}`)) {
+                const region = [];
+                const queue = [{x,y}];
+                visited.add(`${x},${y}`);
+                while(queue.length > 0) {
+                    const curr = queue.pop();
+                    region.push(curr);
+                    const neighbors = [{x: curr.x+1, y: curr.y}, {x: curr.x-1, y: curr.y}, {x: curr.x, y: curr.y+1}, {x: curr.x, y: curr.y-1}];
+                    for(let n of neighbors) {
+                        if (n.x > 0 && n.x < config.cols-1 && n.y > 0 && n.y < config.rows-1 && data.grid[n.x][n.y] === 1 && !visited.has(`${n.x},${n.y}`)) {
+                            visited.add(`${n.x},${n.y}`);
+                            queue.push(n);
+                        }
+                    }
+                }
+                regions.push(region);
+            }
+        }
+    }
 
-    regions.sort((a, b) => b.length - a.length);
-    
-    if (regions.length > 1) {
-        const mainRegion = regions[0];
-        for (let i = 1; i < regions.length; i++) {
-            const targetRegion = regions[i];
-            let minDistance = Infinity;
-            let startPoint = null;
-            let endPoint = null;
-            
-            const targetPt = targetRegion[Math.floor(targetRegion.length/2)];
-            for (let mainPt of mainRegion) {
-                const d = Math.abs(mainPt.x - targetPt.x) + Math.abs(mainPt.y - targetPt.y);
-                if (d < minDistance) {
-                    minDistance = d;
-                    startPoint = mainPt;
-                    endPoint = targetPt;
-                }
-            }
-            
-            if (startPoint && endPoint) {
-                createCorridor(data.grid, startPoint.x, startPoint.y, endPoint.x, endPoint.y, config);
-            }
-        }
-    }
-    
-    addRandomLabels(data, currentLevelIndex < 0 ? 'cave_underground' : 'cave_surface', 4, anchors);
+    regions.sort((a, b) => b.length - a.length);
+    
+    if (regions.length > 1) {
+        const mainRegion = regions[0];
+        for (let i = 1; i < regions.length; i++) {
+            const targetRegion = regions[i];
+            let minDistance = Infinity;
+            let startPoint = null;
+            let endPoint = null;
+            
+            const targetPt = targetRegion[Math.floor(targetRegion.length/2)];
+            for (let mainPt of mainRegion) {
+                const d = Math.abs(mainPt.x - targetPt.x) + Math.abs(mainPt.y - targetPt.y);
+                if (d < minDistance) {
+                    minDistance = d;
+                    startPoint = mainPt;
+                    endPoint = targetPt;
+                }
+            }
+            
+            if (startPoint && endPoint) {
+                createCorridor(data.grid, startPoint.x, startPoint.y, endPoint.x, endPoint.y, config);
+            }
+        }
+    }
+    
+    addRandomLabels(data, currentLevelIndex < 0 ? 'cave_underground' : 'cave_surface', 4, anchors);
 }
 
 function addRandomLabels(data, source, count, anchors) {
-    let attempts = 0, placed = 0;	
-    const hasOasis = Math.random() < 0.25;	
-    
-    while (placed < count && attempts < 100) {	
-        const rx = Math.floor(Math.random() * (config.cols - 2)) + 1;	
-        const ry = Math.floor(Math.random() * (config.rows - 2)) + 1;	
-        
-        if (data.grid[rx][ry] === 1) {	
-            let safe = true; for(let a of anchors) if(Math.abs(rx - a.x) < 3 && Math.abs(ry - a.y) < 3) safe = false;
-            if (safe) {	
-                let name = getRandomName(source);
-                
-                if (hasOasis && placed === 0) {
-                    name = "Hidden Oasis";
-                    for(let dx=-2; dx<=2; dx++) for(let dy=-2; dy<=2; dy++) {
-                        if (rx+dx>0 && rx+dx<config.cols-1 && ry+dy>0 && ry+dy<config.rows-1 && data.grid[rx+dx][ry+dy] === 1) {
-                            data.grid[rx+dx][ry+dy] = 2; // Water ID
-                        }
-                    }
-                }
+    let attempts = 0, placed = 0;	
+    const hasOasis = Math.random() < 0.25;	
+    
+    while (placed < count && attempts < 100) {	
+        const rx = Math.floor(Math.random() * (config.cols - 2)) + 1;	
+        const ry = Math.floor(Math.random() * (config.rows - 2)) + 1;	
+        
+        if (data.grid[rx][ry] === 1) {	
+            let safe = true; for(let a of anchors) if(Math.abs(rx - a.x) < 3 && Math.abs(ry - a.y) < 3) safe = false;
+            if (safe) {	
+                let name = getRandomName(source);
+                
+                if (hasOasis && placed === 0) {
+                    name = "Hidden Oasis";
+                    for(let dx=-2; dx<=2; dx++) for(let dy=-2; dy<=2; dy++) {
+                        if (rx+dx>0 && rx+dx<config.cols-1 && ry+dy>0 && ry+dy<config.rows-1 && data.grid[rx+dx][ry+dy] === 1) {
+                            data.grid[rx+dx][ry+dy] = 2; // Water ID
+                        }
+                    }
+                }
 
-                addLabelToData(data, rx, ry, name);	
-                data.rooms.push({x: rx-2, y: ry-2, w: 5, h: 5, visited: false, name: "Area"});
-                placed++;	
-            }	
-        }	
-        attempts++;	
-    }
+                addLabelToData(data, rx, ry, name);	
+                data.rooms.push({x: rx-2, y: ry-2, w: 5, h: 5, visited: false, name: "Area"});
+                placed++;	
+            }	
+        }	
+        attempts++;	
+    }
 }
 
 function addLabelToData(data, gridX, gridY, text) {
-    data.labels.push({ x: gridX * config.gridSize + (config.gridSize/2), y: gridY * config.gridSize + (config.gridSize/2), text: text, visible: true });
+    data.labels.push({ x: gridX * config.gridSize + (config.gridSize/2), y: gridY * config.gridSize + (config.gridSize/2), text: text, visible: true });
 }
 
 function createRoom(grid, room, conf) { for (let x = room.x; x < room.x + room.w; x++) for (let y = room.y; y < room.y + room.h; y++) if (x < conf.cols && y < conf.rows) grid[x][y] = 1; }
@@ -2366,77 +2370,77 @@ function createCorridor(grid, x1, y1, x2, y2, conf) { let x = x1; let y = y1; wh
 function getWallCount(grid, gridX, gridY) { let wallCount = 0; for (let neighborX = gridX - 1; neighborX <= gridX + 1; neighborX++) for (let neighborY = gridY - 1; neighborY <= gridY + 1; neighborY++) if (neighborX >= 0 && neighborX < grid.length && neighborY >= 0 && neighborY < grid[0].length) { if (grid[neighborX][neighborY] === 0) wallCount++; } else { wallCount++; } return wallCount; }
 
 function getRandomName(source) {	
-    const list = Array.isArray(source) ? source : NAMES[source];	
-    if (list) return list[Math.floor(Math.random() * list.length)];	
-    return "UNKNOWN SECTOR";	
+    const list = Array.isArray(source) ? source : NAMES[source];	
+    if (list) return list[Math.floor(Math.random() * list.length)];	
+    return "UNKNOWN SECTOR";	
 }
 
 function findSafeLabelSpot(roomX, roomY, roomW, roomH, text, stairs) { return { x: Math.floor(roomX + roomW/2), y: Math.floor(roomY + roomH/2) }; }	
 
 const ITEM_DATABASE = {
-    // UPDATED ITEM DATABASE (V.29.1)
-    vault: [	
-        {n: "Bobby Pin", v: 1}, {n: "Scalpel", v: 2}, {n: "Abraxo cleaner", v: 5}, {n: "Rad-X", v: 5},	
-        {n: "Jumpsuit", v: 8}, {n: "Pre-War Money", v: 10}, {n: "Conductor", v: 15}, {n: "Fission Battery", v: 20},	
-        {n: "Sensor Module", v: 20}, {n: "Stimpak", v: 25}, {n: "Doctor's Bag", v: 25}, {n: "Fixer", v: 25},	
-        {n: "Baton", v: 25}, {n: "Radaway", v: 35}, {n: "Super Stimpak", v: 50}, {n: "Skill Book", v: 50},	
-        {n: "Security Armor", v: 70}, {n: "Power Fist", v: 100}, {n: "Hypo", v: 75}, {n: "Trauma Pack", v: 100},
-        {n: "Laser Pistol", v: 200}, {n: "10mm Pistol", v: 250}, {n: "Mini-Nuke", v: 250}, {n: "Stealth Boy", v: 500},	
-        {n: "Pip-Boy", v: 1000}	
-    ],
-    ruins: [	
-        {n: "Tin Can", v: 1}, {n: "Bobby Pin", v: 1}, {n: "Empty Syringe", v: 2}, {n: "Coffee Pot", v: 3},	
-        {n: "Abraxo cleaner", v: 5}, {n: "Duct Tape", v: 5}, {n: "Scrap Metal", v: 5}, {n: "Jet", v: 5},	
-        {n: "Pre-War Hat", v: 6}, {n: "Turpentine", v: 8}, {n: "Pre-War Suit", v: 8}, {n: "Lunchbox", v: 10},	
-        {n: "Pre-War Money", v: 10}, {n: "Vacuum", v: 10}, {n: "Paint Gun", v: 10}, {n: "Cigarettes", v: 10},	
-        {n: "Wonderglue", v: 15}, {n: "Psycho", v: 15}, {n: "Buffout", v: 15}, {n: "Mentats", v: 15},	
-        {n: "Nuka-Cola", v: 20}, {n: "Alcohol", v: 20}, {n: "Brass Knuckles", v: 20}, {n: "Gas Tank", v: 25},	
-        {n: "Stimpak", v: 25}, {n: "Molotov", v: 25}, {n: "Switchblade", v: 25}, {n: "Psycho-D", v: 30},
-        {n: "Radaway", v: 35}, {n: "Super Stimpak", v: 50}, {n: "Leather Jacket", v: 50}, {n: "Baseball Bat", v: 55},	
-        {n: "Quantum", v: 100}, {n: "Raider Armor", v: 180}, {n: "Laser Pistol", v: 200}, {n: "10mm SMG", v: 300},	
-        {n: "Shotgun", v: 370}	
-    ],
-    cave: [	
-        {n: "Bobby Pin", v: 1}, {n: "Antidote", v: 2}, {n: "Broc Flower", v: 3}, {n: "Xander Root", v: 3},	
-        {n: "Fruit", v: 3}, {n: "Antivenom", v: 5}, {n: "Healing Powder", v: 5}, {n: "Poultice", v: 5},	
-        {n: "Meat", v: 5}, {n: "Fungus", v: 5}, {n: "Outfit", v: 6}, {n: "Tribal Garb", v: 6},	
-        {n: "Dirty Water", v: 10}, {n: "Water", v: 20}, {n: "Armor", v: 15}, {n: "Dynamite", v: 25},	
-        {n: "Stimpak", v: 25}, {n: "Meat (Cooked)", v: 30}, {n: "Radaway", v: 35}, {n: "Deathclaw Hand", v: 45},	
-        {n: "Skill Book", v: 50}, {n: "Machete", v: 50}, {n: "Merc Outfit", v: 50}, {n: "Pipe Rifle", v: 50},	
-        {n: "Power Fist", v: 100}, {n: ".32 Hunting Rifle", v: 150}, {n: "Leather Armor", v: 160}, {n: "Sniper Rifle", v: 320}	
-    ]
+    // UPDATED ITEM DATABASE (V.29.1)
+    vault: [	
+        {n: "Bobby Pin", v: 1}, {n: "Scalpel", v: 2}, {n: "Abraxo cleaner", v: 5}, {n: "Rad-X", v: 5},	
+        {n: "Jumpsuit", v: 8}, {n: "Pre-War Money", v: 10}, {n: "Conductor", v: 15}, {n: "Fission Battery", v: 20},	
+        {n: "Sensor Module", v: 20}, {n: "Stimpak", v: 25}, {n: "Doctor's Bag", v: 25}, {n: "Fixer", v: 25},	
+        {n: "Baton", v: 25}, {n: "Radaway", v: 35}, {n: "Super Stimpak", v: 50}, {n: "Skill Book", v: 50},	
+        {n: "Security Armor", v: 70}, {n: "Power Fist", v: 100}, {n: "Hypo", v: 75}, {n: "Trauma Pack", v: 100},
+        {n: "Laser Pistol", v: 200}, {n: "10mm Pistol", v: 250}, {n: "Mini-Nuke", v: 250}, {n: "Stealth Boy", v: 500},	
+        {n: "Pip-Boy", v: 1000}	
+    ],
+    ruins: [	
+        {n: "Tin Can", v: 1}, {n: "Bobby Pin", v: 1}, {n: "Empty Syringe", v: 2}, {n: "Coffee Pot", v: 3},	
+        {n: "Abraxo cleaner", v: 5}, {n: "Duct Tape", v: 5}, {n: "Scrap Metal", v: 5}, {n: "Jet", v: 5},	
+        {n: "Pre-War Hat", v: 6}, {n: "Turpentine", v: 8}, {n: "Pre-War Suit", v: 8}, {n: "Lunchbox", v: 10},	
+        {n: "Pre-War Money", v: 10}, {n: "Vacuum", v: 10}, {n: "Paint Gun", v: 10}, {n: "Cigarettes", v: 10},	
+        {n: "Wonderglue", v: 15}, {n: "Psycho", v: 15}, {n: "Buffout", v: 15}, {n: "Mentats", v: 15},	
+        {n: "Nuka-Cola", v: 20}, {n: "Alcohol", v: 20}, {n: "Brass Knuckles", v: 20}, {n: "Gas Tank", v: 25},	
+        {n: "Stimpak", v: 25}, {n: "Molotov", v: 25}, {n: "Switchblade", v: 25}, {n: "Psycho-D", v: 30},
+        {n: "Radaway", v: 35}, {n: "Super Stimpak", v: 50}, {n: "Leather Jacket", v: 50}, {n: "Baseball Bat", v: 55},	
+        {n: "Quantum", v: 100}, {n: "Raider Armor", v: 180}, {n: "Laser Pistol", v: 200}, {n: "10mm SMG", v: 300},	
+        {n: "Shotgun", v: 370}	
+    ],
+    cave: [	
+        {n: "Bobby Pin", v: 1}, {n: "Antidote", v: 2}, {n: "Broc Flower", v: 3}, {n: "Xander Root", v: 3},	
+        {n: "Fruit", v: 3}, {n: "Antivenom", v: 5}, {n: "Healing Powder", v: 5}, {n: "Poultice", v: 5},	
+        {n: "Meat", v: 5}, {n: "Fungus", v: 5}, {n: "Outfit", v: 6}, {n: "Tribal Garb", v: 6},	
+        {n: "Dirty Water", v: 10}, {n: "Water", v: 20}, {n: "Armor", v: 15}, {n: "Dynamite", v: 25},	
+        {n: "Stimpak", v: 25}, {n: "Meat (Cooked)", v: 30}, {n: "Radaway", v: 35}, {n: "Deathclaw Hand", v: 45},	
+        {n: "Skill Book", v: 50}, {n: "Machete", v: 50}, {n: "Merc Outfit", v: 50}, {n: "Pipe Rifle", v: 50},	
+        {n: "Power Fist", v: 100}, {n: ".32 Hunting Rifle", v: 150}, {n: "Leather Armor", v: 160}, {n: "Sniper Rifle", v: 320}	
+    ]
 };
 
-// --- MISSING NAMES DEFINITION ADDED HERE ---
+// --- NAMES DEFINITION ADDED HERE (Global scope assumption) ---
 const NAMES = {
-    ruins_street: [	
-        "Casino Lobby", "Transit Hub", "Ruined Bodega", "Barricaded Street",	
-        "Sniper Nest", "Crater Edge", "Gang Hideout", "Corporate Bullpen",	
-        "Hospital ER", "Bank Vault", "Movie Theater", "Police Precinct",	
-        "Public Park", "Dead End Alley", "Highway Overpass", "Penthouse",	
-        "Speakeasy", "Fire Station", "Power Substation", "Catwalk",	
-        "Pawn Shop", "Chem Den", "Radio Tower", "Hotel Ballroom",
-        "Bombed-Out Apartment", "Makeshift Clinic", "Raider Fighting Pit",
-        "Collapsed Subway", "Nuka-Cola Billboard", "Super Mutant Stronghold", "Slave Pen"
-    ],
-    cave_surface: [	
-        "Radscorpion Burrow", "Raider Camp", "Red Rocket", "Farmhouse",	
-        "Relay Tower", "Cave Entrance", "Canyon Pass", "Factory Ruin",	
-        "Train Wreck", "Campsite", "Mine Entrance", "Tar Pit", "Checkpoint",	
-        "Drive-In Theater", "Scrapyard", "Crashed B-29", "Satellite Array",	
-        "Hunting Lodge", "Cliff Edge", "Rope Bridge", "Dried Riverbed",	
-        "Tribal Village", "Brahmin Pen", "Wind Farm", "Solar Array",	
-        "Ranger Outpost", "Vertibird Crash", "Nuka-Cola Truck Wreck",	
-        "Mysterious Cave", "Gecko Hunting Grounds", "Coyote Den", "Sulfur Pits",
-        "Hermit's Shack", "Tribal Altar", "Prospector Camp"
-    ],
-    cave_underground: [	
-        "Cave Den", "Mine Shaft", "Underground Spring", "Collapsed Tunnel",	
-        "Fissure Wall", "Mushroom Grotto", "Sump Chamber", "Burial Site",	
-        "Supply Cache", "Flooded Cavern", "Glowing Grove", "Ant Nest",	
-        "Mole Rat Tunnels", "Underground Lake", "Crystal Formation", "Bat Roost",
-        "Subterranean River", "Legendary Creature Den", "Queen's Nest"
-    ]
+    ruins_street: [	
+        "Casino Lobby", "Transit Hub", "Ruined Bodega", "Barricaded Street",	
+        "Sniper Nest", "Crater Edge", "Gang Hideout", "Corporate Bullpen",	
+        "Hospital ER", "Bank Vault", "Movie Theater", "Police Precinct",	
+        "Public Park", "Dead End Alley", "Highway Overpass", "Penthouse",	
+        "Speakeasy", "Fire Station", "Power Substation", "Catwalk",	
+        "Pawn Shop", "Chem Den", "Radio Tower", "Hotel Ballroom",
+        "Bombed-Out Apartment", "Makeshift Clinic", "Raider Fighting Pit",
+        "Collapsed Subway", "Nuka-Cola Billboard", "Super Mutant Stronghold", "Slave Pen"
+    ],
+    cave_surface: [	
+        "Radscorpion Burrow", "Raider Camp", "Red Rocket", "Farmhouse",	
+        "Relay Tower", "Cave Entrance", "Canyon Pass", "Factory Ruin",	
+        "Train Wreck", "Campsite", "Mine Entrance", "Tar Pit", "Checkpoint",	
+        "Drive-In Theater", "Scrapyard", "Crashed B-29", "Satellite Array",	
+        "Hunting Lodge", "Cliff Edge", "Rope Bridge", "Dried Riverbed",	
+        "Tribal Village", "Brahmin Pen", "Wind Farm", "Solar Array",	
+        "Ranger Outpost", "Vertibird Crash", "Nuka-Cola Truck Wreck",	
+        "Mysterious Cave", "Gecko Hunting Grounds", "Coyote Den", "Sulfur Pits",
+        "Hermit's Shack", "Tribal Altar", "Prospector Camp"
+    ],
+    cave_underground: [	
+        "Cave Den", "Mine Shaft", "Underground Spring", "Collapsed Tunnel",	
+        "Fissure Wall", "Mushroom Grotto", "Sump Chamber", "Burial Site",	
+        "Supply Cache", "Flooded Cavern", "Glowing Grove", "Ant Nest",	
+        "Mole Rat Tunnels", "Underground Lake", "Crystal Formation", "Bat Roost",
+        "Subterranean River", "Legendary Creature Den", "Queen's Nest"
+    ]
 };
 // ---------------------------------------------
 
@@ -2444,795 +2448,465 @@ const NAMES = {
 // --- 🎨 PROFESSIONAL GRAPHICS ENGINE ---
 
 function createPixelPattern(colors, type) {
-    const pCanvas = document.createElement('canvas');	
-    const pCtx = pCanvas.getContext('2d');
-    const size = 128; 
-    pCanvas.width = size; pCanvas.height = size;
-    
-    // 1. Base Layer and Noise
-    pCtx.fillStyle = colors.base;	
-    pCtx.fillRect(0, 0, size, size);
-    
-    for(let i=0; i<800; i++) {
-        pCtx.fillStyle = (Math.random() > 0.5) ? colors.dark : colors.light;
-        pCtx.globalAlpha = 0.05;
-        const x = Math.random()*size;
-        const y = Math.random()*size;
-        const w = Math.random()*2 + 1;
-        pCtx.fillRect(x, y, w, w);
-    }
-    pCtx.globalAlpha = 1.0;
+    const pCanvas = document.createElement('canvas');	
+    const pCtx = pCanvas.getContext('2d');
+    const size = 128; 
+    pCanvas.width = size; pCanvas.height = size;
+    
+    // 1. Base Layer and Noise
+    pCtx.fillStyle = colors.base;	
+    pCtx.fillRect(0, 0, size, size);
+    
+    for(let i=0; i<800; i++) {
+        pCtx.fillStyle = (Math.random() > 0.5) ? colors.dark : colors.light;
+        pCtx.globalAlpha = 0.05;
+        const x = Math.random()*size;
+        const y = Math.random()*size;
+        const w = Math.random()*2 + 1;
+        pCtx.fillRect(x, y, w, w);
+    }
+    pCtx.globalAlpha = 1.0;
 
-    if (type === 'vault' || type === 'interior_ruins') {
-        // --- VAULT ENHANCEMENTS ---
-        const spacing = 32;
+    if (type === 'vault' || type === 'interior_ruins') {
+        // --- VAULT ENHANCEMENTS ---
+        const spacing = 32;
 
-        // A. Primary Grid Lines (Structural)
-        pCtx.strokeStyle = colors.noise; // '#6f8179'
-        pCtx.lineWidth = 1;
-        pCtx.beginPath();
-        for(let i=0; i<=size; i+=spacing) {
-            pCtx.moveTo(i, 0); pCtx.lineTo(i, size);
-            pCtx.moveTo(0, i); pCtx.lineTo(size, i);
-        }
-        pCtx.stroke();
+        // A. Primary Grid Lines (Structural)
+        pCtx.strokeStyle = colors.noise; // '#6f8179'
+        pCtx.lineWidth = 1;
+        pCtx.beginPath();
+        for(let i=0; i<=size; i+=spacing) {
+            pCtx.moveTo(i, 0); pCtx.lineTo(i, size);
+            pCtx.moveTo(0, i); pCtx.lineTo(size, i);
+        }
+        pCtx.stroke();
 
-        // B. Diamond Plate Texture (Diagonal Highlights)
-        pCtx.strokeStyle = colors.light; // Highlights
-        pCtx.lineWidth = 1;
-        pCtx.globalAlpha = 0.4;
-        pCtx.beginPath();
-        for(let i=0; i<=size*2; i+=8) {
-            // Diagonal Lines 1
-            pCtx.moveTo(i, 0); pCtx.lineTo(0, i);
-            // Diagonal Lines 2 (Opposite direction)
-            pCtx.moveTo(size - i, 0); pCtx.lineTo(size, i);
-        }
-        pCtx.stroke();
-        pCtx.globalAlpha = 1.0;
+        // B. Diamond Plate Texture (Diagonal Highlights)
+        pCtx.strokeStyle = colors.light; // Highlights
+        pCtx.lineWidth = 1;
+        pCtx.globalAlpha = 0.4;
+        pCtx.beginPath();
+        for(let i=0; i<=size*2; i+=8) {
+            // Diagonal Lines 1
+            pCtx.moveTo(i, 0); pCtx.lineTo(0, i);
+            // Diagonal Lines 2 (Opposite direction)
+            pCtx.moveTo(size - i, 0); pCtx.lineTo(size, i);
+        }
+        pCtx.stroke();
+        pCtx.globalAlpha = 1.0;
 
-        // C. Rivets (Shadowed for depth)
-        pCtx.fillStyle = colors.dark; 
-        for(let y=0; y<=size; y+=spacing) {
-            for(let x=0; x<=size; x+=spacing) {
-                pCtx.fillRect(x-1, y-1, 3, 3);
-            }
-        }
-        pCtx.fillStyle = colors.light; // Highlight dot
-        for(let y=0; y<=size; y+=spacing) {
-            for(let x=0; x<=size; x+=spacing) {
-                pCtx.fillRect(x-1, y-2, 1, 1);
-            }
-        }
+        // C. Rivets (Shadowed for depth)
+        pCtx.fillStyle = colors.dark; 
+        for(let y=0; y<=size; y+=spacing) {
+            for(let x=0; x<=size; x+=spacing) {
+                pCtx.fillRect(x-1, y-1, 3, 3);
+            }
+        }
+        pCtx.fillStyle = colors.light; // Highlight dot
+        for(let y=0; y<=size; y+=spacing) {
+            for(let x=0; x<=size; x+=spacing) {
+                pCtx.fillRect(x-1, y-2, 1, 1);
+            }
+        }
 
-    } else if (type === 'cave') {
-        // Organic Texture
-        pCtx.fillStyle = colors.dark;
-        pCtx.globalAlpha = 0.15;
-        for(let i=0; i<20; i++) {
-            pCtx.beginPath();
-            pCtx.arc(Math.random()*size, Math.random()*size, Math.random()*15 + 5, 0, Math.PI*2);
-            pCtx.fill();
-        }
-        pCtx.globalAlpha = 1.0;
- } else if (type === 'ruins') {
-        // --- RUINS ENHANCEMENTS: Cracked Asphalt / Concrete ---
+    } else if (type === 'cave') {
+        // Organic Texture
+        pCtx.fillStyle = colors.dark;
+        pCtx.globalAlpha = 0.15;
+        for(let i=0; i<20; i++) {
+            pCtx.beginPath();
+            pCtx.arc(Math.random()*size, Math.random()*size, Math.random()*15 + 5, 0, Math.PI*2);
+            pCtx.fill();
+        }
+        pCtx.globalAlpha = 1.0;
+ } else if (type === 'ruins') {
+        // --- RUINS ENHANCEMENTS: Cracked Asphalt / Concrete ---
 
-        // A. Base Noise (Retain some subtle texture, but make it less dominant)
-        // This will now be more like fine surface cracks or general wear.
-        pCtx.strokeStyle = colors.dark;
-        pCtx.lineWidth = 1;
-        pCtx.globalAlpha = 0.2; // Reduce visibility
-        for(let i=0; i<15; i++) { // Fewer, longer initial lines
-            pCtx.beginPath();
-            let sx = Math.random()*size; let sy = Math.random()*size;
-            pCtx.moveTo(sx, sy);
-            pCtx.lineTo(sx + (Math.random()-0.5)*60, sy + (Math.random()-0.5)*60); // Longer lines
-            pCtx.stroke();
-        }
-        pCtx.globalAlpha = 1.0;
-        
-        // B. Prominent, Jagged Cracks (using colors.noise for high contrast and more complexity)
-        pCtx.strokeStyle = colors.noise; 
-        pCtx.lineWidth = 1.5; // Slightly thicker for prominence
-        pCtx.globalAlpha = 0.8; // More opaque for clear cracks
-        for(let i=0; i<6; i++) { // More main cracks
-             pCtx.beginPath();
-             let startX = Math.random() * size;
-             let startY = Math.random() * size;
-             pCtx.moveTo(startX, startY);
-             
-             // Create a more complex, branching crack path
-             let currentX = startX;
-             let currentY = startY;
-             for(let j=0; j<4; j++) { // Multiple segments for a single crack
-                 currentX += (Math.random() * 40 - 20); // Random step
-                 currentY += (Math.random() * 40 - 20); // Random step
-                 currentX = Math.min(Math.max(currentX, 0), size); // Keep within bounds
-                 currentY = Math.min(Math.max(currentY, 0), size);
-                 pCtx.lineTo(currentX, currentY);
-             }
-             pCtx.stroke();
-        }
-        pCtx.globalAlpha = 1.0;
+        // A. Base Noise (Retain some subtle texture, but make it less dominant)
+        // This will now be more like fine surface cracks or general wear.
+        pCtx.strokeStyle = colors.dark;
+        pCtx.lineWidth = 1;
+        pCtx.globalAlpha = 0.2; // Reduce visibility
+        for(let i=0; i<15; i++) { // Fewer, longer initial lines
+            pCtx.beginPath();
+            let sx = Math.random()*size; let sy = Math.random()*size;
+            pCtx.moveTo(sx, sy);
+            pCtx.lineTo(sx + (Math.random()-0.5)*60, sy + (Math.random()-0.5)*60); // Longer lines
+            pCtx.stroke();
+        }
+        pCtx.globalAlpha = 1.0;
+        
+        // B. Prominent, Jagged Cracks (using colors.noise for high contrast and more complexity)
+        pCtx.strokeStyle = colors.noise; 
+        pCtx.lineWidth = 1.5; // Slightly thicker for prominence
+        pCtx.globalAlpha = 0.8; // More opaque for clear cracks
+        for(let i=0; i<6; i++) { // More main cracks
+             pCtx.beginPath();
+             let startX = Math.random() * size;
+             let startY = Math.random() * size;
+             pCtx.moveTo(startX, startY);
+             
+             // Create a more complex, branching crack path
+             let currentX = startX;
+             let currentY = startY;
+             for(let j=0; j<4; j++) { // Multiple segments for a single crack
+                 currentX += (Math.random() * 40 - 20); // Random step
+                 currentY += (Math.random() * 40 - 20); // Random step
+                 currentX = Math.min(Math.max(currentX, 0), size); // Keep within bounds
+                 currentY = Math.min(Math.max(currentY, 0), size);
+                 pCtx.lineTo(currentX, currentY);
+             }
+             pCtx.stroke();
+        }
+        pCtx.globalAlpha = 1.0;
 
-        // C. Faded Painted Road Lines (keep this as is, it's fine)
-        pCtx.fillStyle = colors.accent; 
-        pCtx.globalAlpha = 0.15; 
-        if (Math.random() < 0.6) {
-            pCtx.fillRect(size/2 - 4, 0, 4, size);
-        }
-        pCtx.globalAlpha = 1.0;
-        
-        // D. Debris Chunks (Reduce them significantly or make them less distinct to avoid 'bone pile')
-        // We can make them smaller and fewer, or just remove them if the cracks are enough.
-        // Let's make them smaller and fewer, and maybe a bit lighter to blend more.
-        pCtx.fillStyle = colors.dark; // Or even colors.base for less contrast
-        pCtx.globalAlpha = 0.3; // More subtle
-        for(let i=0; i<10; i++) { // Fewer debris chunks
-             pCtx.fillRect(Math.random() * size, Math.random() * size, 2, 2); // Smaller size
-        }
-        pCtx.globalAlpha = 1.0;
-    }
-    
-    return ctx.createPattern(pCanvas, 'repeat');
+        // C. Faded Painted Road Lines (keep this as is, it's fine)
+        pCtx.fillStyle = colors.accent; 
+        pCtx.globalAlpha = 0.15; 
+        if (Math.random() < 0.6) {
+            pCtx.fillRect(size/2 - 4, 0, 4, size);
+        }
+        pCtx.globalAlpha = 1.0;
+        
+        // D. Debris Chunks (Reduce them significantly or make them less distinct to avoid 'bone pile')
+        // We can make them smaller and fewer, or just remove them if the cracks are enough.
+        // Let's make them smaller and fewer, and maybe a bit lighter to blend more.
+        pCtx.fillStyle = colors.dark; // Or even colors.base for less contrast
+        pCtx.globalAlpha = 0.3; // More subtle
+        for(let i=0; i<10; i++) { // Fewer debris chunks
+             pCtx.fillRect(Math.random() * size, Math.random() * size, 2, 2); // Smaller size
+        }
+        pCtx.globalAlpha = 1.0;
+    }
+    
+    return ctx.createPattern(pCanvas, 'repeat');
 }
 
 function drawSprite(ctx, type, x, y, size, time) {
-    const cx = x + size/2; const cy = y + size/2;
-    
-    // --- Initial Shadow and Palette Setup ---
-    // Enhanced Soft Shadow
-    const shadowG = ctx.createRadialGradient(cx + 2, cy + size*0.4, 0, cx + 2, cy + size*0.4, size*0.3);
-    shadowG.addColorStop(0, 'rgba(0,0,0,0.6)');
-    shadowG.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = shadowG;
-    ctx.fillRect(x, y + size*0.3, size, size*0.3);
+    const cx = x + size/2; const cy = y + size/2;
+    
+    // --- Initial Shadow and Palette Setup ---
+    // Enhanced Soft Shadow
+    const shadowG = ctx.createRadialGradient(cx + 2, cy + size*0.4, 0, cx + 2, cy + size*0.4, size*0.3);
+    shadowG.addColorStop(0, 'rgba(0,0,0,0.6)');
+    shadowG.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = shadowG;
+    ctx.fillRect(x, y + size*0.3, size, size*0.3);
 
-    // Safely get current palette based on map mode
-    const pal = PALETTES[config.mapType] || PALETTES.vault;
-    
-    // --- 1. NEW BUILDING/RUINS STRUCTURE LOGIC ---
-    if (type === 'ruin_building' || type === 'interior_ruins') {
-        const isInterior = (type === 'interior_ruins');
-        
-        // Use WALL colors for the structure/features
-        let wallColors = isInterior ? PALETTES.interior_ruins.wall : pal.wall;
-        let floorColor = pal.floor.base; // Used for "holes"
-        
-        // 2.5D WALL RENDERING (Draws front and top faces)
-        const wallHeight = size / 2;
-        
-        // Front face (shadowed)
-        ctx.fillStyle = wallColors.front;
-        ctx.fillRect(x, y + size - wallHeight, size, wallHeight);
-        
-        // Top face (lighter)
-        ctx.fillStyle = wallColors.top;
-        ctx.fillRect(x, y, size, size - wallHeight);
-        
-        // Highlights (top and left edges)
-        ctx.fillStyle = wallColors.highlight;
-        ctx.fillRect(x, y, size, 2);	
-        ctx.fillRect(x, y, 2, size - wallHeight);
+    // Safely get current palette based on map mode
+    const pal = PALETTES[config.mapType] || PALETTES.vault;
+    
+    // --- 1. NEW BUILDING/RUINS STRUCTURE LOGIC ---
+    if (type === 'ruin_building' || type === 'interior_ruins') {
+        const isInterior = (type === 'interior_ruins');
+        
+        // Use WALL colors for the structure/features
+        let wallColors = isInterior ? PALETTES.interior_ruins.wall : pal.wall;
+        let floorColor = pal.floor.base; // Used for "holes"
+        
+        // 2.5D WALL RENDERING (Draws front and top faces)
+        const wallHeight = size / 2;
+        
+        // Front face (shadowed)
+        ctx.fillStyle = wallColors.front;
+        ctx.fillRect(x, y + size - wallHeight, size, wallHeight);
+        
+        // Top face (lighter)
+        ctx.fillStyle = wallColors.top;
+        ctx.fillRect(x, y, size, size - wallHeight);
+        
+        // Highlights (top and left edges)
+        ctx.fillStyle = wallColors.highlight;
+        ctx.fillRect(x, y, size, 2);	
+        ctx.fillRect(x, y, 2, size - wallHeight);
 
-        // Dark detail color for windows/doors
-        const detailColor = wallColors.dark; 
+        // Dark detail color for windows/doors
+        const detailColor = wallColors.dark; 
 
-        // 1. Windows: Simple rectangular cutouts
-        const numWindows = Math.floor(Math.random() * 3) + 2; 
-        for (let i = 0; i < numWindows; i++) {
-            const winW = Math.floor(Math.random() * 10) + 10; 
-            const winH = Math.floor(Math.random() * 10) + 10; 
-            const winX = x + Math.random() * (size - winW - 10) + 5; 
-            const winY = y + Math.random() * (size - winH - 10) + 5; 
-            
-            // Draw dark "hole" for window
-            ctx.fillStyle = detailColor;
-            ctx.fillRect(winX, winY, winW, winH);
-        }
+        // 1. Windows: Simple rectangular cutouts
+        const numWindows = Math.floor(Math.random() * 3) + 2; 
+        for (let i = 0; i < numWindows; i++) {
+            const winW = Math.floor(Math.random() * 10) + 10; 
+            const winH = Math.floor(Math.random() * 10) + 10; 
+            const winX = x + Math.random() * (size - winW - 10) + 5; 
+            const winY = y + Math.random() * (size - winH - 10) + 5; 
+            
+            // Draw dark "hole" for window
+            ctx.fillStyle = detailColor;
+            ctx.fillRect(winX, winY, winW, winH);
+        }
 
-        // 2. Door/Entrance
-        if (Math.random() < 0.8) { 
-            const doorW = Math.floor(Math.random() * 12) + 15; 
-            const doorH = Math.floor(Math.random() * 15) + 20; 
-            const doorSide = Math.floor(Math.random() * 4); 
+        // 2. Door/Entrance
+        if (Math.random() < 0.8) { 
+            const doorW = Math.floor(Math.random() * 12) + 15; 
+            const doorH = Math.floor(Math.random() * 15) + 20; 
+            const doorSide = Math.floor(Math.random() * 4); 
 
-            ctx.fillStyle = detailColor;
+            ctx.fillStyle = detailColor;
 
-            if (doorSide === 0) { // Top
-                ctx.fillRect(x + (size - doorW) / 2, y, doorW, doorH);
-            } else if (doorSide === 1) { // Right
-                ctx.fillRect(x + size - doorW, y + (size - doorH) / 2, doorW, doorH);
-            } else if (doorSide === 2) { // Bottom
-                // Door at base should be cut out of the front face
-                ctx.fillRect(x + (size - doorW) / 2, y + size - doorH, doorW, doorH);
-            } else { // Left
-                ctx.fillRect(x, y + (size - doorH) / 2, doorW, doorH);
-            }
-        }
+            if (doorSide === 0) { // Top
+                ctx.fillRect(x + (size - doorW) / 2, y, doorW, doorH);
+            } else if (doorSide === 1) { // Right
+                ctx.fillRect(x + size - doorW, y + (size - doorH) / 2, doorW, doorH);
+            } else if (doorSide === 2) { // Bottom
+                // Door at base should be cut out of the front face
+                ctx.fillRect(x + (size - doorW) / 2, y + size - doorH, doorW, doorH);
+            } else { // Left
+                ctx.fillRect(x, y + (size - doorH) / 2, doorW, doorH);
+            }
+        }
 
-        // 3. Crumbling/Damaged Edges & Interior Holes
-        if (isInterior || Math.random() < 0.6) { 
-            const numBreaks = Math.floor(Math.random() * 3) + 1; 
-            
-            // Use the determined floor color to draw the holes
-            ctx.fillStyle = floorColor; 
+        // 3. Crumbling/Damaged Edges & Interior Holes
+        if (isInterior || Math.random() < 0.6) { 
+            const numBreaks = Math.floor(Math.random() * 3) + 1; 
+            
+            ctx.fillStyle = floorColor; 
 
-            for (let i = 0; i < numBreaks; i++) {
-                const breakSize = Math.floor(Math.random() * 20) + 10; 
-                const edge = Math.floor(Math.random() * 4); 
+            for (let i = 0; i < numBreaks; i++) {
+                const breakSize = Math.floor(Math.random() * 20) + 10; 
+                const edge = Math.floor(Math.random() * 4); 
 
-                // Draw outer edge damage (holes revealing the ground)
-                if (edge === 0) { // Top edge
-                    ctx.fillRect(x + Math.random() * (size - breakSize), y, breakSize, Math.random() * 5 + 5);
-                } else if (edge === 1) { // Right edge
-                    ctx.fillRect(x + size - (Math.random() * 5 + 5), y + Math.random() * (size - breakSize), Math.random() * 5 + 5, breakSize);
-                } else if (edge === 2) { // Bottom edge
-                    ctx.fillRect(x + Math.random() * (size - breakSize), y + size - (Math.random() * 5 + 5), breakSize, Math.random() * 5 + 5);
-                } else { // Left edge
-                    ctx.fillRect(x, y + Math.random() * (size - breakSize), Math.random() * 5 + 5, breakSize);
-                }
+                // Draw outer edge damage (holes revealing the ground)
+                if (edge === 0) { // Top edge
+                    ctx.fillRect(x + Math.random() * (size - breakSize), y, breakSize, Math.random() * 5 + 5);
+                } else if (edge === 1) { // Right edge
+                    ctx.fillRect(x + size - (Math.random() * 5 + 5), y + Math.random() * (size - breakSize), Math.random() * 5 + 5, breakSize);
+                } else if (edge === 2) { // Bottom edge
+                    ctx.fillRect(x + Math.random() * (size - breakSize), y + size - (Math.random() * 5 + 5), breakSize, Math.random() * 5 + 5);
+                } else { // Left edge
+                    ctx.fillRect(x, y + Math.random() * (size - breakSize), Math.random() * 5 + 5, breakSize);
+                }
 
-                // Inner damage spots 
-                if (Math.random() < 0.5) { 
-                    const holeW = Math.floor(Math.random() * 10) + 5;
-                    const holeH = Math.floor(Math.random() * 10) + 5;
-                    ctx.fillRect(x + Math.random() * (size - holeW - 10) + 5, y + Math.random() * (size - holeH - 10) + 5, holeW, holeH);
-                }
-            }
-        }
-    } 
-    // --- END NEW LOGIC ---
-    
-    // START OF ORIGINAL SPRITES, NOW WRAPPED IN ELSE IF
-    else if (type === 'tree' || type === 'joshua_tree') {
-        const trunkW = size*0.12;
-        const trunkH = size*0.5;
-        ctx.fillStyle = '#3e2723'; ctx.fillRect(cx-trunkW/2, y+size*0.4, trunkW, trunkH);
-        ctx.strokeStyle = '#3e2723'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.moveTo(cx, cy+size*0.1); ctx.lineTo(cx-size*0.2, cy-size*0.2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cx, cy+size*0.2); ctx.lineTo(cx+size*0.2, cy-size*0.1); ctx.stroke();
-        const cl = '#15803d'; const clH = '#22c55e';
-        const drawClump = (bx, by, s) => {
-            ctx.fillStyle = cl; ctx.beginPath(); ctx.arc(bx, by, s, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = clH; ctx.fillRect(bx-2, by-4, 4, 4);	
-        };
-        drawClump(cx, cy-size*0.2, size*0.25);
-        drawClump(cx-size*0.2, cy-size*0.2, size*0.15);
-        drawClump(cx+size*0.2, cy-size*0.1, size*0.15);
-    }	
-    else if (type === 'car') {
-        ctx.fillStyle = '#7f1d1d';	
-        ctx.fillRect(x+4, cy+2, size-8, size*0.25);	
-        
-        ctx.fillStyle = '#0a0a0a';
-        ctx.fillRect(x+8, cy+size*0.2, 8, 6);
-        ctx.fillRect(x+size-16, cy+size*0.2, 8, 6);
+                // Inner damage spots 
+                if (Math.random() < 0.5) { 
+                    const holeW = Math.floor(Math.random() * 10) + 5;
+                    const holeH = Math.floor(Math.random() * 10) + 5;
+                    ctx.fillRect(x + Math.random() * (size - holeW - 10) + 5, y + Math.random() * (size - holeH - 10) + 5, holeW, holeH);
+                }
+            }
+        }
+    } 
+    // --- END NEW LOGIC ---
+    
+    // START OF ORIGINAL SPRITES, NOW WRAPPED IN ELSE IF
+    else if (type === 'tree' || type === 'joshua_tree') {
+        const trunkW = size*0.12;
+        const trunkH = size*0.5;
+        ctx.fillStyle = '#3e2723'; ctx.fillRect(cx-trunkW/2, y+size*0.4, trunkW, trunkH);
+        ctx.strokeStyle = '#3e2723'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(cx, cy+size*0.1); ctx.lineTo(cx-size*0.2, cy-size*0.2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx, cy+size*0.2); ctx.lineTo(cx+size*0.2, cy-size*0.1); ctx.stroke();
+        const cl = '#15803d'; const clH = '#22c55e';
+        const drawClump = (bx, by, s) => {
+            ctx.fillStyle = cl; ctx.beginPath(); ctx.arc(bx, by, s, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = clH; ctx.fillRect(bx-2, by-4, 4, 4);	
+        };
+        drawClump(cx, cy-size*0.2, size*0.25);
+        drawClump(cx-size*0.2, cy-size*0.2, size*0.15);
+        drawClump(cx+size*0.2, cy-size*0.1, size*0.15);
+    }	
+    else if (type === 'car') {
+        ctx.fillStyle = '#7f1d1d';	
+        ctx.fillRect(x+4, cy+2, size-8, size*0.25);	
+        
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(x+8, cy+size*0.2, 8, 6);
+        ctx.fillRect(x+size-16, cy+size*0.2, 8, 6);
 
-        ctx.fillStyle = '#b91c1c';	
-        ctx.beginPath(); ctx.moveTo(x+8, cy+2); ctx.lineTo(x+size*0.3, cy-size*0.2); ctx.lineTo(x+size*0.7, cy-size*0.2); ctx.lineTo(x+size-8, cy+2); ctx.fill();
-        
-        ctx.fillStyle = '#1e293b';
-        ctx.beginPath(); ctx.moveTo(x+10, cy); ctx.lineTo(x+size*0.32, cy-size*0.15); ctx.lineTo(x+size*0.68, cy-size*0.15); ctx.lineTo(x+size-10, cy); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.3; ctx.beginPath(); ctx.moveTo(x+14, cy); ctx.lineTo(x+18, cy-4); ctx.stroke(); ctx.globalAlpha = 1.0;
-    }
-    else if (type === 'rubble') {
-        ctx.fillStyle = '#57534e';
-        ctx.beginPath(); ctx.arc(cx-4, cy+4, 5, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#78716c';
-        ctx.beginPath(); ctx.arc(cx+4, cy+2, 6, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#44403c';
-        ctx.fillRect(cx-2, cy-6, 6, 6);
-    }
-    else if (type === 'tumbleweed') {
-        ctx.strokeStyle = '#a8a29e'; ctx.lineWidth = 1;	
-        ctx.beginPath();
-        for(let i=0; i<12; i++) {	
-            const angle = Math.random() * Math.PI * 2;
-            const rad = Math.random() * size * 0.4;
-            ctx.moveTo(cx + Math.cos(angle)*rad, cy + Math.sin(angle)*rad);
-            ctx.lineTo(cx + Math.cos(angle + 2)*rad, cy + Math.sin(angle + 2)*rad);
-        }
-        ctx.stroke();
-    }
-    else if (type === 'bed') {
-        ctx.fillStyle = '#737373';	
-        ctx.fillRect(x+4, y+4, size-8, size-8);
-        ctx.fillStyle = '#1d4ed8';	
-        ctx.fillRect(x+4, y+size*0.4, size-8, size*0.6-4);
-        ctx.fillStyle = '#fafafa';	
-        ctx.fillRect(x+6, y+6, size-12, size*0.15);
-    }
-    else if (type === 'vending_machine') {
-        // NUKA-COLA MACHINE (The Classic Red)
-        // Body
-        ctx.fillStyle = '#991b1b'; // Dark Red
-        ctx.fillRect(x + 4, y - 8, size - 8, size + 4);
-        
-        // Side Highlight
-        ctx.fillStyle = '#ef4444'; // Bright Red
-        ctx.fillRect(x + 4, y - 8, 4, size + 4);
+        ctx.fillStyle = '#b91c1c';	
+        ctx.beginPath(); ctx.moveTo(x+8, cy+2); ctx.lineTo(x+size*0.3, cy-size*0.2); ctx.lineTo(x+size*0.7, cy-size*0.2); ctx.lineTo(x+size-8, cy+2); ctx.fill();
+        
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath(); ctx.moveTo(x+10, cy); ctx.lineTo(x+size*0.32, cy-size*0.15); ctx.lineTo(x+size*0.68, cy-size*0.15); ctx.lineTo(x+size-10, cy); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.3; ctx.beginPath(); ctx.moveTo(x+14, cy); ctx.lineTo(x+18, cy-4); ctx.stroke(); ctx.globalAlpha = 1.0;
+    }
+    else if (type === 'rubble') {
+        ctx.fillStyle = '#57534e';
+        ctx.beginPath(); ctx.arc(cx-4, cy+4, 5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#78716c';
+        ctx.beginPath(); ctx.arc(cx+4, cy+2, 6, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#44403c';
+        ctx.fillRect(cx-2, cy-6, 6, 6);
+    }
+    else if (type === 'tumbleweed') {
+        ctx.strokeStyle = '#a8a29e'; ctx.lineWidth = 1;	
+        ctx.beginPath();
+        for(let i=0; i<12; i++) {	
+            const angle = Math.random() * Math.PI * 2;
+            const rad = Math.random() * size * 0.4;
+            ctx.moveTo(cx + Math.cos(angle)*rad, cy + Math.sin(angle)*rad);
+            ctx.lineTo(cx + Math.cos(angle + 2)*rad, cy + Math.sin(angle + 2)*rad);
+        }
+        ctx.stroke();
+    }
+    else if (type === 'bed') {
+        ctx.fillStyle = '#737373';	
+        ctx.fillRect(x+4, y+4, size-8, size-8);
+        ctx.fillStyle = '#1d4ed8';	
+        ctx.fillRect(x+4, y+size*0.4, size-8, size*0.6-4);
+        ctx.fillStyle = '#fafafa';	
+        ctx.fillRect(x+6, y+6, size-12, size*0.15);
+    }
+    else if (type === 'vending_machine') {
+        // NUKA-COLA MACHINE (The Classic Red)
+        // Body
+        ctx.fillStyle = '#991b1b'; // Dark Red
+        ctx.fillRect(x + 4, y - 8, size - 8, size + 4);
+        
+        // Side Highlight
+        ctx.fillStyle = '#ef4444'; // Bright Red
+        ctx.fillRect(x + 4, y - 8, 4, size + 4);
 
-        // Display Window (Glowing Blue/White)
-        const glow = Math.sin(time / 200) * 0.5 + 0.5;
-        ctx.fillStyle = `rgba(200, 255, 255, ${0.3 + glow * 0.2})`;
-        ctx.fillRect(x + size/2, y, size/3, size/2);
+        // Display Window (Glowing Blue/White)
+        const glow = Math.sin(time / 200) * 0.5 + 0.5;
+        ctx.fillStyle = `rgba(200, 255, 255, ${0.3 + glow * 0.2})`;
+        ctx.fillRect(x + size/2, y, size/3, size/2);
 
-        // "Cola" Stripe (White)
-        ctx.fillStyle = '#e5e5e5';
-        ctx.beginPath();
-        ctx.moveTo(x + 4, y + size/2);
-        ctx.bezierCurveTo(x + size/2, y + size/4, x + size/2, y + size*0.8, x + size - 4, y + size/2);
-        ctx.lineTo(x + size - 4, y + size/2 + 2);
-        ctx.bezierCurveTo(x + size/2, y + size*0.8 + 2, x + size/2, y + size/4 + 2, x + 4, y + size/2 + 2);
-        ctx.fill();
-    }
-    else if (type === 'server_rack') {
-        const isServer = type === 'server_rack';
-        ctx.fillStyle = isServer ? '#111827' : '#991b1b';	
-        ctx.fillRect(x+size*0.25, y+size*0.1, size*0.5, size*0.8);
-        ctx.fillStyle = isServer ? '#374151' : '#ef4444';	
-        ctx.fillRect(x+size*0.25, y, size*0.5, size*0.1);
-        
-        if (!isServer) {
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(x+size*0.25, y+size*0.5, size*0.5, size*0.1);
-        } else {
-            ctx.fillStyle = '#000';	
-            ctx.fillRect(x+size*0.3, y+size*0.2, size*0.4, size*0.2);
-            // Blinking LEDs
-            if(Math.random() > 0.1) {
-                ctx.fillStyle = (Math.sin(time/100 + x)>0) ? '#22c55e' : '#064e3b';
-                ctx.fillRect(x+size*0.35, y+size*0.6, 2, 2);
-            }
-            if(Math.random() > 0.1) {
-                ctx.fillStyle = (Math.cos(time/150 + y)>0) ? '#ef4444' : '#7f1d1d';
-                ctx.fillRect(x+size*0.45, y+size*0.6, 2, 2);
-            }
-        }
-    }
-    else if (type === 'crate' || type === 'ammo_crate') {
-        ctx.fillStyle = '#14532d';	
-        ctx.fillRect(x+4, y+size*0.4, size-8, size*0.5);
-        ctx.fillStyle = '#166534';	
-        ctx.fillRect(x+4, y+size*0.1, size-8, size*0.3);	
-        ctx.fillStyle = '#052e16'; ctx.fillRect(x+4, y+size*0.4, size-8, 2);	
-        ctx.strokeStyle = '#22c55e'; ctx.lineWidth=1;
-        ctx.strokeRect(x+4, y+size*0.4, size-8, size*0.5);
-    }
-    else if (type === 'wall_terminal' || type === 'desk') {
-        // TERMINAL (RobCo Style)
-        // Desk/Stand
-        ctx.fillStyle = '#4b5563'; // Grey metal
-        ctx.fillRect(x + 2, y + size/2, size - 4, size/2);
-        
-        // Monitor Housing
-        ctx.fillStyle = '#374151'; // Darker metal
-        ctx.beginPath();
-        ctx.arc(cx, y + size/2, size/3, Math.PI, 0); // Rounded top
-        ctx.lineTo(cx + size/3, y + size/2 + 4);
-        ctx.lineTo(cx - size/3, y + size/2 + 4);
-        ctx.fill();
+        // "Cola" Stripe (White)
+        ctx.fillStyle = '#e5e5e5';
+        ctx.beginPath();
+        ctx.moveTo(x + 4, y + size/2);
+        ctx.bezierCurveTo(x + size/2, y + size/4, x + size/2, y + size*0.8, x + size - 4, y + size/2);
+        ctx.lineTo(x + size - 4, y + size/2 + 2);
+        ctx.bezierCurveTo(x + size/2, y + size*0.8 + 2, x + size/2, y + size/4 + 2, x + 4, y + size/2 + 2);
+        ctx.fill();
+    }
+    else if (type === 'server_rack') {
+        const isServer = type === 'server_rack';
+        ctx.fillStyle = isServer ? '#111827' : '#991b1b';	
+        ctx.fillRect(x+size*0.25, y+size*0.1, size*0.5, size*0.8);
+        ctx.fillStyle = isServer ? '#374151' : '#ef4444';	
+        ctx.fillRect(x+size*0.25, y, size*0.5, size*0.1);
+        
+        if (!isServer) {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(x+size*0.25, y+size*0.5, size*0.5, size*0.1);
+        } else {
+            ctx.fillStyle = '#000';	
+            ctx.fillRect(x+size*0.3, y+size*0.2, size*0.4, size*0.2);
+            // Blinking LEDs
+            if(Math.random() > 0.1) {
+                ctx.fillStyle = (Math.sin(time/100 + x)>0) ? '#22c55e' : '#064e3b';
+                ctx.fillRect(x+size*0.35, y+size*0.6, 2, 2);
+            }
+            if(Math.random() > 0.1) {
+                ctx.fillStyle = (Math.cos(time/150 + y)>0) ? '#ef4444' : '#7f1d1d';
+                ctx.fillRect(x+size*0.45, y+size*0.6, 2, 2);
+            }
+        }
+    }
+    else if (type === 'crate' || type === 'ammo_crate') {
+        ctx.fillStyle = '#14532d';	
+        ctx.fillRect(x+4, y+size*0.4, size-8, size*0.5);
+        ctx.fillStyle = '#166534';	
+        ctx.fillRect(x+4, y+size*0.1, size-8, size*0.3);	
+        ctx.fillStyle = '#052e16'; ctx.fillRect(x+4, y+size*0.4, size-8, 2);	
+        ctx.strokeStyle = '#22c55e'; ctx.lineWidth=1;
+        ctx.strokeRect(x+4, y+size*0.4, size-8, size*0.5);
+    }
+    else if (type === 'wall_terminal' || type === 'desk') {
+        // TERMINAL (RobCo Style)
+        // Desk/Stand
+        ctx.fillStyle = '#4b5563'; // Grey metal
+        ctx.fillRect(x + 2, y + size/2, size - 4, size/2);
+        
+        // Monitor Housing
+        ctx.fillStyle = '#374151'; // Darker metal
+        ctx.beginPath();
+        ctx.arc(cx, y + size/2, size/3, Math.PI, 0); // Rounded top
+        ctx.lineTo(cx + size/3, y + size/2 + 4);
+        ctx.lineTo(cx - size/3, y + size/2 + 4);
+        ctx.fill();
 
-        // Screen (Flickering Green Code)
-        if (Math.random() > 0.05) { // Occasional flicker off
-            ctx.fillStyle = '#14532d'; // Dark Green Base
-            ctx.fill(); // Fill background
-            
-            ctx.fillStyle = '#4ade80'; // Bright Green Text
-            const screenW = size/2;
-            const screenH = size/3;
-            // Draw "Text lines"
-            for(let i=0; i<3; i++) {
-                ctx.fillRect(cx - screenW/3, (y + size/3) + (i*4), Math.random() * screenW/1.5, 2);
-            }
-        }
-    }
-    else if (type === 'table') {
-        const isRound = type === 'table';
-        if (isRound) {
-            ctx.fillStyle = '#78350f';
-            ctx.beginPath(); ctx.ellipse(cx, y+size*0.5, size*0.4, size*0.2, 0, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#451a03';
-            ctx.fillRect(cx-2, y+size*0.5, 4, size*0.4);
-        } else {
-            ctx.fillStyle = '#78350f';
-            ctx.fillRect(x+2, y+size*0.4, size-4, size*0.3);
-            ctx.fillStyle = '#a16207'; ctx.fillRect(x+2, y+size*0.4, size-4, 2);	
-            ctx.fillStyle = '#451a03';
-            ctx.fillRect(x+2, y+size*0.7, 6, size*0.2);
-            ctx.fillRect(x+size-8, y+size*0.7, 6, size*0.2);
-        }
-    }
-    else if (type === 'skeleton' || type === 'skeleton_blue') {
-        ctx.fillStyle = '#e5e5e5';
-        ctx.beginPath(); ctx.arc(cx, cy-2, size*0.12, 0, Math.PI*2); ctx.fill();	
-        ctx.fillStyle = '#000'; ctx.fillRect(cx-2, cy-3, 1, 1); ctx.fillRect(cx+1, cy-3, 1, 1);	
-        ctx.strokeStyle = '#e5e5e5'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.moveTo(cx-3, cy+2); ctx.lineTo(cx+3, cy+2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cx-3, cy+5); ctx.lineTo(cx+3, cy+5); ctx.stroke();
-    }
-    else if (type === 'fire_barrel') {
-        ctx.fillStyle = '#374151'; ctx.fillRect(x+size*0.25, y+size*0.25, size*0.5, size*0.75);
-        ctx.fillStyle = '#1f2937';	
-        ctx.fillRect(x+size*0.25, y+size*0.4, size*0.5, 2);
-        ctx.fillRect(x+size*0.25, y+size*0.6, size*0.5, 2);
-        
-        const pTime = time / 100;
-        ctx.globalCompositeOperation = 'lighter';
-        for(let i=0; i<8; i++) {
-            const fy = (pTime + i*1.5) % 10;	
-            const fx = Math.sin(pTime + i) * 4;
-            const alpha = 1 - (fy/10);
-            ctx.fillStyle = `rgba(250, 204, 21, ${alpha})`;
-            ctx.fillRect(cx + fx - 2, y + size*0.25 - fy*2, 4, 4);
-        }
-        ctx.globalCompositeOperation = 'source-over';
-    }
-    else if (type === 'rad_puddle') {
-        const pulse = (Math.sin(time / 500) + 1) / 2;	
-        const r = size/2 + (pulse * 4);
-        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-        g.addColorStop(0, 'rgba(132, 204, 22, 0.9)');
-        g.addColorStop(0.6, 'rgba(132, 204, 22, 0.4)');
-        g.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = g;
-        ctx.beginPath(); ctx.ellipse(cx, cy, r, r*0.6, 0, 0, Math.PI*2); ctx.fill();
-    }
-    else if (type === 'glowing_fungus') {
-        ctx.fillStyle = '#a3e635';
-        ctx.shadowColor = '#a3e635'; ctx.shadowBlur = 10;
-        ctx.beginPath(); ctx.arc(cx, cy+4, size*0.15, 0, Math.PI*2); ctx.fill();
-        ctx.shadowBlur = 0;
-    }
-    else if (type === 'overhead_light') {
-        ctx.fillStyle = '#e2e8f0';
-        ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI*2); ctx.fill();
-    }
-    else if (type === 'server_rack') {
-        ctx.fillStyle = '#57534e';	
-        ctx.fillRect(x+8, y+size*0.4, size-16, size*0.4);
-        ctx.fillStyle = '#78716c';	
-        ctx.fillRect(x+8, y+size*0.2, size-16, size*0.2);
-    }
-    else {
-        ctx.fillStyle = '#57534e';	
-        ctx.fillRect(x+8, y+size*0.4, size-16, size*0.4);
-        ctx.fillStyle = '#78716c';	
-        ctx.fillRect(x+8, y+size*0.2, size-16, size*0.2);
-    }
+        // Screen (Flickering Green Code)
+        if (Math.random() > 0.05) { // Occasional flicker off
+            ctx.fillStyle = '#14532d'; // Dark Green Base
+            ctx.fill(); // Fill background
+            
+            ctx.fillStyle = '#4ade80'; // Bright Green Text
+            const screenW = size/2;
+            const screenH = size/3;
+            // Draw "Text lines"
+            for(let i=0; i<3; i++) {
+                ctx.fillRect(cx - screenW/3, (y + size/3) + (i*4), Math.random() * screenW/1.5, 2);
+            }
+        }
+    }
+    else if (type === 'table') {
+        const isRound = type === 'table';
+        if (isRound) {
+            ctx.fillStyle = '#78350f';
+            ctx.beginPath(); ctx.ellipse(cx, y+size*0.5, size*0.4, size*0.2, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(cx-2, y+size*0.5, 4, size*0.4);
+        } else {
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(x+2, y+size*0.4, size-4, size*0.3);
+            ctx.fillStyle = '#a16207'; ctx.fillRect(x+2, y+size*0.4, size-4, 2);	
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(x+2, y+size*0.7, 6, size*0.2);
+            ctx.fillRect(x+size-8, y+size*0.7, 6, size*0.2);
+        }
+    }
+    else if (type === 'skeleton' || type === 'skeleton_blue') {
+        ctx.fillStyle = '#e5e5e5';
+        ctx.beginPath(); ctx.arc(cx, cy-2, size*0.12, 0, Math.PI*2); ctx.fill();	
+        ctx.fillStyle = '#000'; ctx.fillRect(cx-2, cy-3, 1, 1); ctx.fillRect(cx+1, cy-3, 1, 1);	
+        ctx.strokeStyle = '#e5e5e5'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(cx-3, cy+2); ctx.lineTo(cx+3, cy+2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx-3, cy+5); ctx.lineTo(cx+3, cy+5); ctx.stroke();
+    }
+    else if (type === 'fire_barrel') {
+        ctx.fillStyle = '#374151'; ctx.fillRect(x+size*0.25, y+size*0.25, size*0.5, size*0.75);
+        ctx.fillStyle = '#1f2937';	
+        ctx.fillRect(x+size*0.25, y+size*0.4, size*0.5, 2);
+        ctx.fillRect(x+size*0.25, y+size*0.6, size*0.5, 2);
+        
+        const pTime = time / 100;
+        ctx.globalCompositeOperation = 'lighter';
+        for(let i=0; i<8; i++) {
+            const fy = (pTime + i*1.5) % 10;	
+            const fx = Math.sin(pTime + i) * 4;
+            const alpha = 1 - (fy/10);
+            ctx.fillStyle = `rgba(250, 204, 21, ${alpha})`;
+            ctx.fillRect(cx + fx - 2, y + size*0.25 - fy*2, 4, 4);
+        }
+        ctx.globalCompositeOperation = 'source-over';
+    }
+    else if (type === 'rad_puddle') {
+        const pulse = (Math.sin(time / 500) + 1) / 2;	
+        const r = size/2 + (pulse * 4);
+        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        g.addColorStop(0, 'rgba(132, 204, 22, 0.9)');
+        g.addColorStop(0.6, 'rgba(132, 204, 22, 0.4)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.ellipse(cx, cy, r, r*0.6, 0, 0, Math.PI*2); ctx.fill();
+    }
+    else if (type === 'glowing_fungus') {
+        ctx.fillStyle = '#a3e635';
+        ctx.shadowColor = '#a3e635'; ctx.shadowBlur = 10;
+        ctx.beginPath(); ctx.arc(cx, cy+4, size*0.15, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+    else if (type === 'overhead_light') {
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI*2); ctx.fill();
+    }
+    else if (type === 'server_rack') {
+        ctx.fillStyle = '#57534e';	
+        ctx.fillRect(x+8, y+size*0.4, size-16, size*0.4);
+        ctx.fillStyle = '#78716c';	
+        ctx.fillRect(x+8, y+size*0.2, size-16, size*0.2);
+    }
+    else {
+        ctx.fillStyle = '#57534e';	
+        ctx.fillRect(x+8, y+size*0.4, size-16, size*0.4);
+        ctx.fillStyle = '#78716c';	
+        ctx.fillRect(x+8, y+size*0.2, size-16, size*0.2);
+    }
 }
-My apologies! We had a copy-paste error where the new logic block was pasted twice within the function, leading to the code being doubled up. I will now give you the entire, correct drawSprite function content to paste over the previous version. This ensures all the pieces are there and in the right order.
 
-Please replace your entire drawSprite function (from function drawSprite(...) to the final }) with the block below. This is the definitive, corrected function.
-
-JavaScript
-
-function drawSprite(ctx, type, x, y, size, time) {
-    const cx = x + size/2; const cy = y + size/2;
-    
-    // --- Initial Shadow and Palette Setup ---
-    // Enhanced Soft Shadow
-    const shadowG = ctx.createRadialGradient(cx + 2, cy + size*0.4, 0, cx + 2, cy + size*0.4, size*0.3);
-    shadowG.addColorStop(0, 'rgba(0,0,0,0.6)');
-    shadowG.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = shadowG;
-    ctx.fillRect(x, y + size*0.3, size, size*0.3);
-
-    // Safely get current palette based on map mode
-    const pal = PALETTES[config.mapType] || PALETTES.vault;
-    
-    // --- 1. NEW BUILDING/RUINS STRUCTURE LOGIC ---
-    if (type === 'ruin_building' || type === 'interior_ruins') {
-        const isInterior = (type === 'interior_ruins');
-        
-        // Use WALL colors for the structure/features
-        let wallColors = isInterior ? PALETTES.interior_ruins.wall : pal.wall;
-        let floorColor = pal.floor.base; // Used for "holes"
-        
-        // 2.5D WALL RENDERING (Draws front and top faces)
-        const wallHeight = size / 2;
-        
-        // Front face (shadowed)
-        ctx.fillStyle = wallColors.front;
-        ctx.fillRect(x, y + size - wallHeight, size, wallHeight);
-        
-        // Top face (lighter)
-        ctx.fillStyle = wallColors.top;
-        ctx.fillRect(x, y, size, size - wallHeight);
-        
-        // Highlights (top and left edges)
-        ctx.fillStyle = wallColors.highlight;
-        ctx.fillRect(x, y, size, 2);	
-        ctx.fillRect(x, y, 2, size - wallHeight);
-
-        // Dark detail color for windows/doors
-        const detailColor = wallColors.dark; 
-
-        // 1. Windows: Simple rectangular cutouts
-        const numWindows = Math.floor(Math.random() * 3) + 2; 
-        for (let i = 0; i < numWindows; i++) {
-            const winW = Math.floor(Math.random() * 10) + 10; 
-            const winH = Math.floor(Math.random() * 10) + 10; 
-            const winX = x + Math.random() * (size - winW - 10) + 5; 
-            const winY = y + Math.random() * (size - winH - 10) + 5; 
-            
-            // Draw dark "hole" for window
-            ctx.fillStyle = detailColor;
-            ctx.fillRect(winX, winY, winW, winH);
-        }
-
-        // 2. Door/Entrance
-        if (Math.random() < 0.8) { 
-            const doorW = Math.floor(Math.random() * 12) + 15; 
-            const doorH = Math.floor(Math.random() * 15) + 20; 
-            const doorSide = Math.floor(Math.random() * 4); 
-
-            ctx.fillStyle = detailColor;
-
-            if (doorSide === 0) { // Top
-                ctx.fillRect(x + (size - doorW) / 2, y, doorW, doorH);
-            } else if (doorSide === 1) { // Right
-                ctx.fillRect(x + size - doorW, y + (size - doorH) / 2, doorW, doorH);
-            } else if (doorSide === 2) { // Bottom
-                // Door at base should be cut out of the front face
-                ctx.fillRect(x + (size - doorW) / 2, y + size - doorH, doorW, doorH);
-            } else { // Left
-                ctx.fillRect(x, y + (size - doorH) / 2, doorW, doorH);
-            }
-        }
-
-        // 3. Crumbling/Damaged Edges & Interior Holes
-        if (isInterior || Math.random() < 0.6) { 
-            const numBreaks = Math.floor(Math.random() * 3) + 1; 
-            
-            ctx.fillStyle = floorColor; 
-
-            for (let i = 0; i < numBreaks; i++) {
-                const breakSize = Math.floor(Math.random() * 20) + 10; 
-                const edge = Math.floor(Math.random() * 4); 
-
-                // Draw outer edge damage (holes revealing the ground)
-                if (edge === 0) { // Top edge
-                    ctx.fillRect(x + Math.random() * (size - breakSize), y, breakSize, Math.random() * 5 + 5);
-                } else if (edge === 1) { // Right edge
-                    ctx.fillRect(x + size - (Math.random() * 5 + 5), y + Math.random() * (size - breakSize), Math.random() * 5 + 5, breakSize);
-                } else if (edge === 2) { // Bottom edge
-                    ctx.fillRect(x + Math.random() * (size - breakSize), y + size - (Math.random() * 5 + 5), breakSize, Math.random() * 5 + 5);
-                } else { // Left edge
-                    ctx.fillRect(x, y + Math.random() * (size - breakSize), Math.random() * 5 + 5, breakSize);
-                }
-
-                // Inner damage spots 
-                if (Math.random() < 0.5) { 
-                    const holeW = Math.floor(Math.random() * 10) + 5;
-                    const holeH = Math.floor(Math.random() * 10) + 5;
-                    ctx.fillRect(x + Math.random() * (size - holeW - 10) + 5, y + Math.random() * (size - holeH - 10) + 5, holeW, holeH);
-                }
-            }
-        }
-    } 
-    // --- END NEW BUILDING LOGIC ---
-    
-    // START OF ORIGINAL SPRITES, NOW WRAPPED IN ELSE IF
-    else if (type === 'tree' || type === 'joshua_tree') {
-        const trunkW = size*0.12;
-        const trunkH = size*0.5;
-        ctx.fillStyle = '#3e2723'; ctx.fillRect(cx-trunkW/2, y+size*0.4, trunkW, trunkH);
-        ctx.strokeStyle = '#3e2723'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.moveTo(cx, cy+size*0.1); ctx.lineTo(cx-size*0.2, cy-size*0.2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cx, cy+size*0.2); ctx.lineTo(cx+size*0.2, cy-size*0.1); ctx.stroke();
-        const cl = '#15803d'; const clH = '#22c55e';
-        const drawClump = (bx, by, s) => {
-            ctx.fillStyle = cl; ctx.beginPath(); ctx.arc(bx, by, s, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = clH; ctx.fillRect(bx-2, by-4, 4, 4);	
-        };
-        drawClump(cx, cy-size*0.2, size*0.25);
-        drawClump(cx-size*0.2, cy-size*0.2, size*0.15);
-        drawClump(cx+size*0.2, cy-size*0.2, size*0.15);
-    }	
-    else if (type === 'car') {
-        ctx.fillStyle = '#7f1d1d';	
-        ctx.fillRect(x+4, cy+2, size-8, size*0.25);	
-        
-        ctx.fillStyle = '#0a0a0a';
-        ctx.fillRect(x+8, cy+size*0.2, 8, 6);
-        ctx.fillRect(x+size-16, cy+size*0.2, 8, 6);
-
-        ctx.fillStyle = '#b91c1c';	
-        ctx.beginPath(); ctx.moveTo(x+8, cy+2); ctx.lineTo(x+size*0.3, cy-size*0.2); ctx.lineTo(x+size*0.7, cy-size*0.2); ctx.lineTo(x+size-8, cy+2); ctx.fill();
-        
-        ctx.fillStyle = '#1e293b';
-        ctx.beginPath(); ctx.moveTo(x+10, cy); ctx.lineTo(x+size*0.32, cy-size*0.15); ctx.lineTo(x+size*0.68, cy-size*0.15); ctx.lineTo(x+size-10, cy); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.3; ctx.beginPath(); ctx.moveTo(x+14, cy); ctx.lineTo(x+18, cy-4); ctx.stroke(); ctx.globalAlpha = 1.0;
-    }
-    else if (type === 'rubble') {
-        ctx.fillStyle = '#57534e';
-        ctx.beginPath(); ctx.arc(cx-4, cy+4, 5, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#78716c';
-        ctx.beginPath(); ctx.arc(cx+4, cy+2, 6, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#44403c';
-        ctx.fillRect(cx-2, cy-6, 6, 6);
-    }
-    else if (type === 'tumbleweed') {
-        ctx.strokeStyle = '#a8a29e'; ctx.lineWidth = 1;	
-        ctx.beginPath();
-        for(let i=0; i<12; i++) {	
-            const angle = Math.random() * Math.PI * 2;
-            const rad = Math.random() * size * 0.4;
-            ctx.moveTo(cx + Math.cos(angle)*rad, cy + Math.sin(angle)*rad);
-            ctx.lineTo(cx + Math.cos(angle + 2)*rad, cy + Math.sin(angle + 2)*rad);
-        }
-        ctx.stroke();
-    }
-    else if (type === 'bed') {
-        ctx.fillStyle = '#737373';	
-        ctx.fillRect(x+4, y+4, size-8, size-8);
-        ctx.fillStyle = '#1d4ed8';	
-        ctx.fillRect(x+4, y+size*0.4, size-8, size*0.6-4);
-        ctx.fillStyle = '#fafafa';	
-        ctx.fillRect(x+6, y+6, size-12, size*0.15);
-    }
-    else if (type === 'vending_machine') {
-        // NUKA-COLA MACHINE (The Classic Red)
-        // Body
-        ctx.fillStyle = '#991b1b'; // Dark Red
-        ctx.fillRect(x + 4, y - 8, size - 8, size + 4);
-        
-        // Side Highlight
-        ctx.fillStyle = '#ef4444'; // Bright Red
-        ctx.fillRect(x + 4, y - 8, 4, size + 4);
-
-        // Display Window (Glowing Blue/White)
-        const glow = Math.sin(time / 200) * 0.5 + 0.5;
-        ctx.fillStyle = `rgba(200, 255, 255, ${0.3 + glow * 0.2})`;
-        ctx.fillRect(x + size/2, y, size/3, size/2);
-
-        // "Cola" Stripe (White)
-        ctx.fillStyle = '#e5e5e5';
-        ctx.beginPath();
-        ctx.moveTo(x + 4, y + size/2);
-        ctx.bezierCurveTo(x + size/2, y + size/4, x + size/2, y + size*0.8, x + size - 4, y + size/2);
-        ctx.lineTo(x + size - 4, y + size/2 + 2);
-        ctx.bezierCurveTo(x + size/2, y + size*0.8 + 2, x + size/2, y + size/4 + 2, x + 4, y + size/2 + 2);
-        ctx.fill();
-    }
-    else if (type === 'server_rack') {
-        const isServer = type === 'server_rack';
-        ctx.fillStyle = isServer ? '#111827' : '#991b1b';	
-        ctx.fillRect(x+size*0.25, y+size*0.1, size*0.5, size*0.8);
-        ctx.fillStyle = isServer ? '#374151' : '#ef4444';	
-        ctx.fillRect(x+size*0.25, y, size*0.5, size*0.1);
-        
-        if (!isServer) {
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(x+size*0.25, y+size*0.5, size*0.5, size*0.1);
-        } else {
-            ctx.fillStyle = '#000';	
-            ctx.fillRect(x+size*0.3, y+size*0.2, size*0.4, size*0.2);
-            // Blinking LEDs
-            if(Math.random() > 0.1) {
-                ctx.fillStyle = (Math.sin(time/100 + x)>0) ? '#22c55e' : '#064e3b';
-                ctx.fillRect(x+size*0.35, y+size*0.6, 2, 2);
-            }
-            if(Math.random() > 0.1) {
-                ctx.fillStyle = (Math.cos(time/150 + y)>0) ? '#ef4444' : '#7f1d1d';
-                ctx.fillRect(x+size*0.45, y+size*0.6, 2, 2);
-            }
-        }
-    }
-    else if (type === 'crate' || type === 'ammo_crate') {
-        ctx.fillStyle = '#14532d';	
-        ctx.fillRect(x+4, y+size*0.4, size-8, size*0.5);
-        ctx.fillStyle = '#166534';	
-        ctx.fillRect(x+4, y+size*0.1, size-8, size*0.3);	
-        ctx.fillStyle = '#052e16'; ctx.fillRect(x+4, y+size*0.4, size-8, 2);	
-        ctx.strokeStyle = '#22c55e'; ctx.lineWidth=1;
-        ctx.strokeRect(x+4, y+size*0.4, size-8, size*0.5);
-    }
-    else if (type === 'wall_terminal' || type === 'desk') {
-        // TERMINAL (RobCo Style)
-        // Desk/Stand
-        ctx.fillStyle = '#4b5563'; // Grey metal
-        ctx.fillRect(x + 2, y + size/2, size - 4, size/2);
-        
-        // Monitor Housing
-        ctx.fillStyle = '#374151'; // Darker metal
-        ctx.beginPath();
-        ctx.arc(cx, y + size/2, size/3, Math.PI, 0); // Rounded top
-        ctx.lineTo(cx + size/3, y + size/2 + 4);
-        ctx.lineTo(cx - size/3, y + size/2 + 4);
-        ctx.fill();
-
-        // Screen (Flickering Green Code)
-        if (Math.random() > 0.05) { // Occasional flicker off
-            ctx.fillStyle = '#14532d'; // Dark Green Base
-            ctx.fill(); // Fill background
-            
-            ctx.fillStyle = '#4ade80'; // Bright Green Text
-            const screenW = size/2;
-            const screenH = size/3;
-            // Draw "Text lines"
-            for(let i=0; i<3; i++) {
-                ctx.fillRect(cx - screenW/3, (y + size/3) + (i*4), Math.random() * screenW/1.5, 2);
-            }
-        }
-    }
-    else if (type === 'table') {
-        const isRound = type === 'table';
-        if (isRound) {
-            ctx.fillStyle = '#78350f';
-            ctx.beginPath(); ctx.ellipse(cx, y+size*0.5, size*0.4, size*0.2, 0, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#451a03';
-            ctx.fillRect(cx-2, y+size*0.5, 4, size*0.4);
-        } else {
-            ctx.fillStyle = '#78350f';
-            ctx.fillRect(x+2, y+size*0.4, size-4, size*0.3);
-            ctx.fillStyle = '#a16207'; ctx.fillRect(x+2, y+size*0.4, size-4, 2);	
-            ctx.fillStyle = '#451a03';
-            ctx.fillRect(x+2, y+size*0.7, 6, size*0.2);
-            ctx.fillRect(x+size-8, y+size*0.7, 6, size*0.2);
-        }
-    }
-    else if (type === 'skeleton' || type === 'skeleton_blue') {
-        ctx.fillStyle = '#e5e5e5';
-        ctx.beginPath(); ctx.arc(cx, cy-2, size*0.12, 0, Math.PI*2); ctx.fill();	
-        ctx.fillStyle = '#000'; ctx.fillRect(cx-2, cy-3, 1, 1); ctx.fillRect(cx+1, cy-3, 1, 1);	
-        ctx.strokeStyle = '#e5e5e5'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.moveTo(cx-3, cy+2); ctx.lineTo(cx+3, cy+2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cx-3, cy+5); ctx.lineTo(cx+3, cy+5); ctx.stroke();
-    }
-    else if (type === 'fire_barrel') {
-        ctx.fillStyle = '#374151'; ctx.fillRect(x+size*0.25, y+size*0.25, size*0.5, size*0.75);
-        ctx.fillStyle = '#1f2937';	
-        ctx.fillRect(x+size*0.25, y+size*0.4, size*0.5, 2);
-        ctx.fillRect(x+size*0.25, y+size*0.6, size*0.5, 2);
-        
-        const pTime = time / 100;
-        ctx.globalCompositeOperation = 'lighter';
-        for(let i=0; i<8; i++) {
-            const fy = (pTime + i*1.5) % 10;	
-            const fx = Math.sin(pTime + i) * 4;
-            const alpha = 1 - (fy/10);
-            ctx.fillStyle = `rgba(250, 204, 21, ${alpha})`;
-            ctx.fillRect(cx + fx - 2, y + size*0.25 - fy*2, 4, 4);
-        }
-        ctx.globalCompositeOperation = 'source-over';
-    }
-    else if (type === 'rad_puddle') {
-        const pulse = (Math.sin(time / 500) + 1) / 2;	
-        const r = size/2 + (pulse * 4);
-        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-        g.addColorStop(0, 'rgba(132, 204, 22, 0.9)');
-        g.addColorStop(0.6, 'rgba(132, 204, 22, 0.4)');
-        g.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = g;
-        ctx.beginPath(); ctx.ellipse(cx, cy, r, r*0.6, 0, 0, Math.PI*2); ctx.fill();
-    }
-    else if (type === 'glowing_fungus') {
-        ctx.fillStyle = '#a3e635';
-        ctx.shadowColor = '#a3e635'; ctx.shadowBlur = 10;
-        ctx.beginPath(); ctx.arc(cx, cy+4, size*0.15, 0, Math.PI*2); ctx.fill();
-        ctx.shadowBlur = 0;
-    }
-    else if (type === 'overhead_light') {
-        ctx.fillStyle = '#e2e8f0';
-        ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI*2); ctx.fill();
-    }
-    else if (type === 'server_rack') {
-        ctx.fillStyle = '#57534e';	
-        ctx.fillRect(x+8, y+size*0.4, size-16, size*0.4);
-        ctx.fillStyle = '#78716c';	
-        ctx.fillRect(x+8, y+size*0.2, size-16, size*0.2);
-    }
-    else {
-        ctx.fillStyle = '#57534e';	
-        ctx.fillRect(x+8, y+size*0.4, size-16, size*0.4);
-        ctx.fillStyle = '#78716c';	
-        ctx.fillRect(x+8, y+size*0.2, size-16, size*0.2);
-    }
-}
 
 function drawCRTEffects(ctx, width, height) {
     // Curved Screen Distortion (Simulated via Vignette and Radial Gradient)
@@ -3404,63 +3078,59 @@ function drawCurrentLevel(time = 0) {
          ctx.restore();
     }
 
-    // WALL RENDER (2.5D) - Only needed for non-cave types to show depth
-    if (patternType !== 'cave') {
-        for (let x = 0; x < config.cols; x++) {
-            for (let y = 0; y < config.rows; y++) {
-                // WALL RENDER (2.5D) - Only needed for non-cave types to show depth
+// WALL RENDER (2.5D) - Only needed for non-cave types to show depth
 if (patternType !== 'cave') {
     for (let x = 0; x < config.cols; x++) {
         for (let y = 0; y < config.rows; y++) {
             const isDecoration = data.decorations && data.decorations.some(d => d.x === x && d.y === y && d.type === 'ruin_building');
 
             // CRITICAL FIX: Only draw a generic wall if it's a 0 (void) AND NOT taken by a detailed sprite.
-            if (data.grid[x][y] === 0 && !isDecoration) {
-                const px = x * gs; const py = y * gs;
-                const wallHeight = gs / 2;
-                const southOpen = (y < config.rows - 1 && data.grid[x][y+1] >= 1);
-                const southRevealed = southOpen && (!config.fogEnabled || isLocationRevealed(data, x, y+1));
+            if (data.grid[x][y] === 0 && !isDecoration) { // KEEP ONLY THIS IF STATEMENT
+                const px = x * gs; const py = y * gs;
+                const wallHeight = gs / 2;
+                const southOpen = (y < config.rows - 1 && data.grid[x][y+1] >= 1);
+                const southRevealed = southOpen && (!config.fogEnabled || isLocationRevealed(data, x, y+1));
 
-                if (southRevealed) {
-                    const grad = ctx.createLinearGradient(px, py+gs-wallHeight, px, py+gs);
-                    grad.addColorStop(0, pal.wall.front);
-                    grad.addColorStop(1, '#0a0a0a');	
-                    ctx.fillStyle = grad;
-                    ctx.fillRect(px, py + gs - wallHeight, gs, wallHeight);
-                    
-                    // Rust/Grime Detail
-                    if ((x+y) % 5 === 0) {
-                        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-                        ctx.fillRect(px + gs/2, py+gs-wallHeight, 2, wallHeight);
-                    }
+                if (southRevealed) {
+                    const grad = ctx.createLinearGradient(px, py+gs-wallHeight, px, py+gs);
+                    grad.addColorStop(0, pal.wall.front);
+                    grad.addColorStop(1, '#0a0a0a');	
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(px, py + gs - wallHeight, gs, wallHeight);
+                    
+                    // Rust/Grime Detail
+                    if ((x+y) % 5 === 0) {
+                        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                        ctx.fillRect(px + gs/2, py+gs-wallHeight, 2, wallHeight);
+                    }
 
-                    ctx.fillStyle = pal.wall.top;
-                    ctx.fillRect(px, py, gs, gs - wallHeight);
-                    
-                    ctx.fillStyle = pal.wall.highlight;
-                    ctx.fillRect(px, py, gs, 2);	
-                    ctx.fillRect(px, py, 2, gs-wallHeight);	
-                    
-                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-                    ctx.fillRect(px, py+gs, gs, gs*0.4);
-                } else {
-                    let nearRevealed = false;
-                    for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) {
-                        if (x+dx>=0 && x+dx<config.cols && y+dy>=0 && y+dy<config.rows) {
-                            if(data.grid[x+dx][y+dy]>=1 && (!config.fogEnabled || isLocationRevealed(data, x+dx, y+dy))) nearRevealed = true;
-                        }
-                    }
-                    
-                    if(nearRevealed) {
-                        ctx.fillStyle = pal.wall.top;
-                        ctx.fillRect(px, py, gs, gs);
-                        ctx.fillStyle = pal.wall.highlight;
-                        ctx.fillRect(px, py, gs, 2);	
-                        ctx.fillRect(px, py, 2, gs);
-                        ctx.fillStyle = 'rgba(0,0,0,0.3)';	
-                        ctx.fillRect(px + 4, py + 4, gs - 8, gs - 8);
-                    }
-                }
+                    ctx.fillStyle = pal.wall.top;
+                    ctx.fillRect(px, py, gs, gs - wallHeight);
+                    
+                    ctx.fillStyle = pal.wall.highlight;
+                    ctx.fillRect(px, py, gs, 2);	
+                    ctx.fillRect(px, py, 2, gs-wallHeight);	
+                    
+                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                    ctx.fillRect(px, py+gs, gs, gs*0.4);
+                } else {
+                    let nearRevealed = false;
+                    for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) {
+                        if (x+dx>=0 && x+dx<config.cols && y+dy>=0 && y+dy<config.rows) {
+                            if(data.grid[x+dx][y+dy]>=1 && (!config.fogEnabled || isLocationRevealed(data, x+dx, y+dy))) nearRevealed = true;
+                        }
+                    }
+                    
+                    if(nearRevealed) {
+                        ctx.fillStyle = pal.wall.top;
+                        ctx.fillRect(px, py, gs, gs);
+                        ctx.fillStyle = pal.wall.highlight;
+                        ctx.fillRect(px, py, gs, 2);	
+                        ctx.fillRect(px, py, 2, gs);
+                        ctx.fillStyle = 'rgba(0,0,0,0.3)';	
+                        ctx.fillRect(px + 4, py + 4, gs - 8, gs - 8);
+                    }
+                }
             }
         }
     }
