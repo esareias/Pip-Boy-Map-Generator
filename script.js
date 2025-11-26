@@ -1630,6 +1630,8 @@ function generateAtmosphere() {
 function generateCurrentLevel() {
     if (isClient) return; // Client should never generate maps
 
+        patternCache = {}; // Force pattern regeneration
+
     // gridSize is now fixed in config
     config.mapType = document.getElementById('mapType').value;
     const density = parseInt(document.getElementById('density').value);
@@ -2534,18 +2536,82 @@ function createPixelPattern(colors, type) {
             pCtx.fill();
         }
         pCtx.globalAlpha = 1.0;
-    } else if (type === 'ruins') {
-        // Cracks and Debris
+   } else if (type === 'ruins') {
+        // Enhanced Ruins: Cracks, Debris, and Road Markings
+        
+        // A. Major Cracks (Wider, more dramatic)
         pCtx.strokeStyle = colors.dark;
-        pCtx.lineWidth = 1;
-        pCtx.globalAlpha = 0.4;
-        for(let i=0; i<10; i++) {
+        pCtx.lineWidth = 2;
+        pCtx.globalAlpha = 0.6;
+        for(let i=0; i<8; i++) {
             pCtx.beginPath();
-            let sx = Math.random()*size; let sy = Math.random()*size;
+            let sx = Math.random()*size; 
+            let sy = Math.random()*size;
             pCtx.moveTo(sx, sy);
-            pCtx.lineTo(sx + (Math.random()-0.5)*40, sy + (Math.random()-0.5)*40);
+            
+            // Create branching cracks
+            let segments = 3 + Math.floor(Math.random()*3);
+            for(let j=0; j<segments; j++) {
+                sx += (Math.random()-0.5)*30;
+                sy += (Math.random()-0.5)*30;
+                pCtx.lineTo(sx, sy);
+            }
             pCtx.stroke();
         }
+        
+        // B. Fine Cracks (Spider-web detail)
+        pCtx.lineWidth = 1;
+        pCtx.globalAlpha = 0.3;
+        for(let i=0; i<20; i++) {
+            pCtx.beginPath();
+            let sx = Math.random()*size; 
+            let sy = Math.random()*size;
+            pCtx.moveTo(sx, sy);
+            pCtx.lineTo(sx + (Math.random()-0.5)*20, sy + (Math.random()-0.5)*20);
+            pCtx.stroke();
+        }
+        
+        // C. Debris/Dirt Stains
+        pCtx.fillStyle = colors.dark;
+        pCtx.globalAlpha = 0.2;
+        for(let i=0; i<15; i++) {
+            pCtx.beginPath();
+            pCtx.arc(Math.random()*size, Math.random()*size, Math.random()*12 + 4, 0, Math.PI*2);
+            pCtx.fill();
+        }
+        
+        // D. Faded Road Markings (Dashed lines)
+        pCtx.strokeStyle = colors.light;
+        pCtx.lineWidth = 3;
+        pCtx.globalAlpha = 0.15;
+        pCtx.setLineDash([8, 12]);
+        
+        // Horizontal marking
+        pCtx.beginPath();
+        pCtx.moveTo(0, size/2);
+        pCtx.lineTo(size, size/2);
+        pCtx.stroke();
+        
+        // Vertical marking
+        pCtx.beginPath();
+        pCtx.moveTo(size/2, 0);
+        pCtx.lineTo(size/2, size);
+        pCtx.stroke();
+        
+        pCtx.setLineDash([]);
+        
+        // E. Rust Patches
+        pCtx.fillStyle = '#8b4513'; // Rust brown
+        pCtx.globalAlpha = 0.1;
+        for(let i=0; i<10; i++) {
+            const px = Math.random()*size;
+            const py = Math.random()*size;
+            const pr = Math.random()*10 + 5;
+            pCtx.beginPath();
+            pCtx.arc(px, py, pr, 0, Math.PI*2);
+            pCtx.fill();
+        }
+        
         pCtx.globalAlpha = 1.0;
     }
     
