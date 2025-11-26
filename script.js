@@ -373,10 +373,10 @@ const PALETTES = {
         accent: '#fbbf24',	
         shadow: 'rgba(0,0,0,0.6)'
     },
-    ruins: {	
+      ruins: {	
         bg: '#0a0908',	
-        floor: { base: '#292524', dark: '#1c1917', light: '#44403c', noise: '#57534e' },
-        wall: { top: '#7f1d1d', front: '#450a0a', outline: '#2a0505', highlight: '#991b1b' },	
+        floor: { base: '#3c3836', dark: '#282828', light: '#504945', noise: '#665c54' }, // Concrete/asphalt
+        wall: { top: '#8b4513', front: '#5c3317', outline: '#3e2723', highlight: '#a0522d' }, // Rust/brick
         accent: '#ef4444',	
         shadow: 'rgba(0,0,0,0.7)'
     },
