@@ -406,7 +406,7 @@ const PALETTES = {
 const KEY_COLORS = ["#ef4444", "#3b82f6", "#eab308", "#a855f7"];	
 
 const DECO_POOLS = {
-    wasteland_surface: ["joshua_tree", "brahmin_skull", "boulder", "skeleton", "rad_puddle", "fire_barrel"],
+    wasteland_surface: ["joshua_tree", "brahmin_skull", "boulder", "skeleton", "rad_puddle", "fire_barrel", "dead_bush", "crashed_satellite"],
     wasteland_cave: ["glowing_fungus", "rock_pile", "skeleton", "gore_bag", "campfire", "mattress", "rad_puddle"],
     city_street: ["car", "rubble", "tire_pile", "traffic_cone", "broken_pole", "street_sign", "vending_machine", "fire_barrel"],
     city_interior: ["bed", "table", "chair", "file_cabinet", "rubble", "radio", "ammo_crate", "vending_machine"],
@@ -498,9 +498,7 @@ function getRoomDecision(archetypeKey, currentRooms, sourceRoomName) {
         if (arch.unique.includes(c)) {
             // For vaults: search ALL rooms in all levels
             if (archetypeKey === 'VAULT') {
-                // Get all rooms in all vault levels (check for multi-level generation!)
                 const allRooms = Object.values(floorData).reduce((arr, lvl) => lvl && lvl.rooms ? arr.concat(lvl.rooms) : arr, []);
-                // Also check rooms currently being built on this level
                 if (currentRooms.some(r => r.name === c)) {
                     return false;
                 }
@@ -2542,14 +2540,36 @@ function createPixelPattern(colors, type) {
         }
 
     } else if (type === 'cave') {
-        // Organic Texture
-        pCtx.fillStyle = colors.dark;
-        pCtx.globalAlpha = 0.15;
-        for(let i=0; i<20; i++) {
+        // --- MOJAVE TEXTURE ---
+        // Fine cracks
+        pCtx.strokeStyle = colors.dark;
+        pCtx.lineWidth = 0.5;
+        pCtx.globalAlpha = 0.2;
+        for(let i=0; i<25; i++) {
             pCtx.beginPath();
-            pCtx.arc(Math.random()*size, Math.random()*size, Math.random()*15 + 5, 0, Math.PI*2);
-            pCtx.fill();
+            let sx = Math.random()*size; let sy = Math.random()*size;
+            pCtx.moveTo(sx, sy);
+            for(let j=0; j<3; j++) {
+                sx += (Math.random()-0.5)*20; sy += (Math.random()-0.5)*20;
+                pCtx.lineTo(sx, sy);
+            }
+            pCtx.stroke();
         }
+        
+        // Pebbles
+        pCtx.globalAlpha = 0.3;
+        for(let i=0; i<200; i++) {
+            pCtx.fillStyle = (Math.random() > 0.5) ? colors.dark : colors.light;
+            pCtx.fillRect(Math.random()*size, Math.random()*size, 1, 1);
+        }
+        
+        // Wind streaks
+        pCtx.globalAlpha = 0.03;
+        pCtx.fillStyle = colors.light;
+        for(let i=0; i<10; i++) {
+            pCtx.fillRect(0, Math.random()*size, size, Math.random()*2+1);
+        }
+        
         pCtx.globalAlpha = 1.0;
    } else if (type === 'ruins') {
         // Enhanced Ruins: Cracks, Debris, and Road Markings
@@ -2636,12 +2656,20 @@ function createPixelPattern(colors, type) {
 function drawSprite(ctx, type, x, y, size, time) {
     const cx = x + size/2; const cy = y + size/2;
     
-    // Enhanced Soft Shadow
-    const shadowG = ctx.createRadialGradient(cx + 2, cy + size*0.4, 0, cx + 2, cy + size*0.4, size*0.3);
-    shadowG.addColorStop(0, 'rgba(0,0,0,0.6)');
-    shadowG.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = shadowG;
-    ctx.fillRect(x, y + size*0.3, size, size*0.3);
+    // Directional, harsher shadow for desert
+    if (config.mapType === 'cave' && viewMode === 'sector') {
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.beginPath();
+        ctx.ellipse(cx + 4, cy + size * 0.45, size * 0.4, size * 0.15, Math.PI / 8, 0, Math.PI * 2);
+        ctx.fill();
+    } else {
+        // Standard soft shadow
+        const shadowG = ctx.createRadialGradient(cx + 2, cy + size*0.4, 0, cx + 2, cy + size*0.4, size*0.3);
+        shadowG.addColorStop(0, 'rgba(0,0,0,0.6)');
+        shadowG.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = shadowG;
+        ctx.fillRect(x, y + size*0.3, size, size*0.3);
+    }
 
     if (type === 'tree' || type === 'joshua_tree') {
         const trunkW = size*0.12;
@@ -2659,6 +2687,34 @@ function drawSprite(ctx, type, x, y, size, time) {
         drawClump(cx-size*0.2, cy-size*0.2, size*0.15);
         drawClump(cx+size*0.2, cy-size*0.1, size*0.15);
     }	
+    else if (type === 'dead_bush') {
+        ctx.strokeStyle = '#5c4b37';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for(let i=0; i<5; i++) {
+            const angle = (i/5) * Math.PI + Math.PI/4;
+            const len = size * (0.3 + Math.random()*0.2);
+            ctx.moveTo(cx, cy + size*0.3);
+            ctx.lineTo(cx + Math.cos(angle) * len, cy - Math.sin(angle) * len);
+        }
+        ctx.stroke();
+    }
+     else if (type === 'crashed_satellite') {
+        ctx.fillStyle = '#78716c'; // Metal grey
+        ctx.beginPath();
+        ctx.moveTo(cx, y + size*0.2);
+        ctx.lineTo(x + size-4, cy);
+        ctx.lineTo(cx, y + size*0.8);
+        ctx.lineTo(x+4, cy);
+        ctx.fill();
+        
+        // Broken solar panel
+        ctx.fillStyle = '#1e3a8a';
+        ctx.fillRect(x, y, size*0.4, size*0.6);
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, size*0.4, size*0.6);
+    }
     else if (type === 'car') {
         ctx.fillStyle = '#7f1d1d';	
         ctx.fillRect(x+4, cy+2, size-8, size*0.25);	
@@ -3175,6 +3231,26 @@ function drawSprite(ctx, type, x, y, size, time) {
   
 }
 
+function drawSunGlare(ctx, width, height) {
+    // Top-down sun bloom
+    const grad = ctx.createRadialGradient(width/2, -height*0.2, 0, width/2, height/2, width*0.9);
+    grad.addColorStop(0, "rgba(255, 240, 200, 0.3)");
+    grad.addColorStop(0.4, "rgba(255, 220, 180, 0.1)");
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0, width, height);
+
+    // Vignette
+    const vGrad = ctx.createRadialGradient(width/2, height/2, width/3, width/2, height/2, width*0.7);
+    vGrad.addColorStop(0, "rgba(0,0,0,0)");
+    vGrad.addColorStop(1, "rgba(0,0,0,0.4)");
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = vGrad;
+    ctx.fillRect(0,0, width, height);
+}
+
 function drawCRTEffects(ctx, width, height) {
     // Curved Screen Distortion (Simulated via Vignette and Radial Gradient)
     const grad = ctx.createRadialGradient(width/2, height/2, width/4, width/2, height/2, width*0.85);
@@ -3239,7 +3315,7 @@ function drawCurrentLevel(time = 0) {
     }
 
     // --- ORGANIC CAVE RENDERING (JAGGED ROCK) ---
-    if (patternType === 'cave') {
+    if (patternType === 'cave' && viewMode !== 'interior') {
         ctx.fillStyle = floorPattern;
         
         // Deterministic Random Helper (Stops the jiggling)
@@ -3277,7 +3353,7 @@ function drawCurrentLevel(time = 0) {
         }
     }	
     else {
-        // STANDARD / RUINS RENDERING
+        // STANDARD / RUINS / INTERIOR CAVE RENDERING
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
                 if (data.grid[x][y] >= 1) {	
@@ -3346,7 +3422,7 @@ function drawCurrentLevel(time = 0) {
     }
 
     // WALL RENDER (2.5D) - Only needed for non-cave types to show depth
-    if (patternType !== 'cave') {
+    if (!(patternType === 'cave' && viewMode === 'sector')) {
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
                 if (data.grid[x][y] === 0) {
@@ -3568,7 +3644,14 @@ function drawCurrentLevel(time = 0) {
     }
     
     ctx.globalCompositeOperation = 'source-over';
-    drawCRTEffects(ctx, config.width, config.height);
+    
+    // Switch between sun glare for Mojave and CRT for others
+    if (config.mapType === 'cave' && viewMode === 'sector') {
+        drawSunGlare(ctx, config.width, config.height);
+    } else {
+        drawCRTEffects(ctx, config.width, config.height);
+    }
+
 
     if (config.showLabels) {
         ctx.font = "bold 14px 'VT323', monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";	
@@ -3679,5 +3762,3 @@ window.handleMouseUp = handleMouseUp;
 // --------------------------------------------------
 
 window.onload = init;
-
-
