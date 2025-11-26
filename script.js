@@ -1,4 +1,3 @@
-
 // --- FIREBASE IMPORTS (MANDATORY BOILERPLATE) ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -376,8 +375,7 @@ const PALETTES = {
     },
     ruins: {	
         bg: '#0a0908',	
-        // NEW FLOOR: Muted concrete/asphalt base, higher contrast dirt/noise
-        floor: { base: '#363432', dark: '#292524', light: '#57534e', noise: '#999690' }, 
+        floor: { base: '#292524', dark: '#1c1917', light: '#44403c', noise: '#57534e' },
         wall: { top: '#7f1d1d', front: '#450a0a', outline: '#2a0505', highlight: '#991b1b' },	
         accent: '#ef4444',	
         shadow: 'rgba(0,0,0,0.7)'
@@ -2536,10 +2534,8 @@ function createPixelPattern(colors, type) {
             pCtx.fill();
         }
         pCtx.globalAlpha = 1.0;
- } else if (type === 'ruins') {
-        // --- RUINS ENHANCEMENTS: Cracked Asphalt / Concrete ---
-
-        // A. Base Noise (Cracks and Debris)
+    } else if (type === 'ruins') {
+        // Cracks and Debris
         pCtx.strokeStyle = colors.dark;
         pCtx.lineWidth = 1;
         pCtx.globalAlpha = 0.4;
@@ -2551,38 +2547,10 @@ function createPixelPattern(colors, type) {
             pCtx.stroke();
         }
         pCtx.globalAlpha = 1.0;
-        
-        // B. Large Road Cracks (using colors.noise for high contrast)
-        pCtx.strokeStyle = colors.noise; // '#999690'
-        pCtx.lineWidth = 2; // Thicker lines for major cracks
-        pCtx.globalAlpha = 0.6;
-        for(let i=0; i<4; i++) {
-             pCtx.beginPath();
-             let startX = Math.random() * size;
-             let startY = Math.random() * size;
-             // Draw a jagged line simulating a deep crack
-             pCtx.moveTo(startX, startY);
-             pCtx.lineTo(startX + (Math.random() * 30 - 15), startY + (Math.random() * 30 - 15));
-             pCtx.lineTo(startX + (Math.random() * 50 - 25), startY + (Math.random() * 50 - 25));
-             pCtx.stroke();
-        }
-        pCtx.globalAlpha = 1.0;
-
-        // C. Painted Road Lines (if applicable, use accent color for fading yellow/white lines)
-        pCtx.fillStyle = colors.accent; // Red/Amber tint from Pip-Boy theme
-        pCtx.globalAlpha = 0.15; // Heavily faded
-        // Draw one or two faded central lines
-        if (Math.random() < 0.6) {
-            pCtx.fillRect(size/2 - 4, 0, 4, size);
-        }
-        pCtx.globalAlpha = 1.0;
-        
-        // D. Debris Chunks (Use dark color to represent missing asphalt/concrete)
-        pCtx.fillStyle = colors.dark; // '#292524'
-        for(let i=0; i<20; i++) {
-             pCtx.fillRect(Math.random() * size, Math.random() * size, 3, 3);
-        }
     }
+    
+    return ctx.createPattern(pCanvas, 'repeat');
+}
 
 function drawSprite(ctx, type, x, y, size, time) {
     const cx = x + size/2; const cy = y + size/2;
