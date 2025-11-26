@@ -3078,61 +3078,7 @@ function drawCurrentLevel(time = 0) {
          ctx.restore();
     }
 
-// WALL RENDER (2.5D) - Only needed for non-cave types to show depth
-if (patternType !== 'cave') {
-    for (let x = 0; x < config.cols; x++) {
-        for (let y = 0; y < config.rows; y++) {
-            const isDecoration = data.decorations && data.decorations.some(d => d.x === x && d.y === y && d.type === 'ruin_building');
 
-            // CRITICAL FIX: Only draw a generic wall if it's a 0 (void) AND NOT taken by a detailed sprite.
-            if (data.grid[x][y] === 0 && !isDecoration) { // KEEP ONLY THIS IF STATEMENT
-                const px = x * gs; const py = y * gs;
-                const wallHeight = gs / 2;
-                const southOpen = (y < config.rows - 1 && data.grid[x][y+1] >= 1);
-                const southRevealed = southOpen && (!config.fogEnabled || isLocationRevealed(data, x, y+1));
-
-                if (southRevealed) {
-                    const grad = ctx.createLinearGradient(px, py+gs-wallHeight, px, py+gs);
-                    grad.addColorStop(0, pal.wall.front);
-                    grad.addColorStop(1, '#0a0a0a');	
-                    ctx.fillStyle = grad;
-                    ctx.fillRect(px, py + gs - wallHeight, gs, wallHeight);
-                    
-                    // Rust/Grime Detail
-                    if ((x+y) % 5 === 0) {
-                        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-                        ctx.fillRect(px + gs/2, py+gs-wallHeight, 2, wallHeight);
-                    }
-
-                    ctx.fillStyle = pal.wall.top;
-                    ctx.fillRect(px, py, gs, gs - wallHeight);
-                    
-                    ctx.fillStyle = pal.wall.highlight;
-                    ctx.fillRect(px, py, gs, 2);	
-                    ctx.fillRect(px, py, 2, gs-wallHeight);	
-                    
-                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-                    ctx.fillRect(px, py+gs, gs, gs*0.4);
-                } else {
-                    let nearRevealed = false;
-                    for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) {
-                        if (x+dx>=0 && x+dx<config.cols && y+dy>=0 && y+dy<config.rows) {
-                            if(data.grid[x+dx][y+dy]>=1 && (!config.fogEnabled || isLocationRevealed(data, x+dx, y+dy))) nearRevealed = true;
-                        }
-                    }
-                    
-                    if(nearRevealed) {
-                        ctx.fillStyle = pal.wall.top;
-                        ctx.fillRect(px, py, gs, gs);
-                        ctx.fillStyle = pal.wall.highlight;
-                        ctx.fillRect(px, py, gs, 2);	
-                        ctx.fillRect(px, py, 2, gs);
-                        ctx.fillStyle = 'rgba(0,0,0,0.3)';	
-                        ctx.fillRect(px + 4, py + 4, gs - 8, gs - 8);
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -3229,7 +3175,61 @@ if (patternType !== 'cave') {
             ctx.fillRect(m.x, m.y, m.size, m.size);
         }
     }
+// WALL RENDER (2.5D) - Only needed for non-cave types to show depth
+if (patternType !== 'cave') {
+    for (let x = 0; x < config.cols; x++) {
+        for (let y = 0; y < config.rows; y++) {
+            const isDecoration = data.decorations && data.decorations.some(d => d.x === x && d.y === y && d.type === 'ruin_building');
 
+            // CRITICAL FIX: Only draw a generic wall if it's a 0 (void) AND NOT taken by a detailed sprite.
+            if (data.grid[x][y] === 0 && !isDecoration) { // KEEP ONLY THIS IF STATEMENT
+                const px = x * gs; const py = y * gs;
+                const wallHeight = gs / 2;
+                const southOpen = (y < config.rows - 1 && data.grid[x][y+1] >= 1);
+                const southRevealed = southOpen && (!config.fogEnabled || isLocationRevealed(data, x, y+1));
+
+                if (southRevealed) {
+                    const grad = ctx.createLinearGradient(px, py+gs-wallHeight, px, py+gs);
+                    grad.addColorStop(0, pal.wall.front);
+                    grad.addColorStop(1, '#0a0a0a');	
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(px, py + gs - wallHeight, gs, wallHeight);
+                    
+                    // Rust/Grime Detail
+                    if ((x+y) % 5 === 0) {
+                        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                        ctx.fillRect(px + gs/2, py+gs-wallHeight, 2, wallHeight);
+                    }
+
+                    ctx.fillStyle = pal.wall.top;
+                    ctx.fillRect(px, py, gs, gs - wallHeight);
+                    
+                    ctx.fillStyle = pal.wall.highlight;
+                    ctx.fillRect(px, py, gs, 2);	
+                    ctx.fillRect(px, py, 2, gs-wallHeight);	
+                    
+                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                    ctx.fillRect(px, py+gs, gs, gs*0.4);
+                } else {
+                    let nearRevealed = false;
+                    for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) {
+                        if (x+dx>=0 && x+dx<config.cols && y+dy>=0 && y+dy<config.rows) {
+                            if(data.grid[x+dx][y+dy]>=1 && (!config.fogEnabled || isLocationRevealed(data, x+dx, y+dy))) nearRevealed = true;
+                        }
+                    }
+                    
+                    if(nearRevealed) {
+                        ctx.fillStyle = pal.wall.top;
+                        ctx.fillRect(px, py, gs, gs);
+                        ctx.fillStyle = pal.wall.highlight;
+                        ctx.fillRect(px, py, gs, 2);	
+                        ctx.fillRect(px, py, 2, gs);
+                        ctx.fillStyle = 'rgba(0,0,0,0.3)';	
+                        ctx.fillRect(px + 4, py + 4, gs - 8, gs - 8);
+                    }
+                }
+            }
+        }
     if (data.decorations) for (let deco of data.decorations) {
         if (config.fogEnabled && !isLocationRevealed(data, deco.x, deco.y)) continue;
         
