@@ -1,0 +1,7 @@
+{
+  "name": "Pip-Boy Map Terminal",
+  "description": "A Fallout-inspired procedural map generator and tactical display terminal. Features sector scanning, fog of war, and multiplayer synchronization.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
