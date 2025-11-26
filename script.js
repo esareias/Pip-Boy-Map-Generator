@@ -3157,12 +3157,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#78716c';	
         ctx.fillRect(x+8, y+size*0.2, size-16, size*0.2);
     }
-    else {
-        ctx.fillStyle = '#57534e';	
-        ctx.fillRect(x+8, y+size*0.4, size-16, size*0.4);
-        ctx.fillStyle = '#78716c';	
-        ctx.fillRect(x+8, y+size*0.2, size-16, size*0.2);
-    }
+  
 }
 
 function drawCRTEffects(ctx, width, height) {
