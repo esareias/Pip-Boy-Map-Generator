@@ -2593,17 +2593,31 @@ function drawSprite(ctx, type, x, y, size, time) {
     const pal = PALETTES[config.mapType] || PALETTES.vault;
     
     // --- 1. NEW BUILDING/RUINS STRUCTURE LOGIC ---
-    // This draws the walls, windows, and holes for buildings in ruins/interiors.
-    if (type === 'building_shell' || type === 'interior_ruins') {
-        let colors = (type === 'interior_ruins') ? PALETTES.interior_ruins.floor : pal.floor;
-        let floorColor = pal.floor.base; // Use the base floor color for 'holes'
+    if (type === 'ruin_building' || type === 'interior_ruins') {
+        const isInterior = (type === 'interior_ruins');
         
-        // Draw the Base Pattern 
-        const pattern = patternCache[type] || createPixelPattern(colors, type);
-        ctx.fillStyle = pattern;
-        ctx.fillRect(x, y, size, size);
+        // Use WALL colors for the structure/features
+        let wallColors = isInterior ? PALETTES.interior_ruins.wall : pal.wall;
+        let floorColor = pal.floor.base; // Used for "holes"
+        
+        // 2.5D WALL RENDERING (Draws front and top faces)
+        const wallHeight = size / 2;
+        
+        // Front face (shadowed)
+        ctx.fillStyle = wallColors.front;
+        ctx.fillRect(x, y + size - wallHeight, size, wallHeight);
+        
+        // Top face (lighter)
+        ctx.fillStyle = wallColors.top;
+        ctx.fillRect(x, y, size, size - wallHeight);
+        
+        // Highlights (top and left edges)
+        ctx.fillStyle = wallColors.highlight;
+        ctx.fillRect(x, y, size, 2);	
+        ctx.fillRect(x, y, 2, size - wallHeight);
 
-        const detailColor = colors.dark; 
+        // Dark detail color for windows/doors
+        const detailColor = wallColors.dark; 
 
         // 1. Windows: Simple rectangular cutouts
         const numWindows = Math.floor(Math.random() * 3) + 2; 
@@ -2613,11 +2627,12 @@ function drawSprite(ctx, type, x, y, size, time) {
             const winX = x + Math.random() * (size - winW - 10) + 5; 
             const winY = y + Math.random() * (size - winH - 10) + 5; 
             
+            // Draw dark "hole" for window
             ctx.fillStyle = detailColor;
             ctx.fillRect(winX, winY, winW, winH);
         }
 
-        // 2. Door/Entrance: One per building, placed somewhat centrally on one side
+        // 2. Door/Entrance
         if (Math.random() < 0.8) { 
             const doorW = Math.floor(Math.random() * 12) + 15; 
             const doorH = Math.floor(Math.random() * 15) + 20; 
@@ -2630,6 +2645,7 @@ function drawSprite(ctx, type, x, y, size, time) {
             } else if (doorSide === 1) { // Right
                 ctx.fillRect(x + size - doorW, y + (size - doorH) / 2, doorW, doorH);
             } else if (doorSide === 2) { // Bottom
+                // Door at base should be cut out of the front face
                 ctx.fillRect(x + (size - doorW) / 2, y + size - doorH, doorW, doorH);
             } else { // Left
                 ctx.fillRect(x, y + (size - doorH) / 2, doorW, doorH);
@@ -2637,7 +2653,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         }
 
         // 3. Crumbling/Damaged Edges & Interior Holes
-        if (type === 'interior_ruins' || Math.random() < 0.6) { 
+        if (isInterior || Math.random() < 0.6) { 
             const numBreaks = Math.floor(Math.random() * 3) + 1; 
             
             // Use the determined floor color to draw the holes
@@ -2647,6 +2663,7 @@ function drawSprite(ctx, type, x, y, size, time) {
                 const breakSize = Math.floor(Math.random() * 20) + 10; 
                 const edge = Math.floor(Math.random() * 4); 
 
+                // Draw outer edge damage (holes revealing the ground)
                 if (edge === 0) { // Top edge
                     ctx.fillRect(x + Math.random() * (size - breakSize), y, breakSize, Math.random() * 5 + 5);
                 } else if (edge === 1) { // Right edge
@@ -2669,96 +2686,7 @@ function drawSprite(ctx, type, x, y, size, time) {
     // --- END NEW LOGIC ---
     
     // START OF ORIGINAL SPRITES, NOW WRAPPED IN ELSE IF
- // Function: drawSprite (approx. line 2731 in your paste)
-// ... immediately after the shadow drawing: ctx.fillRect(x, y + size*0.3, size, size*0.3);
-
-// Safely get current palette based on map mode
-const pal = PALETTES[config.mapType] || PALETTES.vault;
-
-// 1. DRAW NEW BUILDING SHELL// Function: drawSprite (around line 2732)
-
-// --- 1. NEW BUILDING/RUINS STRUCTURE LOGIC ---
-if (type === 'ruin_building' || type === 'interior_ruins') {
-    const isInterior = (type === 'interior_ruins');
-    let colors = isInterior ? PALETTES.interior_ruins.wall : pal.wall;
-    let floorColor = pal.floor.base; // Used for "holes"
-    
-    // VITAL ADDITION: Draw the textured wall shading first.
-    // This gives the building its 2.5D height and depth.
-    const wallHeight = size / 2;
-    ctx.fillStyle = colors.front;
-    ctx.fillRect(x, y + size - wallHeight, size, wallHeight);
-    
-    ctx.fillStyle = colors.top;
-    ctx.fillRect(x, y, size, size - wallHeight);
-    
-    ctx.fillStyle = colors.highlight;
-    ctx.fillRect(x, y, size, 2);	
-    ctx.fillRect(x, y, 2, size - wallHeight);
-    // END VITAL ADDITION. Now features can be drawn on top.
-
-    // 1. Windows: Simple rectangular cutouts
-    const numWindows = Math.floor(Math.random() * 3) + 2; 
-    for (let i = 0; i < numWindows; i++) {
-        const winW = Math.floor(Math.random() * 10) + 10; 
-        const winH = Math.floor(Math.random() * 10) + 10; 
-        const winX = x + Math.random() * (size - winW - 10) + 5; 
-        const winY = y + Math.random() * (size - winH - 10) + 5; 
-        
-        ctx.fillStyle = detailColor;
-        ctx.fillRect(winX, winY, winW, winH);
-    }
-
-    // 2. Door/Entrance 
-    if (Math.random() < 0.8) { 
-        const doorW = Math.floor(Math.random() * 12) + 15; 
-        const doorH = Math.floor(Math.random() * 15) + 20; 
-        const doorSide = Math.floor(Math.random() * 4); 
-
-        ctx.fillStyle = detailColor;
-
-        if (doorSide === 0) { // Top
-            ctx.fillRect(x + (size - doorW) / 2, y, doorW, doorH);
-        } else if (doorSide === 1) { // Right
-            ctx.fillRect(x + size - doorW, y + (size - doorH) / 2, doorW, doorH);
-        } else if (doorSide === 2) { // Bottom
-            ctx.fillRect(x + (size - doorW) / 2, y + size - doorH, doorW, doorH);
-        } else { // Left
-            ctx.fillRect(x, y + (size - doorH) / 2, doorW, doorH);
-        }
-    }
-
-    // 3. Crumbling/Damaged Edges & Interior Holes
-    if (type === 'interior_ruins' || Math.random() < 0.6) { 
-        const numBreaks = Math.floor(Math.random() * 3) + 1; 
-        
-        ctx.fillStyle = floorColor; 
-
-        for (let i = 0; i < numBreaks; i++) {
-            const breakSize = Math.floor(Math.random() * 20) + 10; 
-            const edge = Math.floor(Math.random() * 4); 
-
-            if (edge === 0) { // Top edge
-                ctx.fillRect(x + Math.random() * (size - breakSize), y, breakSize, Math.random() * 5 + 5);
-            } else if (edge === 1) { // Right edge
-                ctx.fillRect(x + size - (Math.random() * 5 + 5), y + Math.random() * (size - breakSize), Math.random() * 5 + 5, breakSize);
-            } else if (edge === 2) { // Bottom edge
-                ctx.fillRect(x + Math.random() * (size - breakSize), y + size - (Math.random() * 5 + 5), breakSize, Math.random() * 5 + 5);
-            } else { // Left edge
-                ctx.fillRect(x, y + Math.random() * (size - breakSize), Math.random() * 5 + 5, breakSize);
-            }
-
-            // Inner damage spots 
-            if (Math.random() < 0.5) { 
-                const holeW = Math.floor(Math.random() * 10) + 5;
-                const holeH = Math.floor(Math.random() * 10) + 5;
-                ctx.fillRect(x + Math.random() * (size - holeW - 10) + 5, y + Math.random() * (size - holeH - 10) + 5, holeW, holeH);
-            }
-        }
-    }
-} 
-// START OF ORIGINAL SPRITES, NOW WRAPPED IN ELSE IF
-else if (type === 'tree' || type === 'joshua_tree') {
+    else if (type === 'tree' || type === 'joshua_tree') {
         const trunkW = size*0.12;
         const trunkH = size*0.5;
         ctx.fillStyle = '#3e2723'; ctx.fillRect(cx-trunkW/2, y+size*0.4, trunkW, trunkH);
@@ -2773,6 +2701,336 @@ else if (type === 'tree' || type === 'joshua_tree') {
         drawClump(cx, cy-size*0.2, size*0.25);
         drawClump(cx-size*0.2, cy-size*0.2, size*0.15);
         drawClump(cx+size*0.2, cy-size*0.1, size*0.15);
+    }	
+    else if (type === 'car') {
+        ctx.fillStyle = '#7f1d1d';	
+        ctx.fillRect(x+4, cy+2, size-8, size*0.25);	
+        
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(x+8, cy+size*0.2, 8, 6);
+        ctx.fillRect(x+size-16, cy+size*0.2, 8, 6);
+
+        ctx.fillStyle = '#b91c1c';	
+        ctx.beginPath(); ctx.moveTo(x+8, cy+2); ctx.lineTo(x+size*0.3, cy-size*0.2); ctx.lineTo(x+size*0.7, cy-size*0.2); ctx.lineTo(x+size-8, cy+2); ctx.fill();
+        
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath(); ctx.moveTo(x+10, cy); ctx.lineTo(x+size*0.32, cy-size*0.15); ctx.lineTo(x+size*0.68, cy-size*0.15); ctx.lineTo(x+size-10, cy); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.3; ctx.beginPath(); ctx.moveTo(x+14, cy); ctx.lineTo(x+18, cy-4); ctx.stroke(); ctx.globalAlpha = 1.0;
+    }
+    else if (type === 'rubble') {
+        ctx.fillStyle = '#57534e';
+        ctx.beginPath(); ctx.arc(cx-4, cy+4, 5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#78716c';
+        ctx.beginPath(); ctx.arc(cx+4, cy+2, 6, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#44403c';
+        ctx.fillRect(cx-2, cy-6, 6, 6);
+    }
+    else if (type === 'tumbleweed') {
+        ctx.strokeStyle = '#a8a29e'; ctx.lineWidth = 1;	
+        ctx.beginPath();
+        for(let i=0; i<12; i++) {	
+            const angle = Math.random() * Math.PI * 2;
+            const rad = Math.random() * size * 0.4;
+            ctx.moveTo(cx + Math.cos(angle)*rad, cy + Math.sin(angle)*rad);
+            ctx.lineTo(cx + Math.cos(angle + 2)*rad, cy + Math.sin(angle + 2)*rad);
+        }
+        ctx.stroke();
+    }
+    else if (type === 'bed') {
+        ctx.fillStyle = '#737373';	
+        ctx.fillRect(x+4, y+4, size-8, size-8);
+        ctx.fillStyle = '#1d4ed8';	
+        ctx.fillRect(x+4, y+size*0.4, size-8, size*0.6-4);
+        ctx.fillStyle = '#fafafa';	
+        ctx.fillRect(x+6, y+6, size-12, size*0.15);
+    }
+    else if (type === 'vending_machine') {
+        // NUKA-COLA MACHINE (The Classic Red)
+        // Body
+        ctx.fillStyle = '#991b1b'; // Dark Red
+        ctx.fillRect(x + 4, y - 8, size - 8, size + 4);
+        
+        // Side Highlight
+        ctx.fillStyle = '#ef4444'; // Bright Red
+        ctx.fillRect(x + 4, y - 8, 4, size + 4);
+
+        // Display Window (Glowing Blue/White)
+        const glow = Math.sin(time / 200) * 0.5 + 0.5;
+        ctx.fillStyle = `rgba(200, 255, 255, ${0.3 + glow * 0.2})`;
+        ctx.fillRect(x + size/2, y, size/3, size/2);
+
+        // "Cola" Stripe (White)
+        ctx.fillStyle = '#e5e5e5';
+        ctx.beginPath();
+        ctx.moveTo(x + 4, y + size/2);
+        ctx.bezierCurveTo(x + size/2, y + size/4, x + size/2, y + size*0.8, x + size - 4, y + size/2);
+        ctx.lineTo(x + size - 4, y + size/2 + 2);
+        ctx.bezierCurveTo(x + size/2, y + size*0.8 + 2, x + size/2, y + size/4 + 2, x + 4, y + size/2 + 2);
+        ctx.fill();
+    }
+    else if (type === 'server_rack') {
+        const isServer = type === 'server_rack';
+        ctx.fillStyle = isServer ? '#111827' : '#991b1b';	
+        ctx.fillRect(x+size*0.25, y+size*0.1, size*0.5, size*0.8);
+        ctx.fillStyle = isServer ? '#374151' : '#ef4444';	
+        ctx.fillRect(x+size*0.25, y, size*0.5, size*0.1);
+        
+        if (!isServer) {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(x+size*0.25, y+size*0.5, size*0.5, size*0.1);
+        } else {
+            ctx.fillStyle = '#000';	
+            ctx.fillRect(x+size*0.3, y+size*0.2, size*0.4, size*0.2);
+            // Blinking LEDs
+            if(Math.random() > 0.1) {
+                ctx.fillStyle = (Math.sin(time/100 + x)>0) ? '#22c55e' : '#064e3b';
+                ctx.fillRect(x+size*0.35, y+size*0.6, 2, 2);
+            }
+            if(Math.random() > 0.1) {
+                ctx.fillStyle = (Math.cos(time/150 + y)>0) ? '#ef4444' : '#7f1d1d';
+                ctx.fillRect(x+size*0.45, y+size*0.6, 2, 2);
+            }
+        }
+    }
+    else if (type === 'crate' || type === 'ammo_crate') {
+        ctx.fillStyle = '#14532d';	
+        ctx.fillRect(x+4, y+size*0.4, size-8, size*0.5);
+        ctx.fillStyle = '#166534';	
+        ctx.fillRect(x+4, y+size*0.1, size-8, size*0.3);	
+        ctx.fillStyle = '#052e16'; ctx.fillRect(x+4, y+size*0.4, size-8, 2);	
+        ctx.strokeStyle = '#22c55e'; ctx.lineWidth=1;
+        ctx.strokeRect(x+4, y+size*0.4, size-8, size*0.5);
+    }
+    else if (type === 'wall_terminal' || type === 'desk') {
+        // TERMINAL (RobCo Style)
+        // Desk/Stand
+        ctx.fillStyle = '#4b5563'; // Grey metal
+        ctx.fillRect(x + 2, y + size/2, size - 4, size/2);
+        
+        // Monitor Housing
+        ctx.fillStyle = '#374151'; // Darker metal
+        ctx.beginPath();
+        ctx.arc(cx, y + size/2, size/3, Math.PI, 0); // Rounded top
+        ctx.lineTo(cx + size/3, y + size/2 + 4);
+        ctx.lineTo(cx - size/3, y + size/2 + 4);
+        ctx.fill();
+
+        // Screen (Flickering Green Code)
+        if (Math.random() > 0.05) { // Occasional flicker off
+            ctx.fillStyle = '#14532d'; // Dark Green Base
+            ctx.fill(); // Fill background
+            
+            ctx.fillStyle = '#4ade80'; // Bright Green Text
+            const screenW = size/2;
+            const screenH = size/3;
+            // Draw "Text lines"
+            for(let i=0; i<3; i++) {
+                ctx.fillRect(cx - screenW/3, (y + size/3) + (i*4), Math.random() * screenW/1.5, 2);
+            }
+        }
+    }
+    else if (type === 'table') {
+        const isRound = type === 'table';
+        if (isRound) {
+            ctx.fillStyle = '#78350f';
+            ctx.beginPath(); ctx.ellipse(cx, y+size*0.5, size*0.4, size*0.2, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(cx-2, y+size*0.5, 4, size*0.4);
+        } else {
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(x+2, y+size*0.4, size-4, size*0.3);
+            ctx.fillStyle = '#a16207'; ctx.fillRect(x+2, y+size*0.4, size-4, 2);	
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(x+2, y+size*0.7, 6, size*0.2);
+            ctx.fillRect(x+size-8, y+size*0.7, 6, size*0.2);
+        }
+    }
+    else if (type === 'skeleton' || type === 'skeleton_blue') {
+        ctx.fillStyle = '#e5e5e5';
+        ctx.beginPath(); ctx.arc(cx, cy-2, size*0.12, 0, Math.PI*2); ctx.fill();	
+        ctx.fillStyle = '#000'; ctx.fillRect(cx-2, cy-3, 1, 1); ctx.fillRect(cx+1, cy-3, 1, 1);	
+        ctx.strokeStyle = '#e5e5e5'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(cx-3, cy+2); ctx.lineTo(cx+3, cy+2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx-3, cy+5); ctx.lineTo(cx+3, cy+5); ctx.stroke();
+    }
+    else if (type === 'fire_barrel') {
+        ctx.fillStyle = '#374151'; ctx.fillRect(x+size*0.25, y+size*0.25, size*0.5, size*0.75);
+        ctx.fillStyle = '#1f2937';	
+        ctx.fillRect(x+size*0.25, y+size*0.4, size*0.5, 2);
+        ctx.fillRect(x+size*0.25, y+size*0.6, size*0.5, 2);
+        
+        const pTime = time / 100;
+        ctx.globalCompositeOperation = 'lighter';
+        for(let i=0; i<8; i++) {
+            const fy = (pTime + i*1.5) % 10;	
+            const fx = Math.sin(pTime + i) * 4;
+            const alpha = 1 - (fy/10);
+            ctx.fillStyle = `rgba(250, 204, 21, ${alpha})`;
+            ctx.fillRect(cx + fx - 2, y + size*0.25 - fy*2, 4, 4);
+        }
+        ctx.globalCompositeOperation = 'source-over';
+    }
+    else if (type === 'rad_puddle') {
+        const pulse = (Math.sin(time / 500) + 1) / 2;	
+        const r = size/2 + (pulse * 4);
+        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        g.addColorStop(0, 'rgba(132, 204, 22, 0.9)');
+        g.addColorStop(0.6, 'rgba(132, 204, 22, 0.4)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.ellipse(cx, cy, r, r*0.6, 0, 0, Math.PI*2); ctx.fill();
+    }
+    else if (type === 'glowing_fungus') {
+        ctx.fillStyle = '#a3e635';
+        ctx.shadowColor = '#a3e635'; ctx.shadowBlur = 10;
+        ctx.beginPath(); ctx.arc(cx, cy+4, size*0.15, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+    else if (type === 'overhead_light') {
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI*2); ctx.fill();
+    }
+    else if (type === 'server_rack') {
+        ctx.fillStyle = '#57534e';	
+        ctx.fillRect(x+8, y+size*0.4, size-16, size*0.4);
+        ctx.fillStyle = '#78716c';	
+        ctx.fillRect(x+8, y+size*0.2, size-16, size*0.2);
+    }
+    else {
+        ctx.fillStyle = '#57534e';	
+        ctx.fillRect(x+8, y+size*0.4, size-16, size*0.4);
+        ctx.fillStyle = '#78716c';	
+        ctx.fillRect(x+8, y+size*0.2, size-16, size*0.2);
+    }
+}
+My apologies! We had a copy-paste error where the new logic block was pasted twice within the function, leading to the code being doubled up. I will now give you the entire, correct drawSprite function content to paste over the previous version. This ensures all the pieces are there and in the right order.
+
+Please replace your entire drawSprite function (from function drawSprite(...) to the final }) with the block below. This is the definitive, corrected function.
+
+JavaScript
+
+function drawSprite(ctx, type, x, y, size, time) {
+    const cx = x + size/2; const cy = y + size/2;
+    
+    // --- Initial Shadow and Palette Setup ---
+    // Enhanced Soft Shadow
+    const shadowG = ctx.createRadialGradient(cx + 2, cy + size*0.4, 0, cx + 2, cy + size*0.4, size*0.3);
+    shadowG.addColorStop(0, 'rgba(0,0,0,0.6)');
+    shadowG.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = shadowG;
+    ctx.fillRect(x, y + size*0.3, size, size*0.3);
+
+    // Safely get current palette based on map mode
+    const pal = PALETTES[config.mapType] || PALETTES.vault;
+    
+    // --- 1. NEW BUILDING/RUINS STRUCTURE LOGIC ---
+    if (type === 'ruin_building' || type === 'interior_ruins') {
+        const isInterior = (type === 'interior_ruins');
+        
+        // Use WALL colors for the structure/features
+        let wallColors = isInterior ? PALETTES.interior_ruins.wall : pal.wall;
+        let floorColor = pal.floor.base; // Used for "holes"
+        
+        // 2.5D WALL RENDERING (Draws front and top faces)
+        const wallHeight = size / 2;
+        
+        // Front face (shadowed)
+        ctx.fillStyle = wallColors.front;
+        ctx.fillRect(x, y + size - wallHeight, size, wallHeight);
+        
+        // Top face (lighter)
+        ctx.fillStyle = wallColors.top;
+        ctx.fillRect(x, y, size, size - wallHeight);
+        
+        // Highlights (top and left edges)
+        ctx.fillStyle = wallColors.highlight;
+        ctx.fillRect(x, y, size, 2);	
+        ctx.fillRect(x, y, 2, size - wallHeight);
+
+        // Dark detail color for windows/doors
+        const detailColor = wallColors.dark; 
+
+        // 1. Windows: Simple rectangular cutouts
+        const numWindows = Math.floor(Math.random() * 3) + 2; 
+        for (let i = 0; i < numWindows; i++) {
+            const winW = Math.floor(Math.random() * 10) + 10; 
+            const winH = Math.floor(Math.random() * 10) + 10; 
+            const winX = x + Math.random() * (size - winW - 10) + 5; 
+            const winY = y + Math.random() * (size - winH - 10) + 5; 
+            
+            // Draw dark "hole" for window
+            ctx.fillStyle = detailColor;
+            ctx.fillRect(winX, winY, winW, winH);
+        }
+
+        // 2. Door/Entrance
+        if (Math.random() < 0.8) { 
+            const doorW = Math.floor(Math.random() * 12) + 15; 
+            const doorH = Math.floor(Math.random() * 15) + 20; 
+            const doorSide = Math.floor(Math.random() * 4); 
+
+            ctx.fillStyle = detailColor;
+
+            if (doorSide === 0) { // Top
+                ctx.fillRect(x + (size - doorW) / 2, y, doorW, doorH);
+            } else if (doorSide === 1) { // Right
+                ctx.fillRect(x + size - doorW, y + (size - doorH) / 2, doorW, doorH);
+            } else if (doorSide === 2) { // Bottom
+                // Door at base should be cut out of the front face
+                ctx.fillRect(x + (size - doorW) / 2, y + size - doorH, doorW, doorH);
+            } else { // Left
+                ctx.fillRect(x, y + (size - doorH) / 2, doorW, doorH);
+            }
+        }
+
+        // 3. Crumbling/Damaged Edges & Interior Holes
+        if (isInterior || Math.random() < 0.6) { 
+            const numBreaks = Math.floor(Math.random() * 3) + 1; 
+            
+            ctx.fillStyle = floorColor; 
+
+            for (let i = 0; i < numBreaks; i++) {
+                const breakSize = Math.floor(Math.random() * 20) + 10; 
+                const edge = Math.floor(Math.random() * 4); 
+
+                // Draw outer edge damage (holes revealing the ground)
+                if (edge === 0) { // Top edge
+                    ctx.fillRect(x + Math.random() * (size - breakSize), y, breakSize, Math.random() * 5 + 5);
+                } else if (edge === 1) { // Right edge
+                    ctx.fillRect(x + size - (Math.random() * 5 + 5), y + Math.random() * (size - breakSize), Math.random() * 5 + 5, breakSize);
+                } else if (edge === 2) { // Bottom edge
+                    ctx.fillRect(x + Math.random() * (size - breakSize), y + size - (Math.random() * 5 + 5), breakSize, Math.random() * 5 + 5);
+                } else { // Left edge
+                    ctx.fillRect(x, y + Math.random() * (size - breakSize), Math.random() * 5 + 5, breakSize);
+                }
+
+                // Inner damage spots 
+                if (Math.random() < 0.5) { 
+                    const holeW = Math.floor(Math.random() * 10) + 5;
+                    const holeH = Math.floor(Math.random() * 10) + 5;
+                    ctx.fillRect(x + Math.random() * (size - holeW - 10) + 5, y + Math.random() * (size - holeH - 10) + 5, holeW, holeH);
+                }
+            }
+        }
+    } 
+    // --- END NEW BUILDING LOGIC ---
+    
+    // START OF ORIGINAL SPRITES, NOW WRAPPED IN ELSE IF
+    else if (type === 'tree' || type === 'joshua_tree') {
+        const trunkW = size*0.12;
+        const trunkH = size*0.5;
+        ctx.fillStyle = '#3e2723'; ctx.fillRect(cx-trunkW/2, y+size*0.4, trunkW, trunkH);
+        ctx.strokeStyle = '#3e2723'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(cx, cy+size*0.1); ctx.lineTo(cx-size*0.2, cy-size*0.2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx, cy+size*0.2); ctx.lineTo(cx+size*0.2, cy-size*0.1); ctx.stroke();
+        const cl = '#15803d'; const clH = '#22c55e';
+        const drawClump = (bx, by, s) => {
+            ctx.fillStyle = cl; ctx.beginPath(); ctx.arc(bx, by, s, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = clH; ctx.fillRect(bx-2, by-4, 4, 4);	
+        };
+        drawClump(cx, cy-size*0.2, size*0.25);
+        drawClump(cx-size*0.2, cy-size*0.2, size*0.15);
+        drawClump(cx+size*0.2, cy-size*0.2, size*0.15);
     }	
     else if (type === 'car') {
         ctx.fillStyle = '#7f1d1d';	
@@ -3150,56 +3408,63 @@ function drawCurrentLevel(time = 0) {
     if (patternType !== 'cave') {
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
-                if (data.grid[x][y] === 0) {
-                    const px = x * gs; const py = y * gs;
-                    const wallHeight = gs / 2;
-                    const southOpen = (y < config.rows - 1 && data.grid[x][y+1] >= 1);
-                    const southRevealed = southOpen && (!config.fogEnabled || isLocationRevealed(data, x, y+1));
+                // WALL RENDER (2.5D) - Only needed for non-cave types to show depth
+if (patternType !== 'cave') {
+    for (let x = 0; x < config.cols; x++) {
+        for (let y = 0; y < config.rows; y++) {
+            const isDecoration = data.decorations && data.decorations.some(d => d.x === x && d.y === y && d.type === 'ruin_building');
 
-                    if (southRevealed) {
-                        const grad = ctx.createLinearGradient(px, py+gs-wallHeight, px, py+gs);
-                        grad.addColorStop(0, pal.wall.front);
-                        grad.addColorStop(1, '#0a0a0a');	
-                        ctx.fillStyle = grad;
-                        ctx.fillRect(px, py + gs - wallHeight, gs, wallHeight);
-                        
-                        // Rust/Grime Detail
-                        if ((x+y) % 5 === 0) {
-                            ctx.fillStyle = 'rgba(0,0,0,0.3)';
-                            ctx.fillRect(px + gs/2, py+gs-wallHeight, 2, wallHeight);
+            // CRITICAL FIX: Only draw a generic wall if it's a 0 (void) AND NOT taken by a detailed sprite.
+            if (data.grid[x][y] === 0 && !isDecoration) {
+                const px = x * gs; const py = y * gs;
+                const wallHeight = gs / 2;
+                const southOpen = (y < config.rows - 1 && data.grid[x][y+1] >= 1);
+                const southRevealed = southOpen && (!config.fogEnabled || isLocationRevealed(data, x, y+1));
+
+                if (southRevealed) {
+                    const grad = ctx.createLinearGradient(px, py+gs-wallHeight, px, py+gs);
+                    grad.addColorStop(0, pal.wall.front);
+                    grad.addColorStop(1, '#0a0a0a');	
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(px, py + gs - wallHeight, gs, wallHeight);
+                    
+                    // Rust/Grime Detail
+                    if ((x+y) % 5 === 0) {
+                        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                        ctx.fillRect(px + gs/2, py+gs-wallHeight, 2, wallHeight);
+                    }
+
+                    ctx.fillStyle = pal.wall.top;
+                    ctx.fillRect(px, py, gs, gs - wallHeight);
+                    
+                    ctx.fillStyle = pal.wall.highlight;
+                    ctx.fillRect(px, py, gs, 2);	
+                    ctx.fillRect(px, py, 2, gs-wallHeight);	
+                    
+                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                    ctx.fillRect(px, py+gs, gs, gs*0.4);
+                } else {
+                    let nearRevealed = false;
+                    for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) {
+                        if (x+dx>=0 && x+dx<config.cols && y+dy>=0 && y+dy<config.rows) {
+                            if(data.grid[x+dx][y+dy]>=1 && (!config.fogEnabled || isLocationRevealed(data, x+dx, y+dy))) nearRevealed = true;
                         }
-
+                    }
+                    
+                    if(nearRevealed) {
                         ctx.fillStyle = pal.wall.top;
-                        ctx.fillRect(px, py, gs, gs - wallHeight);
-                        
+                        ctx.fillRect(px, py, gs, gs);
                         ctx.fillStyle = pal.wall.highlight;
                         ctx.fillRect(px, py, gs, 2);	
-                        ctx.fillRect(px, py, 2, gs-wallHeight);	
-                        
-                        ctx.fillStyle = 'rgba(0,0,0,0.6)';
-                        ctx.fillRect(px, py+gs, gs, gs*0.4);
-                    } else {
-                        let nearRevealed = false;
-                        for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) {
-                            if (x+dx>=0 && x+dx<config.cols && y+dy>=0 && y+dy<config.rows) {
-                                if(data.grid[x+dx][y+dy]>=1 && (!config.fogEnabled || isLocationRevealed(data, x+dx, y+dy))) nearRevealed = true;
-                            }
-                        }
-                        
-                        if(nearRevealed) {
-                            ctx.fillStyle = pal.wall.top;
-                            ctx.fillRect(px, py, gs, gs);
-                            ctx.fillStyle = pal.wall.highlight;
-                            ctx.fillRect(px, py, gs, 2);	
-                            ctx.fillRect(px, py, 2, gs);
-                            ctx.fillStyle = 'rgba(0,0,0,0.3)';	
-                            ctx.fillRect(px + 4, py + 4, gs - 8, gs - 8);
-                        }
+                        ctx.fillRect(px, py, 2, gs);
+                        ctx.fillStyle = 'rgba(0,0,0,0.3)';	
+                        ctx.fillRect(px + 4, py + 4, gs - 8, gs - 8);
                     }
                 }
             }
         }
     }
+}
 
     if (data.doors) for(let door of data.doors) {
         const dx = door.x * gs; const dy = door.y * gs;
