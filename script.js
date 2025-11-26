@@ -3066,13 +3066,13 @@ function drawCurrentLevel(time = 0) {
     
     // --- MOVED WALL RENDER TO FIX Z-INDEX ISSUE ---
     // WALL RENDER (2.5D) - Only needed for non-cave types to show depth
-    if (patternType !== 'cave') {
+  if (patternType !== 'cave') {
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
                 const isDecoration = data.decorations && data.decorations.some(d => d.x === x && d.y === y && d.type === 'ruin_building');
 
                 // CRITICAL FIX: Only draw a generic wall if it's a 0 (void) AND NOT taken by a detailed sprite.
-                if (data.grid[x][y] === 0 && !isDecoration) { 
+                if (data.grid[x][y] === 0 && !isDecoration) {  
                     const px = x * gs; const py = y * gs;
                     const wallHeight = gs / 2;
                     const southOpen = (y < config.rows - 1 && data.grid[x][y+1] >= 1);
