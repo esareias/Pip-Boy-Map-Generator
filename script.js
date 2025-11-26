@@ -20,7 +20,6 @@ const sendChatBtn = document.getElementById('sendChatBtn'); // New chat element
 const screenContainer = document.getElementById('screenContainer');
 const mainAppContent = document.getElementById('mainAppContent'); // Main content wrapper
 const characterSelectScreen = document.getElementById('characterSelectScreen');
-const heatHazeElement = document.getElementById('heatHaze'); // New: Heat Haze element
 
 // Configuration
 const RENDER_SCALE = 2;	
@@ -266,10 +265,10 @@ const BUILDING_ARCHETYPES = {
     },
     // REWORKED: Split into distinct "Wasteland" vibes to avoid Offices in caves
     NATURAL: {	
-        keywords: ["CAVE", "HOLE", "BURROW", "DEN", "CLIFF", "PASS", "NEST", "GROTTO", "MINE"],	
+        keywords: ["CAVE", "HOLE", "BURROW", "DEN", "CLIFF", "PASS", "NEST", "GROTTO"],	
         mandatory: ["Cave Entrance"],	
-        allowed: ["Damp Cavern", "Narrow Tunnel", "Underground Lake", "Glowing Mushroom Grove", "Rockfall", "Bear Den", "Pre-War Skeleton", "Supply Cache", "Fissure", "Bat Roost", "Crystal Formation", "Subterranean River", "Mine Shaft", "Geode Chamber", "Ancient Fossil Pit"],	
-        unique: ["Queen's Nest", "Hidden Pre-War Bunker", "Crash Site", "Legendary Creature Den", "Geothermal Vent"]	
+        allowed: ["Damp Cavern", "Narrow Tunnel", "Underground Lake", "Glowing Mushroom Grove", "Rockfall", "Bear Den", "Pre-War Skeleton", "Supply Cache", "Fissure", "Bat Roost", "Crystal Formation", "Subterranean River"],	
+        unique: ["Queen's Nest", "Hidden Pre-War Bunker", "Crash Site", "Legendary Creature Den"]	
     },
     BUNKER: {
         keywords: ["BUNKER", "SHELTER", "SILO", "BASE", "OUTPOST", "MILITARY"],
@@ -308,9 +307,6 @@ const ROOM_RELATIONS = {
     "Glowing Mushroom Grove": { tags: ["Nature", "Light"], link: ["Damp Cavern", "Toxic Pit"], avoid: [] },
     "Bear Den": { tags: ["Nature", "Danger"], link: ["Narrow Tunnel", "Bone Pile"], avoid: ["Civilized"] },
     "Queen's Nest": { tags: ["Nature", "Boss"], link: ["Narrow Tunnel"], avoid: ["Safe"] },
-    "Mine Shaft": { tags: ["Nature", "Industrial", "Dark"], link: ["Mine Tunnels", "Ore Vein"], avoid: ["Clean"] },
-    "Geode Chamber": { tags: ["Nature", "Light", "Rare"], link: ["Crystal Formation", "Narrow Tunnel"], avoid: [] },
-    "Ancient Fossil Pit": { tags: ["Nature", "Historical"], link: ["Damp Cavern", "Supply Cache"], avoid: ["Modern"] },
     
     // --- BUNKER & MILITARY ---
     "Blast Door": { tags: ["Military", "Secure"], link: ["Decontamination", "Security Station"], avoid: ["Nature"] },
@@ -350,10 +346,6 @@ const ROOM_LOGIC = {
     "Crashed Vertibird": { tags: ["Wreckage", "Tech"], avoid: ["Clean"] },
     "Tribal Altar": { tags: ["Tribal", "Decorated"], avoid: ["High Tech"] },
     "Prospector Camp": { tags: ["Civilized", "Temporary"], avoid: [] },
-    "Mine Tunnels": { tags: ["Nature", "Industrial", "Dark"], avoid: ["Clean"] },
-    "Ore Vein": { tags: ["Nature", "Resource", "Dark"], avoid: ["Civilized"] },
-    "Geothermal Vent": { tags: ["Nature", "Hazard", "Hot"], avoid: ["Cold", "Water"] },
-    "Ancient Dwelling": { tags: ["Nature", "Historical", "Shelter"], avoid: ["Modern"] },
 
     // RUINS / CITY
     "Sniper Nest": { tags: ["Combat", "High"], avoid: ["Basement"] },
@@ -388,12 +380,11 @@ const PALETTES = {
         accent: '#ef4444',	
         shadow: 'rgba(0,0,0,0.7)'
     },
-    // UPDATED MOJAVE PALETTE
     cave: {	
-        bg: '#1f1a16', // Darker, dusty brown
-        floor: { base: '#856a5c', dark: '#634e43', light: '#ad9a8f', noise: '#4d3e34' }, // Reddish-brown sand/rock
-        wall: { top: '#7a6254', front: '#5b4a3e', outline: '#2a211b', highlight: '#a08d81' }, // Weathered rock
-        accent: '#e6b86d', // Muted, sandy amber
+        bg: '#1a1612',	
+        floor: { base: '#c2b280', dark: '#a39264', light: '#e0d2a8', noise: '#8c7e58' }, // Sandy Tan
+        wall: { top: '#8b7355', front: '#5c4b37', outline: '#2b2218', highlight: '#a68a66' }, // Sandstone
+        accent: '#eab308',	
         shadow: 'rgba(0,0,0,0.5)'
     },
     interior_ruins: {	
@@ -415,16 +406,8 @@ const PALETTES = {
 const KEY_COLORS = ["#ef4444", "#3b82f6", "#eab308", "#a855f7"];	
 
 const DECO_POOLS = {
-    // UPDATED DECORATION POOLS for Mojave
-    wasteland_surface: [
-        "joshua_tree", "brahmin_skull", "boulder", "skeleton", "rad_puddle", "fire_barrel", "dead_bush", "crashed_satellite",
-        "saguaro_cactus", "prickly_pear", "dead_tree_large", "rock_outcrop", "skull_pile", "bones_scattered", "abandoned_campfire",
-        "scorpion", "gila_monster"
-    ],
-    wasteland_cave: [
-        "glowing_fungus", "rock_pile", "skeleton", "gore_bag", "campfire", "mattress", "rad_puddle",
-        "bones_scattered", "rock_outcrop", "abandoned_campfire", "scorpion", "gila_monster" // Small creatures can be in caves
-    ],
+    wasteland_surface: ["joshua_tree", "brahmin_skull", "boulder", "skeleton", "rad_puddle", "fire_barrel"],
+    wasteland_cave: ["glowing_fungus", "rock_pile", "skeleton", "gore_bag", "campfire", "mattress", "rad_puddle"],
     city_street: ["car", "rubble", "tire_pile", "traffic_cone", "broken_pole", "street_sign", "vending_machine", "fire_barrel"],
     city_interior: ["bed", "table", "chair", "file_cabinet", "rubble", "radio", "ammo_crate", "vending_machine"],
     vault: ["server_rack", "vr_pod", "wall_terminal", "vent_grate", "filing_cabinet", "stacked_crates", "water_pipe", "bulletin_board", "diner_booth", "food_dispenser", "jumpsuit_locker", "auto_doc", "skeleton_blue", "blood_stain", "barricade"]
@@ -435,33 +418,32 @@ const CONTAINER_DETAILS = {
     // Ruin/Vault High Security
     "Safe": { types: ["Ruins", "Vault"], lootFocus: "HIGH_VALUE", lock: true, skill: "LOCKPICK" },
     "Locker": { types: ["Vault", "Ruins"], lootFocus: "JUMPSUIT_GUNS", lock: true, skill: "LOCKPICK" },
-    "Footlocker": { types: ["Vault", "Ruins", "Cave"], lootFocus: "JUMPSUIT_GUNS", lock: true, skill: "LOCKPICK" },
+    "Footlocker": { types: ["Vault", "Ruins"], lootFocus: "JUMPSUIT_GUNS", lock: true, skill: "LOCKPICK" },
 
     // Industrial / Utility
-    "Toolbox": { types: ["Ruins", "Vault", "Cave"], lootFocus: "REPAIR_JUNK", lock: true, skill: "LOCKPICK" },
+    "Toolbox": { types: ["Ruins", "Vault"], lootFocus: "REPAIR_JUNK", lock: true, skill: "LOCKPICK" },
     "Desk": { types: ["Vault", "Ruins", "Interior"], lootFocus: "PAPER_JUNK", lock: false, skill: null },
     "File Cabinet": { types: ["Vault", "Ruins", "Interior"], lootFocus: "PAPER_JUNK", lock: true, skill: "SCIENCE" },
 
     // Medical
-    "Medkit": { types: ["Ruins", "Interior", "Vault", "Cave"], lootFocus: "MEDS", lock: true, skill: "LOCKPICK" },
-    "First Aid": { types: ["Vault", "Interior", "Cave"], lootFocus: "MEDS", lock: true, skill: "LOCKPICK" },
-    "Doctor's Bag": { types: ["Vault", "Cave", "Ruins"], lootFocus: "MEDS", lock: true, skill: "LOCKPICK" },
+    "Medkit": { types: ["Ruins", "Interior", "Vault"], lootFocus: "MEDS", lock: true, skill: "LOCKPICK" },
+    "First Aid": { types: ["Vault", "Interior"], lootFocus: "MEDS", lock: true, skill: "LOCKPICK" },
+    "Doctor's Bag": { types: ["Vault", "Cave"], lootFocus: "MEDS", lock: true, skill: "LOCKPICK" },
 
     // Retail / Food
     "Register": { types: ["Ruins", "Interior"], lootFocus: "LOW_CAPS", lock: true, skill: "LOCKPICK" },
     "Cashier": { types: ["Ruins"], lootFocus: "LOW_CAPS", lock: true, skill: "LOCKPICK" },
     "Vending Machine": { types: ["Ruins", "Vault"], lootFocus: "NUKA_COLA", lock: true, skill: "LOCKPICK" },
-    "Cooler": { types: ["Vault", "Cave", "Ruins"], lootFocus: "FOOD_WATER", lock: false, skill: null },
+    "Cooler": { types: ["Vault", "Cave"], lootFocus: "FOOD_WATER", lock: false, skill: null },
     
     // Wasteland / Low Tech
     "Ammo Box": { types: ["Ruins", "Cave"], lootFocus: "AMMO_EXP", lock: true, skill: "LOCKPICK" },
     "Duffel Bag": { types: ["Cave", "Ruins"], lootFocus: "SURVIVAL", lock: false, skill: null },
     "Corpse": { types: ["Cave", "Ruins"], lootFocus: "SURVIVAL", lock: false, skill: null },
     "Hollow Rock": { types: ["Cave"], lootFocus: "SURVIVAL", lock: false, skill: null },
-    "Sack": { types: ["Cave", "Ruins"], lootFocus: "SURVIVAL", lock: false, skill: null },
+    "Sack": { types: ["Cave"], lootFocus: "SURVIVAL", lock: false, skill: null },
     "Crate": { types: ["Cave", "Ruins", "Vault"], lootFocus: "JUNK", lock: false, skill: null },
     "Dumpster": { types: ["Ruins"], lootFocus: "JUNK", lock: false, skill: null },
-    "Empty Barrel": { types: ["Ruins", "Cave"], lootFocus: "JUNK", lock: false, skill: null },
 };
 // -------------------------------------------------------------------
 
@@ -516,7 +498,9 @@ function getRoomDecision(archetypeKey, currentRooms, sourceRoomName) {
         if (arch.unique.includes(c)) {
             // For vaults: search ALL rooms in all levels
             if (archetypeKey === 'VAULT') {
+                // Get all rooms in all vault levels (check for multi-level generation!)
                 const allRooms = Object.values(floorData).reduce((arr, lvl) => lvl && lvl.rooms ? arr.concat(lvl.rooms) : arr, []);
+                // Also check rooms currently being built on this level
                 if (currentRooms.some(r => r.name === c)) {
                     return false;
                 }
@@ -582,10 +566,6 @@ function updateHelperText() {
         log("WARN: UPPER LEVELS RESTRICTED FOR THIS SECTOR.", "var(--pip-amber)");
     } else {
         updateLevelControls();
-    }
-    // Toggle heat haze visibility based on map type and view mode
-    if (heatHazeElement) {
-        heatHazeElement.classList.toggle('hidden', !(config.mapType === 'cave' && viewMode === 'sector' && currentLevelIndex >= 0));
     }
 }
 
@@ -831,10 +811,6 @@ function receiveData(data) {
         updateLevelControls();
         const interiorName = interiorData[currentInteriorKey]?.name || 'INTERIOR';
         updateUIForMode(viewMode, interiorName);
-        // Toggle heat haze visibility based on map type and view mode
-        if (heatHazeElement) {
-            heatHazeElement.classList.toggle('hidden', !(config.mapType === 'cave' && viewMode === 'sector' && currentLevelIndex >= 0));
-        }
         drawCurrentLevel();
         // ------------------------------------
     }
@@ -993,7 +969,7 @@ async function init() {
     });
     // ------------------------------------------
     
-    updateHelperText(); // Calls drawCurrentLevel implicitly
+    updateHelperText();
     changeLevel(0);	
     generateCurrentLevel();	
     requestAnimationFrame(animate);
@@ -1449,11 +1425,6 @@ function changeLevel(delta) {
     
     // Sync state if host
     if (isHost) syncData();
-
-    // Update heat haze visibility
-    if (heatHazeElement) {
-        heatHazeElement.classList.toggle('hidden', !(config.mapType === 'cave' && viewMode === 'sector' && currentLevelIndex >= 0));
-    }
 }
 
 function updateLevelControls() {
@@ -1518,11 +1489,6 @@ function enterInterior(labelObj) {
     
     // FIX: Send the new interior map data and view mode to the client
     syncData();	
-
-    // Update heat haze visibility
-    if (heatHazeElement) {
-        heatHazeElement.classList.add('hidden');
-    }
 }
 
 function exitInterior() {
@@ -1533,11 +1499,6 @@ function exitInterior() {
     
     // FIX: Send the sector view mode back to the client
     syncData();
-
-    // Update heat haze visibility
-    if (heatHazeElement) {
-        heatHazeElement.classList.toggle('hidden', !(config.mapType === 'cave' && viewMode === 'sector' && currentLevelIndex >= 0));
-    }
 }
 
 function updateUIForMode(mode, text) {
@@ -1672,9 +1633,9 @@ function closeModal() { document.getElementById('reportModal').style.display = '
 function copyReport() { document.getElementById('reportArea').select(); document.execCommand('copy'); log("COPIED TO CLIPBOARD", 'var(--main-color)'); }
 
 function generateAtmosphere() {
-    const sounds = ["Distant gunfire", "Buzzing neon lights", "Howling wind", "Geiger counter clicking", "Dripping water", "Static from a radio", "Salty wind", "Silence... too quiet", "Metallic grinding", "Sand crunching", "Distant Coyote Howl"];
-    const smells = ["Ozone and rust", "Rotting brahmin meat", "Antiseptic and dust", "Old paper and mildew", "Gunpowder", "Stagnant water", "Burnt plastic", "Dry desert air", "Mineral tang", "Sulfur"];
-    const lighting = ["Flickering emergency red", "Harsh noonday sun", "Pitch black", "Soft blue CRT glow", "Hazy green irradiation", "Dim orange lantern", "Sunset orange glow", "Starlight"];
+    const sounds = ["Distant gunfire", "Buzzing neon lights", "Howling wind", "Geiger counter clicking", "Dripping water", "Static from a radio", "Salty wind", "Silence... too quiet", "Metallic grinding"];
+    const smells = ["Ozone and rust", "Rotting brahmin meat", "Antiseptic and dust", "Old paper and mildew", "Gunpowder", "Stagnant water", "Burnt plastic"];
+    const lighting = ["Flickering emergency red", "Harsh noonday sun", "Pitch black", "Soft blue CRT glow", "Hazy green irradiation", "Dim orange lantern"];
     const s = sounds[Math.floor(Math.random() * sounds.length)];
     const sm = smells[Math.floor(Math.random() * smells.length)];
     const l = lighting[Math.floor(Math.random() * lighting.length)];
@@ -1891,31 +1852,31 @@ function generateLocksAndKeys(data) {
 function filterItemsByLootFocus(pool, focus) {
     // Focus logic based on required items:
     if (focus === "HIGH_VALUE") {
-        return pool.filter(i => i.v >= 70 || i.n.includes("Mini-Nuke") || i.n.includes("Stealth Boy") || i.n.includes("Pip-Boy") || i.n.includes("Laser Rifle") || i.n.includes("Plasma Caster"));
+        return pool.filter(i => i.v >= 70 || i.n.includes("Mini-Nuke") || i.n.includes("Stealth Boy") || i.n.includes("Pip-Boy"));
     }
     if (focus === "JUMPSUIT_GUNS") {
-        return pool.filter(i => i.n.includes("Jumpsuit") || i.n.includes("Pistol") || i.n.includes("Armor") || i.n.includes("SMG") || i.n.includes("Rifle") || i.n.includes("Shotgun") || i.n.includes("Revolver") || i.n.includes("Carbine"));
+        return pool.filter(i => i.n.includes("Jumpsuit") || i.n.includes("Pistol") || i.n.includes("Armor") || i.n.includes("SMG") || i.n.includes("Rifle") || i.n.includes("Shotgun"));
     }
     if (focus === "REPAIR_JUNK") {
-        return pool.filter(i => i.n.includes("Duct Tape") || i.n.includes("Wonderglue") || i.n.includes("Turpentine") || i.n.includes("Toolbox") || i.n.includes("Scrap") || i.n.includes("Conductor") || i.n.includes("Sensor") || i.n.includes("Wrench") || i.n.includes("Magnifier"));
+        return pool.filter(i => i.n.includes("Duct Tape") || i.n.includes("Wonderglue") || i.n.includes("Turpentine") || i.n.includes("Toolbox") || i.n.includes("Scrap") || i.n.includes("Conductor") || i.n.includes("Sensor"));
     }
     if (focus === "PAPER_JUNK") {
-        return pool.filter(i => i.n.includes("Money") || i.n.includes("Book") || i.n.includes("Pin") || i.n.includes("Cigarettes") || i.n.includes("Pre-War Hat") || i.n.includes("Journal") || i.n.includes("Map"));
+        return pool.filter(i => i.n.includes("Money") || i.n.includes("Book") || i.n.includes("Pin") || i.n.includes("Cigarettes") || i.n.includes("Pre-War Hat"));
     }
     if (focus === "MEDS") {
-        return pool.filter(i => i.n.includes("Stimpak") || i.n.includes("Rad-X") || i.n.includes("RadAway") || i.n.includes("Doctor's Bag") || i.n.includes("Antidote") || i.n.includes("Antivenom") || i.n.includes("Healing Powder") || i.n.includes("Trauma Pack") || i.n.includes("Hypo") || i.n.includes("Fixer") || i.n.includes("Super Stimpak") || i.n.includes("Med-X"));
+        return pool.filter(i => i.n.includes("Stimpak") || i.n.includes("Rad-X") || i.n.includes("RadAway") || i.n.includes("Doctor's Bag") || i.n.includes("Antidote") || i.n.includes("Antivenom") || i.n.includes("Healing Powder") || i.n.includes("Trauma Pack") || i.n.includes("Hypo") || i.n.includes("Fixer") || i.n.includes("Super Stimpak"));
     }
     if (focus === "LOW_CAPS") {
         return pool.filter(i => i.n.includes("Money") || i.v < 10);
     }
     if (focus === "NUKA_COLA") {
-        return pool.filter(i => i.n.includes("Nuka-Cola") || i.n.includes("Quantum") || i.n.includes("Alcohol") || i.n.includes("Jet") || i.n.includes("Psycho") || i.n.includes("Mentats") || i.n.includes("Sunset Sarsaparilla"));
+        return pool.filter(i => i.n.includes("Nuka-Cola") || i.n.includes("Quantum") || i.n.includes("Alcohol") || i.n.includes("Jet") || i.n.includes("Psycho") || i.n.includes("Mentats"));
     }
     if (focus === "AMMO_EXP") {
-        return pool.filter(i => i.n.includes("Dynamite") || i.n.includes("Molotov") || i.n.includes("Pistol") || i.n.includes("Rifle") || i.n.includes("Shotgun") || i.n.includes("SMG") || i.n.includes("Mini-Nuke") || i.n.includes("Grenade") || i.n.includes("Flare"));
+        return pool.filter(i => i.n.includes("Dynamite") || i.n.includes("Molotov") || i.n.includes("Pistol") || i.n.includes("Rifle") || i.n.includes("Shotgun") || i.n.includes("SMG") || i.n.includes("Mini-Nuke"));
     }
     if (focus === "FOOD_WATER" || focus === "SURVIVAL") {
-        return pool.filter(i => i.n.includes("Water") || i.n.includes("Food") || i.n.includes("Fruit") || i.n.includes("Meat") || i.n.includes("Fungus") || i.n.includes("Outfit") || i.n.includes("Machete") || i.n.includes("Canteen") || i.n.includes("Survival Guide"));
+        return pool.filter(i => i.n.includes("Water") || i.n.includes("Food") || i.n.includes("Fruit") || i.n.includes("Meat") || i.n.includes("Fungus") || i.n.includes("Outfit") || i.n.includes("Machete"));
     }
     // Default fallback to all general junk and low value
     return pool.filter(i => i.v < 25);
@@ -2006,15 +1967,11 @@ function generateLoot(data, type) {
             if (mapCategory === 'Ruins' && details.types.includes('Interior')) return true;
 
             // If in a Cave, only allow things specifically tagged Cave (prevents Dumpster spawn)
-            if (mapCategory === 'Cave' && !details.types.includes('Cave') && !details.types.includes('Interior')) return false;
+            if (mapCategory === 'Cave' && !details.types.includes('Cave')) return false;
 
             // Fallback for Interior: If mapTheme is an interior archetype (like MEDICAL/RETAIL), filter for things
             // that belong inside, ignoring the original sector type. (e.g., Desk/Locker)
             if (mapTheme !== 'VAULT' && mapCategory !== 'Cave' && details.types.includes('Interior')) return true;
-
-            // For caves, allow certain ruins/interior type containers (like Toolbox, Footlocker, Medkit)
-            if (mapCategory === 'Cave' && (details.types.includes('Ruins') || details.types.includes('Interior')) &&
-                (key === 'Toolbox' || key === 'Footlocker' || key === 'Medkit' || key === 'First Aid' || key === 'Doctor\'s Bag' || key === 'Ammo Box' || key === 'Cooler')) return true;
 
             return false;
         })
@@ -2109,16 +2066,10 @@ function generateDecorations(data, type, density) {
     // Stricter filtering based on indoors/outdoors
     if (isIndoors) {
         // Must not appear indoors
-        pool = pool.filter(d => ![
-            'joshua_tree', 'brahmin_skull', 'boulder', 'car', 'tire_pile', 'traffic_cone', 'broken_pole', 'street_sign',
-            'saguaro_cactus', 'prickly_pear', 'dead_tree_large', 'rock_outcrop' // new outdoor elements
-        ].includes(d));
+        pool = pool.filter(d => !['joshua_tree', 'brahmin_skull', 'boulder', 'car', 'tire_pile', 'traffic_cone', 'broken_pole', 'street_sign'].includes(d));
     } else {
         // Must not appear outdoors
-        pool = pool.filter(d => ![
-            'server_rack', 'vr_pod', 'wall_terminal', 'vent_grate', 'filing_cabinet', 'diner_booth', 'auto_doc', 'blood_stain',
-            'bed', 'table', 'chair', 'file_cabinet' // city interior elements
-        ].includes(d));
+        pool = pool.filter(d => !['server_rack', 'vr_pod', 'wall_terminal', 'vent_grate', 'filing_cabinet', 'diner_booth', 'auto_doc', 'blood_stain'].includes(d));
     }
     
     // Common decorations acceptable almost anywhere
@@ -2156,20 +2107,11 @@ function generateDecorations(data, type, density) {
                 if (decoType === 'server_rack' && Math.random() > 0.15) continue;
                 if (decoType === 'vr_pod' && Math.random() > 0.15) continue;
                 if (decoType === 'auto_doc' && Math.random() > 0.05) continue;
-                // New deco chances
-                if (decoType === 'saguaro_cactus' && Math.random() > 0.6) continue;
-                if (decoType === 'prickly_pear' && Math.random() > 0.7) continue;
-                if (decoType === 'dead_tree_large' && Math.random() > 0.3) continue;
-                if (decoType === 'rock_outcrop' && Math.random() > 0.5) continue;
-                if (decoType === 'skull_pile' && Math.random() > 0.6) continue;
-                if (decoType === 'bones_scattered' && Math.random() > 0.7) continue;
-                if (decoType === 'scorpion' && Math.random() > 0.1) continue;
-                if (decoType === 'gila_monster' && Math.random() > 0.1) continue;
                 // ------------------------------------------------------------
                 
                 data.decorations.push({x, y, type: decoType});
                 
-                if (['joshua_tree', 'rubble', 'glowing_fungus', 'server_rack', 'rock_outcrop', 'dead_tree_large'].includes(decoType)) {
+                if (['joshua_tree', 'rubble', 'glowing_fungus', 'server_rack'].includes(decoType)) {
                     if (Math.random() < 0.4) {	
                         let nx = x + (Math.random() > 0.5 ? 1 : -1);
                         let ny = y + (Math.random() > 0.5 ? 1 : -1);
@@ -2468,7 +2410,7 @@ function getRandomName(source) {
 function findSafeLabelSpot(roomX, roomY, roomW, roomH, text, stairs) { return { x: Math.floor(roomX + roomW/2), y: Math.floor(roomY + roomH/2) }; }	
 
 const ITEM_DATABASE = {
-    // UPDATED ITEM DATABASE for Mojave
+    // UPDATED ITEM DATABASE (V.29.1)
     vault: [	
         {n: "Bobby Pin", v: 1}, {n: "Scalpel", v: 2}, {n: "Abraxo cleaner", v: 5}, {n: "Rad-X", v: 5},	
         {n: "Jumpsuit", v: 8}, {n: "Pre-War Money", v: 10}, {n: "Conductor", v: 15}, {n: "Fission Battery", v: 20},	
@@ -2497,9 +2439,7 @@ const ITEM_DATABASE = {
         {n: "Dirty Water", v: 10}, {n: "Water", v: 20}, {n: "Armor", v: 15}, {n: "Dynamite", v: 25},	
         {n: "Stimpak", v: 25}, {n: "Meat (Cooked)", v: 30}, {n: "Radaway", v: 35}, {n: "Deathclaw Hand", v: 45},	
         {n: "Skill Book", v: 50}, {n: "Machete", v: 50}, {n: "Merc Outfit", v: 50}, {n: "Pipe Rifle", v: 50},	
-        {n: "Power Fist", v: 100}, {n: ".32 Hunting Rifle", v: 150}, {n: "Leather Armor", v: 160}, {n: "Sniper Rifle", v: 320},
-        {n: "Geiger Counter", v: 40}, {n: "Canteen", v: 12}, {n: "Shovel", v: 15}, {n: "Survival Guide", v: 60},
-        {n: "Yao Guai Meat", v: 30}, {n: "Scorpion Tail", v: 20}, {n: "Sunset Sarsaparilla", v: 22}
+        {n: "Power Fist", v: 100}, {n: ".32 Hunting Rifle", v: 150}, {n: "Leather Armor", v: 160}, {n: "Sniper Rifle", v: 320}	
     ]
 };
 
@@ -2515,7 +2455,6 @@ const NAMES = {
         "Bombed-Out Apartment", "Makeshift Clinic", "Raider Fighting Pit",
         "Collapsed Subway", "Nuka-Cola Billboard", "Super Mutant Stronghold", "Slave Pen"
     ],
-    // UPDATED MOJAVE NAMES
     cave_surface: [	
         "Radscorpion Burrow", "Raider Camp", "Red Rocket", "Farmhouse",	
         "Relay Tower", "Cave Entrance", "Canyon Pass", "Factory Ruin",	
@@ -2525,17 +2464,14 @@ const NAMES = {
         "Tribal Village", "Brahmin Pen", "Wind Farm", "Solar Array",	
         "Ranger Outpost", "Vertibird Crash", "Nuka-Cola Truck Wreck",	
         "Mysterious Cave", "Gecko Hunting Grounds", "Coyote Den", "Sulfur Pits",
-        "Hermit's Shack", "Tribal Altar", "Prospector Camp", "Dusty Crossroads", "Forgotten Caravan",
-        "Skull Gorge", "Blasted Mesa", "Whispering Dunes", "Scorpion Gulch", "Gila Monster Ridge",
-        "Old Water Pump", "Sunrise Oasis", "Obsidian Cave", "Rusty Billboard", "Wrecked Bus Stop"
+        "Hermit's Shack", "Tribal Altar", "Prospector Camp"
     ],
     cave_underground: [	
         "Cave Den", "Mine Shaft", "Underground Spring", "Collapsed Tunnel",	
         "Fissure Wall", "Mushroom Grotto", "Sump Chamber", "Burial Site",	
         "Supply Cache", "Flooded Cavern", "Glowing Grove", "Ant Nest",	
         "Mole Rat Tunnels", "Underground Lake", "Crystal Formation", "Bat Roost",
-        "Subterranean River", "Legendary Creature Den", "Queen's Nest", "Geode Chamber", "Ancient Fossil Pit",
-        "Geothermal Vent", "Dark Labyrinth", "Echoing Chasm", "Fungal Forest", "Stalactite Maze"
+        "Subterranean River", "Legendary Creature Den", "Queen's Nest"
     ]
 };
 // ---------------------------------------------
@@ -2606,54 +2542,12 @@ function createPixelPattern(colors, type) {
         }
 
     } else if (type === 'cave') {
-        // --- MOJAVE TEXTURE (Enhanced) ---
-        // Fine grainy noise for sand/dust
-        pCtx.globalAlpha = 0.6;
-        for(let i=0; i<500; i++) {
-            pCtx.fillStyle = (Math.random() > 0.5) ? colors.dark : colors.noise;
-            const x = Math.random()*size;
-            const y = Math.random()*size;
-            const w = Math.random()*1.5 + 0.5;
-            pCtx.fillRect(x, y, w, w);
-        }
-        pCtx.globalAlpha = 1.0;
-
-        // Subtle wind streaks (diagonal)
-        pCtx.strokeStyle = colors.light;
-        pCtx.lineWidth = 0.7;
-        pCtx.globalAlpha = 0.08;
-        for(let i=0; i<30; i++) {
-            pCtx.beginPath();
-            let sx = Math.random() * size;
-            let sy = Math.random() * size;
-            pCtx.moveTo(sx, sy);
-            pCtx.lineTo(sx + size * (0.1 + Math.random()*0.2), sy + size * (0.1 + Math.random()*0.2));
-            pCtx.stroke();
-        }
-        pCtx.globalAlpha = 1.0;
-
-        // Dry cracks
-        pCtx.strokeStyle = colors.dark;
-        pCtx.lineWidth = 1;
-        pCtx.globalAlpha = 0.2;
-        for(let i=0; i<15; i++) {
-            pCtx.beginPath();
-            let sx = Math.random()*size; let sy = Math.random()*size;
-            pCtx.moveTo(sx, sy);
-            for(let j=0; j<3; j++) {
-                sx += (Math.random()-0.5)*25; sy += (Math.random()-0.5)*25;
-                pCtx.lineTo(sx, sy);
-            }
-            pCtx.stroke();
-        }
-        pCtx.globalAlpha = 1.0;
-        
-        // Occasional larger pebbles/small rocks
+        // Organic Texture
         pCtx.fillStyle = colors.dark;
-        pCtx.globalAlpha = 0.4;
-        for(let i=0; i<50; i++) {
+        pCtx.globalAlpha = 0.15;
+        for(let i=0; i<20; i++) {
             pCtx.beginPath();
-            pCtx.arc(Math.random()*size, Math.random()*size, Math.random()*2 + 1, 0, Math.PI*2);
+            pCtx.arc(Math.random()*size, Math.random()*size, Math.random()*15 + 5, 0, Math.PI*2);
             pCtx.fill();
         }
         pCtx.globalAlpha = 1.0;
@@ -2742,20 +2636,12 @@ function createPixelPattern(colors, type) {
 function drawSprite(ctx, type, x, y, size, time) {
     const cx = x + size/2; const cy = y + size/2;
     
-    // Directional, harsher shadow for desert
-    if (config.mapType === 'cave' && viewMode === 'sector') {
-        ctx.fillStyle = 'rgba(0,0,0,0.4)';
-        ctx.beginPath();
-        ctx.ellipse(cx + 4, cy + size * 0.45, size * 0.4, size * 0.15, Math.PI / 8, 0, Math.PI * 2);
-        ctx.fill();
-    } else {
-        // Standard soft shadow
-        const shadowG = ctx.createRadialGradient(cx + 2, cy + size*0.4, 0, cx + 2, cy + size*0.4, size*0.3);
-        shadowG.addColorStop(0, 'rgba(0,0,0,0.6)');
-        shadowG.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = shadowG;
-        ctx.fillRect(x, y + size*0.3, size, size*0.3);
-    }
+    // Enhanced Soft Shadow
+    const shadowG = ctx.createRadialGradient(cx + 2, cy + size*0.4, 0, cx + 2, cy + size*0.4, size*0.3);
+    shadowG.addColorStop(0, 'rgba(0,0,0,0.6)');
+    shadowG.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = shadowG;
+    ctx.fillRect(x, y + size*0.3, size, size*0.3);
 
     if (type === 'tree' || type === 'joshua_tree') {
         const trunkW = size*0.12;
@@ -2773,173 +2659,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         drawClump(cx-size*0.2, cy-size*0.2, size*0.15);
         drawClump(cx+size*0.2, cy-size*0.1, size*0.15);
     }	
-    else if (type === 'dead_bush') {
-        ctx.strokeStyle = '#5c4b37';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        for(let i=0; i<5; i++) {
-            const angle = (i/5) * Math.PI + Math.PI/4;
-            const len = size * (0.3 + Math.random()*0.2);
-            ctx.moveTo(cx, cy + size*0.3);
-            ctx.lineTo(cx + Math.cos(angle) * len, cy - Math.sin(angle) * len);
-        }
-        ctx.stroke();
-    }
-    // NEW: Saguaro Cactus
-    else if (type === 'saguaro_cactus') {
-        ctx.fillStyle = '#3d7a4d'; // Muted green
-        // Main body
-        ctx.fillRect(cx - size * 0.08, y + size * 0.1, size * 0.16, size * 0.8);
-        // Arms
-        ctx.fillRect(cx + size * 0.08, y + size * 0.3, size * 0.2, size * 0.08); // Right arm base
-        ctx.fillRect(cx + size * 0.2, y + size * 0.1, size * 0.08, size * 0.2); // Right arm upright
-        ctx.fillRect(cx - size * 0.28, y + size * 0.5, size * 0.2, size * 0.08); // Left arm base
-        ctx.fillRect(cx - size * 0.28, y + size * 0.3, size * 0.08, size * 0.2); // Left arm upright
-        
-        ctx.fillStyle = '#2d5a3a'; // Darker green for texture
-        ctx.fillRect(cx - size * 0.08, y + size * 0.1, 2, size * 0.8); // Vertical line
-        ctx.fillRect(cx - size * 0.04, y + size * 0.1, 2, size * 0.8);
-        ctx.fillRect(cx + size * 0.0, y + size * 0.1, 2, size * 0.8);
-        ctx.fillRect(cx + size * 0.04, y + size * 0.1, 2, size * 0.8);
-    }
-    // NEW: Prickly Pear Cactus
-    else if (type === 'prickly_pear') {
-        ctx.fillStyle = '#5c926a'; // Lighter muted green
-        // Main pads
-        ctx.beginPath();
-        ctx.ellipse(cx, cy + size * 0.1, size * 0.2, size * 0.3, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(cx - size * 0.15, cy - size * 0.05, size * 0.15, size * 0.25, Math.PI / 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(cx + size * 0.15, cy - size * 0.05, size * 0.15, size * 0.25, -Math.PI / 4, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Small red fruits
-        ctx.fillStyle = '#b91c1c';
-        ctx.beginPath(); ctx.arc(cx - size * 0.05, y + size * 0.15, size * 0.05, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(cx + size * 0.1, y + size * 0.08, size * 0.05, 0, Math.PI * 2); ctx.fill();
-    }
-    // NEW: Large Dead Tree
-    else if (type === 'dead_tree_large') {
-        ctx.fillStyle = '#4a3f36'; // Dark brown
-        // Trunk
-        ctx.fillRect(cx - size * 0.1, y + size * 0.2, size * 0.2, size * 0.7);
-        // Branches
-        ctx.strokeStyle = '#4a3f36';
-        ctx.lineWidth = size * 0.05;
-        ctx.beginPath();
-        ctx.moveTo(cx, y + size * 0.25);
-        ctx.lineTo(cx - size * 0.3, y - size * 0.05);
-        ctx.moveTo(cx, y + size * 0.2);
-        ctx.lineTo(cx + size * 0.3, y + size * 0.1);
-        ctx.moveTo(cx - size * 0.05, y + size * 0.4);
-        ctx.lineTo(cx + size * 0.2, y + size * 0.2);
-        ctx.stroke();
-    }
-    // NEW: Rock Outcrop
-    else if (type === 'rock_outcrop') {
-        ctx.fillStyle = '#7a6254'; // Weathered rock top
-        ctx.beginPath();
-        ctx.moveTo(x + size * 0.1, y + size * 0.8);
-        ctx.lineTo(x + size * 0.9, y + size * 0.7);
-        ctx.lineTo(x + size * 0.7, y + size * 0.2);
-        ctx.lineTo(x + size * 0.3, y + size * 0.1);
-        ctx.lineTo(x + size * 0.15, y + size * 0.4);
-        ctx.closePath();
-        ctx.fill();
-        
-        ctx.fillStyle = '#5b4a3e'; // Shadowed rock face
-        ctx.beginPath();
-        ctx.moveTo(x + size * 0.1, y + size * 0.8);
-        ctx.lineTo(x + size * 0.9, y + size * 0.7);
-        ctx.lineTo(x + size * 0.9, y + size * 0.9);
-        ctx.lineTo(x + size * 0.1, y + size * 0.95);
-        ctx.closePath();
-        ctx.fill();
-    }
-    // NEW: Skull Pile
-    else if (type === 'skull_pile') {
-        const skullColor = '#dcdcdc'; // Bleached bone
-        const eyeColor = '#000';
-        
-        // Main skull
-        ctx.fillStyle = skullColor;
-        ctx.beginPath(); ctx.arc(cx, cy - size * 0.1, size * 0.15, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = eyeColor; ctx.fillRect(cx - size * 0.05, cy - size * 0.15, 2, 2); ctx.fillRect(cx + size * 0.03, cy - size * 0.15, 2, 2);
-        ctx.strokeStyle = skullColor; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx - size * 0.05, cy - size * 0.05); ctx.lineTo(cx + size * 0.05, cy - size * 0.05); ctx.stroke();
-        
-        // Smaller skulls/bones around
-        ctx.fillStyle = skullColor;
-        ctx.beginPath(); ctx.arc(cx - size * 0.2, cy + size * 0.05, size * 0.1, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(cx + size * 0.15, cy + size * 0.1, size * 0.08, 0, Math.PI * 2); ctx.fill();
-        ctx.fillRect(cx - size * 0.1, cy + size * 0.2, size * 0.2, size * 0.05); // Long bone
-    }
-    // NEW: Scattered Bones
-    else if (type === 'bones_scattered') {
-        ctx.fillStyle = '#e5e5e5';
-        ctx.fillRect(cx - size * 0.2, cy - size * 0.05, size * 0.2, size * 0.05);
-        ctx.fillRect(cx + size * 0.05, cy + size * 0.1, size * 0.15, size * 0.05);
-        ctx.beginPath(); ctx.arc(cx - size * 0.1, cy + size * 0.1, size * 0.08, 0, Math.PI * 2); ctx.fill();
-    }
-    // NEW: Abandoned Campfire
-    else if (type === 'abandoned_campfire') {
-        ctx.fillStyle = '#332f2b'; // Dark ash
-        ctx.beginPath(); ctx.ellipse(cx, cy + size * 0.1, size * 0.3, size * 0.15, 0, 0, Math.PI * 2); ctx.fill();
-        
-        ctx.fillStyle = '#5b4a3e'; // Burnt logs
-        ctx.fillRect(cx - size * 0.25, cy + size * 0.05, size * 0.4, size * 0.08);
-        ctx.fillRect(cx - size * 0.1, cy - size * 0.05, size * 0.3, size * 0.08);
-        
-        ctx.fillStyle = '#8b4513'; // Faint embers
-        ctx.globalAlpha = 0.3;
-        ctx.beginPath(); ctx.arc(cx, cy + size * 0.1, size * 0.1, 0, Math.PI * 2); ctx.fill();
-        ctx.globalAlpha = 1.0;
-    }
-    // NEW: Scorpion
-    else if (type === 'scorpion') {
-        ctx.fillStyle = '#4d3e34'; // Dark brown
-        // Body
-        ctx.beginPath(); ctx.ellipse(cx, cy, size * 0.2, size * 0.15, -Math.PI / 8, 0, Math.PI * 2); ctx.fill();
-        // Tail
-        ctx.strokeStyle = '#4d3e34'; ctx.lineWidth = size * 0.05;
-        ctx.beginPath(); ctx.moveTo(cx - size * 0.15, cy - size * 0.08); ctx.quadraticCurveTo(cx - size * 0.25, cy - size * 0.25, cx - size * 0.35, cy - size * 0.15); ctx.stroke();
-        // Claws
-        ctx.beginPath(); ctx.arc(cx + size * 0.25, cy - size * 0.05, size * 0.08, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(cx + size * 0.2, cy + size * 0.1, size * 0.08, 0, Math.PI * 2); ctx.fill();
-    }
-    // NEW: Gila Monster
-    else if (type === 'gila_monster') {
-        ctx.fillStyle = '#7c2d12'; // Rusty red-brown
-        // Body
-        ctx.beginPath(); ctx.ellipse(cx, cy + size * 0.05, size * 0.25, size * 0.12, 0, 0, Math.PI * 2); ctx.fill();
-        // Head
-        ctx.fillRect(cx + size * 0.15, cy - size * 0.05, size * 0.1, size * 0.08);
-        // Legs
-        ctx.fillRect(cx - size * 0.15, cy + size * 0.1, size * 0.08, size * 0.05);
-        ctx.fillRect(cx + size * 0.05, cy + size * 0.1, size * 0.08, size * 0.05);
-        
-        ctx.fillStyle = '#261d1b'; // Dark spots
-        ctx.beginPath(); ctx.arc(cx, cy + size * 0.05, size * 0.03, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(cx - size * 0.1, cy + size * 0.08, size * 0.03, 0, Math.PI * 2); ctx.fill();
-    }
-     else if (type === 'crashed_satellite') {
-        ctx.fillStyle = '#78716c'; // Metal grey
-        ctx.beginPath();
-        ctx.moveTo(cx, y + size*0.2);
-        ctx.lineTo(x + size-4, cy);
-        ctx.lineTo(cx, y + size*0.8);
-        ctx.lineTo(x+4, cy);
-        ctx.fill();
-        
-        // Broken solar panel
-        ctx.fillStyle = '#1e3a8a';
-        ctx.fillRect(x, y, size*0.4, size*0.6);
-        ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x, y, size*0.4, size*0.6);
-    }
     else if (type === 'car') {
         ctx.fillStyle = '#7f1d1d';	
         ctx.fillRect(x+4, cy+2, size-8, size*0.25);	
@@ -3453,54 +3172,8 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#78716c';	
         ctx.fillRect(x+8, y+size*0.2, size-16, size*0.2);
     }
-    else if (type === 'empty_barrel') {
-        ctx.fillStyle = '#555';
-        ctx.fillRect(x + size*0.2, y + size*0.3, size*0.6, size*0.6);
-        ctx.fillStyle = '#444';
-        ctx.beginPath();
-        ctx.ellipse(cx, y + size*0.3, size*0.3, size*0.1, 0, 0, Math.PI*2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(cx, y + size*0.9, size*0.3, size*0.1, 0, 0, Math.PI*2);
-        ctx.fill();
-    }
   
 }
-
-function drawSunGlare(ctx, width, height) {
-    // Top-down sun bloom
-    const grad = ctx.createRadialGradient(width/2, -height*0.2, 0, width/2, height/2, width*0.9);
-    // More golden and widespread for desert
-    grad.addColorStop(0, "rgba(255, 230, 180, 0.4)");
-    grad.addColorStop(0.4, "rgba(255, 200, 150, 0.1)");
-    grad.addColorStop(1, "rgba(0,0,0,0)");
-    
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.fillStyle = grad;
-    ctx.fillRect(0,0, width, height);
-
-    // Vignette
-    const vGrad = ctx.createRadialGradient(width/2, height/2, width/3, width/2, height/2, width*0.7);
-    vGrad.addColorStop(0, "rgba(0,0,0,0)");
-    vGrad.addColorStop(1, "rgba(0,0,0,0.4)");
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = vGrad;
-    ctx.fillRect(0,0, width, height);
-}
-
-// NEW: Heat Haze Effect
-function drawHeatHaze(time) {
-    if (config.mapType !== 'cave' || viewMode !== 'sector' || currentLevelIndex < 0 || heatHazeElement.classList.contains('hidden')) {
-        return; // Only apply for surface Mojave maps
-    }
-
-    const offsetFactor = Math.sin(time / 200) * 1.5 + Math.cos(time / 150) * 1.5;
-    const filterValue = `blur(${Math.abs(Math.sin(time / 300)) * 1.5 + 0.5}px) contrast(0.9) hue-rotate(${Math.sin(time / 500) * 3}deg)`;
-    
-    heatHazeElement.style.filter = filterValue;
-    heatHazeElement.style.transform = `translateY(${offsetFactor}px)`;
-}
-
 
 function drawCRTEffects(ctx, width, height) {
     // Curved Screen Distortion (Simulated via Vignette and Radial Gradient)
@@ -3528,7 +3201,7 @@ function drawCurrentLevel(time = 0) {
         if (config.mapType === 'cave') { pal = PALETTES.cave; patternType = 'cave'; }
     } else {	
         if (config.mapType === 'ruins') { pal = PALETTES.interior_ruins; patternType = 'interior_ruins'; }
-        if (config.mapType === 'cave') { pal = PALETTES.interior_cave; patternType = 'interior_cave'; } // Use interior_cave for cave interior
+        if (config.mapType === 'cave') { pal = PALETTES.interior_cave; patternType = 'cave'; }
     }
     
     // --- HARD CLEAR BEFORE PHOSPHOR ---
@@ -3565,12 +3238,12 @@ function drawCurrentLevel(time = 0) {
         return;	
     }
 
-    // --- ORGANIC CAVE RENDERING (JAGGED ROCK / SMOOTHER NOISE) ---
-    if (patternType === 'cave' || patternType === 'interior_cave') {
+    // --- ORGANIC CAVE RENDERING (JAGGED ROCK) ---
+    if (patternType === 'cave') {
         ctx.fillStyle = floorPattern;
         
-        // Deterministic Random Helper (Stops the jiggling, but adds natural variation)
-        const getNoise = (bx, by, seed) => {
+        // Deterministic Random Helper (Stops the jiggling)
+        const getOffset = (bx, by, seed) => {
             return (Math.abs(Math.sin(bx * 12.9898 + by * 78.233 + seed) * 43758.5453) % 1);
         };
 
@@ -3579,23 +3252,19 @@ function drawCurrentLevel(time = 0) {
                 if (data.grid[x][y] >= 1) {
                     const px = x * gs;	
                     const py = y * gs;
+                    const overlap = gs * 0.4;	
                     
-                    if (viewMode === 'sector') {
-                        // Jagged polygons for sector view (original logic, slightly refined for smooth)
-                        const overlap = gs * 0.4;	
-                        ctx.beginPath();
-                        ctx.moveTo(px - (getNoise(x, y, 1) * overlap), py - (getNoise(x, y, 2) * overlap));
-                        ctx.lineTo(px + gs + (getNoise(x, y, 3) * overlap), py - (getNoise(x, y, 4) * overlap));
-                        ctx.lineTo(px + gs + (getNoise(x, y, 5) * overlap), py + gs + (getNoise(x, y, 6) * overlap));
-                        ctx.lineTo(px - (getNoise(x, y, 7) * overlap), py + gs + (getNoise(x, y, 8) * overlap));
-                        ctx.closePath();
-                        ctx.fill();
-                    } else {
-                        // Smoother, organic blend for interior caves
-                        ctx.beginPath();
-                        ctx.rect(px, py, gs, gs); // Start with a basic rectangle
-                        ctx.fill();
-                    }
+                    ctx.beginPath();
+                    // Seed 1 (Top Left)
+                    ctx.moveTo(px - (getOffset(x, y, 1) * overlap), py - (getOffset(x, y, 2) * overlap));
+                    // Seed 2 (Top Right)
+                    ctx.lineTo(px + gs + (getOffset(x, y, 3) * overlap), py - (getOffset(x, y, 4) * overlap));
+                    // Seed 3 (Bottom Right)
+                    ctx.lineTo(px + gs + (getOffset(x, y, 5) * overlap), py + gs + (getOffset(x, y, 6) * overlap));
+                    // Seed 4 (Bottom Left)
+                    ctx.lineTo(px - (getOffset(x, y, 7) * overlap), py + gs + (getOffset(x, y, 8) * overlap));
+                    
+                    ctx.fill();
 
                     // Add Water Tint if needed
                     if (data.grid[x][y] === 2) {
@@ -3677,7 +3346,7 @@ function drawCurrentLevel(time = 0) {
     }
 
     // WALL RENDER (2.5D) - Only needed for non-cave types to show depth
-    if (!(patternType === 'cave' && viewMode === 'sector')) {
+    if (patternType !== 'cave') {
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
                 if (data.grid[x][y] === 0) {
@@ -3772,8 +3441,7 @@ function drawCurrentLevel(time = 0) {
             "Dumpster": "dumpster",
             "Register": "register",
             "Cashier": "cashier",
-            "Cooler": "cooler",
-            "Empty Barrel": "empty_barrel" // New container type
+            "Cooler": "cooler"
         };
         let sType = "crate";
         for(let key in typeMap) {
@@ -3860,7 +3528,7 @@ function drawCurrentLevel(time = 0) {
         let colorStart = '';
         let colorMid = '';
         
-        if (deco.type === 'fire_barrel' || deco.type === 'campfire' || deco.type === 'abandoned_campfire') { // Add new campfire
+        if (deco.type === 'fire_barrel' || deco.type === 'campfire') {
             const flicker = Math.sin(time / 80) * 5 + Math.random() * 3;
             radius = gs * 2.5 + flicker;
             colorStart = 'rgba(255, 200, 100, 0.6)';	
@@ -3900,16 +3568,7 @@ function drawCurrentLevel(time = 0) {
     }
     
     ctx.globalCompositeOperation = 'source-over';
-    
-    // Switch between sun glare for Mojave and CRT for others
-    if (config.mapType === 'cave' && viewMode === 'sector' && currentLevelIndex >= 0) {
-        drawSunGlare(ctx, config.width, config.height);
-        drawHeatHaze(time); // Draw heat haze only for surface Mojave
-    } else {
-        drawCRTEffects(ctx, config.width, config.height);
-        heatHazeElement.classList.add('hidden'); // Ensure hidden if not Mojave surface
-    }
-
+    drawCRTEffects(ctx, config.width, config.height);
 
     if (config.showLabels) {
         ctx.font = "bold 14px 'VT323', monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";	
@@ -4020,3 +3679,5 @@ window.handleMouseUp = handleMouseUp;
 // --------------------------------------------------
 
 window.onload = init;
+
+
