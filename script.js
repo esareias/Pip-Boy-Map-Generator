@@ -2538,65 +2538,50 @@ function createPixelPattern(colors, type) {
  } else if (type === 'ruins') {
         // --- RUINS ENHANCEMENTS: Cracked Asphalt / Concrete ---
 
-        // A. Base Noise (Retain some subtle texture, but make it less dominant)
-        // This will now be more like fine surface cracks or general wear.
+        // A. Base Noise (Cracks and Debris)
         pCtx.strokeStyle = colors.dark;
         pCtx.lineWidth = 1;
-        pCtx.globalAlpha = 0.2; // Reduce visibility
-        for(let i=0; i<15; i++) { // Fewer, longer initial lines
+        pCtx.globalAlpha = 0.4;
+        for(let i=0; i<10; i++) {
             pCtx.beginPath();
             let sx = Math.random()*size; let sy = Math.random()*size;
             pCtx.moveTo(sx, sy);
-            pCtx.lineTo(sx + (Math.random()-0.5)*60, sy + (Math.random()-0.5)*60); // Longer lines
+            pCtx.lineTo(sx + (Math.random()-0.5)*40, sy + (Math.random()-0.5)*40);
             pCtx.stroke();
         }
         pCtx.globalAlpha = 1.0;
         
-        // B. Prominent, Jagged Cracks (using colors.noise for high contrast and more complexity)
-        pCtx.strokeStyle = colors.noise; 
-        pCtx.lineWidth = 1.5; // Slightly thicker for prominence
-        pCtx.globalAlpha = 0.8; // More opaque for clear cracks
-        for(let i=0; i<6; i++) { // More main cracks
+        // B. Large Road Cracks (using colors.noise for high contrast)
+        pCtx.strokeStyle = colors.noise; // '#999690'
+        pCtx.lineWidth = 2; // Thicker lines for major cracks
+        pCtx.globalAlpha = 0.6;
+        for(let i=0; i<4; i++) {
              pCtx.beginPath();
              let startX = Math.random() * size;
              let startY = Math.random() * size;
+             // Draw a jagged line simulating a deep crack
              pCtx.moveTo(startX, startY);
-             
-             // Create a more complex, branching crack path
-             let currentX = startX;
-             let currentY = startY;
-             for(let j=0; j<4; j++) { // Multiple segments for a single crack
-                 currentX += (Math.random() * 40 - 20); // Random step
-                 currentY += (Math.random() * 40 - 20); // Random step
-                 currentX = Math.min(Math.max(currentX, 0), size); // Keep within bounds
-                 currentY = Math.min(Math.max(currentY, 0), size);
-                 pCtx.lineTo(currentX, currentY);
-             }
+             pCtx.lineTo(startX + (Math.random() * 30 - 15), startY + (Math.random() * 30 - 15));
+             pCtx.lineTo(startX + (Math.random() * 50 - 25), startY + (Math.random() * 50 - 25));
              pCtx.stroke();
         }
         pCtx.globalAlpha = 1.0;
 
-        // C. Faded Painted Road Lines (keep this as is, it's fine)
-        pCtx.fillStyle = colors.accent; 
-        pCtx.globalAlpha = 0.15; 
+        // C. Painted Road Lines (if applicable, use accent color for fading yellow/white lines)
+        pCtx.fillStyle = colors.accent; // Red/Amber tint from Pip-Boy theme
+        pCtx.globalAlpha = 0.15; // Heavily faded
+        // Draw one or two faded central lines
         if (Math.random() < 0.6) {
             pCtx.fillRect(size/2 - 4, 0, 4, size);
         }
         pCtx.globalAlpha = 1.0;
         
-        // D. Debris Chunks (Reduce them significantly or make them less distinct to avoid 'bone pile')
-        // We can make them smaller and fewer, or just remove them if the cracks are enough.
-        // Let's make them smaller and fewer, and maybe a bit lighter to blend more.
-        pCtx.fillStyle = colors.dark; // Or even colors.base for less contrast
-        pCtx.globalAlpha = 0.3; // More subtle
-        for(let i=0; i<10; i++) { // Fewer debris chunks
-             pCtx.fillRect(Math.random() * size, Math.random() * size, 2, 2); // Smaller size
+        // D. Debris Chunks (Use dark color to represent missing asphalt/concrete)
+        pCtx.fillStyle = colors.dark; // '#292524'
+        for(let i=0; i<20; i++) {
+             pCtx.fillRect(Math.random() * size, Math.random() * size, 3, 3);
         }
-        pCtx.globalAlpha = 1.0;
     }
-    
-    return ctx.createPattern(pCanvas, 'repeat');
-}
 
 function drawSprite(ctx, type, x, y, size, time) {
     const cx = x + size/2; const cy = y + size/2;
