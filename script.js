@@ -2926,19 +2926,19 @@ function drawCurrentLevel(time = 0) {
     const data = (viewMode === 'interior') ? interiorData[currentInteriorKey] : floorData[currentLevelIndex];
     const gs = config.gridSize;
     
-    let pal = PALETTES.vault;	
+    let pal = PALETTES.vault;   
     let patternType = 'vault';
 
     if (viewMode === 'sector') {
         if (config.mapType === 'ruins') { pal = PALETTES.ruins; patternType = 'ruins'; }
         if (config.mapType === 'cave') { pal = PALETTES.cave; patternType = 'cave'; }
-    } else {	
+    } else {    
         if (config.mapType === 'ruins') { pal = PALETTES.interior_ruins; patternType = 'interior_ruins'; }
         if (config.mapType === 'cave') { pal = PALETTES.interior_cave; patternType = 'cave'; }
     }
     
     // --- HARD CLEAR BEFORE PHOSPHOR ---
-    ctx.clearRect(0, 0, canvas.width, canvas.height);	
+    ctx.clearRect(0, 0, canvas.width, canvas.height);   
 
     // PHOSPHOR PERSISTENCE (Trails)
     ctx.fillStyle = 'rgba(5, 8, 5, 0.2)'; // Dark green-black tint
@@ -2957,18 +2957,18 @@ function drawCurrentLevel(time = 0) {
     
     const floorPattern = patternCache[patternType];
 
-    if (!data) {	
+    if (!data) {    
         // --- STRONGER ERROR MESSAGE ---
-        ctx.font = "bold 30px 'VT323', monospace";	
-        ctx.fillStyle = 'var(--pip-amber)';	
-        ctx.textAlign = "center";	
-        ctx.fillText(">> NO MAP DATA DETECTED <<", config.width/2, config.height/2);	
+        ctx.font = "bold 30px 'VT323', monospace"; 
+        ctx.fillStyle = 'var(--pip-amber)'; 
+        ctx.textAlign = "center";   
+        ctx.fillText(">> NO MAP DATA DETECTED <<", config.width/2, config.height/2);    
         
         ctx.font = "20px 'VT323', monospace";
-        ctx.fillText("INITIATE [ >> SCAN LEVEL ] TO GENERATE", config.width/2, config.height/2 + 30);	
+        ctx.fillText("INITIATE [ >> SCAN LEVEL ] TO GENERATE", config.width/2, config.height/2 + 30);   
 
         ctx.restore();
-        return;	
+        return; 
     }
 
     // --- ORGANIC CAVE RENDERING (JAGGED ROCK) ---
@@ -2983,9 +2983,9 @@ function drawCurrentLevel(time = 0) {
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
                 if (data.grid[x][y] >= 1) {
-                    const px = x * gs;	
+                    const px = x * gs;  
                     const py = y * gs;
-                    const overlap = gs * 0.4;	
+                    const overlap = gs * 0.4;   
                     
                     ctx.beginPath();
                     // Seed 1 (Top Left)
@@ -3008,12 +3008,12 @@ function drawCurrentLevel(time = 0) {
                 }
             }
         }
-    }	
+    }   
     else {
         // STANDARD / RUINS RENDERING
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
-                if (data.grid[x][y] >= 1) {	
+                if (data.grid[x][y] >= 1) { 
                     const px = x * gs; const py = y * gs;
                     
                     if (data.grid[x][y] === 2) {
@@ -3025,7 +3025,7 @@ function drawCurrentLevel(time = 0) {
                         ctx.fillRect(px - offset + 4, py + 12, gs-8, 2);
                         ctx.globalAlpha = 1.0;
                     } else {
-                        ctx.fillStyle = floorPattern;	
+                        ctx.fillStyle = floorPattern;   
                         ctx.fillRect(px, py, gs, gs);
                         
                         // Ambient Occlusion (Corner Shadows)
@@ -3046,14 +3046,14 @@ function drawCurrentLevel(time = 0) {
             if (config.fogEnabled && !isLocationRevealed(data, x, y)) {
                 const px = x * gs; const py = y * gs;
                 // Base darkness
-                ctx.fillStyle = '#050805';	
+                ctx.fillStyle = '#050805';  
                 ctx.fillRect(px, py, gs, gs);
                 
                 // Organic Cloud Puff (The draw image destination is already affected by ctx.translate)
                 const scrollX1 = (time * 0.02) % 512;
                 const scrollY1 = (time * 0.01) % 512;
                 // Calculate texture source coordinates based on logical map position + time scroll
-                const sx = (px + scrollX1) % 512;	
+                const sx = (px + scrollX1) % 512;   
                 const sy = (py + scrollY1) % 512;
                 
                 // Draw from the pre-rendered cloud texture (cloudCanvas)
@@ -3064,6 +3064,66 @@ function drawCurrentLevel(time = 0) {
         }
     }
     
+    // --- MOVED WALL RENDER TO FIX Z-INDEX ISSUE ---
+    // WALL RENDER (2.5D) - Only needed for non-cave types to show depth
+    if (patternType !== 'cave') {
+        for (let x = 0; x < config.cols; x++) {
+            for (let y = 0; y < config.rows; y++) {
+                const isDecoration = data.decorations && data.decorations.some(d => d.x === x && d.y === y && d.type === 'ruin_building');
+
+                // CRITICAL FIX: Only draw a generic wall if it's a 0 (void) AND NOT taken by a detailed sprite.
+                if (data.grid[x][y] === 0 && !isDecoration) { 
+                    const px = x * gs; const py = y * gs;
+                    const wallHeight = gs / 2;
+                    const southOpen = (y < config.rows - 1 && data.grid[x][y+1] >= 1);
+                    const southRevealed = southOpen && (!config.fogEnabled || isLocationRevealed(data, x, y+1));
+
+                    if (southRevealed) {
+                        const grad = ctx.createLinearGradient(px, py+gs-wallHeight, px, py+gs);
+                        grad.addColorStop(0, pal.wall.front);
+                        grad.addColorStop(1, '#0a0a0a');   
+                        ctx.fillStyle = grad;
+                        ctx.fillRect(px, py + gs - wallHeight, gs, wallHeight);
+                        
+                        // Rust/Grime Detail
+                        if ((x+y) % 5 === 0) {
+                            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                            ctx.fillRect(px + gs/2, py+gs-wallHeight, 2, wallHeight);
+                        }
+
+                        ctx.fillStyle = pal.wall.top;
+                        ctx.fillRect(px, py, gs, gs - wallHeight);
+                        
+                        ctx.fillStyle = pal.wall.highlight;
+                        ctx.fillRect(px, py, gs, 2);    
+                        ctx.fillRect(px, py, 2, gs-wallHeight);    
+                        
+                        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                        ctx.fillRect(px, py+gs, gs, gs*0.4);
+                    } else {
+                        let nearRevealed = false;
+                        for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) {
+                            if (x+dx>=0 && x+dx<config.cols && y+dy>=0 && y+dy<config.rows) {
+                                if(data.grid[x+dx][y+dy]>=1 && (!config.fogEnabled || isLocationRevealed(data, x+dx, y+dy))) nearRevealed = true;
+                            }
+                        }
+                        
+                        if(nearRevealed) {
+                            ctx.fillStyle = pal.wall.top;
+                            ctx.fillRect(px, py, gs, gs);
+                            ctx.fillStyle = pal.wall.highlight;
+                            ctx.fillRect(px, py, gs, 2);    
+                            ctx.fillRect(px, py, 2, gs);
+                            ctx.fillStyle = 'rgba(0,0,0,0.3)';  
+                            ctx.fillRect(px + 4, py + 4, gs - 8, gs - 8);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // ----------------------------------------------
+
     if (data.decorations) for (let deco of data.decorations) {
         if (config.fogEnabled && !isLocationRevealed(data, deco.x, deco.y)) continue;
         drawSprite(ctx, deco.type, deco.x * gs, deco.y * gs, gs, time);
@@ -3078,23 +3138,19 @@ function drawCurrentLevel(time = 0) {
          ctx.restore();
     }
 
-
-    }
-}
-
     if (data.doors) for(let door of data.doors) {
         const dx = door.x * gs; const dy = door.y * gs;
         const isLocked = door.locked;
         
-        if (viewMode === 'sector') {	
-            ctx.fillStyle = '#0a0a0a'; ctx.fillRect(dx + 2, dy - gs/2 + 2, gs - 4, gs/2);	
-            ctx.fillStyle = isLocked ? '#ef4444' : pal.accent;	
-            ctx.fillRect(dx + gs/2 - 4, dy - gs/2, 8, 4);	
-        } else {	
+        if (viewMode === 'sector') {    
+            ctx.fillStyle = '#0a0a0a'; ctx.fillRect(dx + 2, dy - gs/2 + 2, gs - 4, gs/2);  
+            ctx.fillStyle = isLocked ? '#ef4444' : pal.accent;  
+            ctx.fillRect(dx + gs/2 - 4, dy - gs/2, 8, 4);   
+        } else {    
             ctx.fillStyle = '#171717'; ctx.fillRect(dx, dy-4, gs, gs+4);
-            ctx.fillStyle = isLocked ? '#7f1d1d' : '#334155';	
+            ctx.fillStyle = isLocked ? '#7f1d1d' : '#334155';   
             ctx.fillRect(dx + 4, dy, gs - 8, gs - 4);
-            ctx.fillStyle = 'rgba(255,255,255,0.1)';	
+            ctx.fillStyle = 'rgba(255,255,255,0.1)';    
             ctx.fillRect(dx+4, dy, 2, gs-4);
             ctx.fillRect(dx+gs-6, dy, 2, gs-4);
         }
@@ -3134,14 +3190,14 @@ function drawCurrentLevel(time = 0) {
         if (config.fogEnabled && !isLocationRevealed(data, stair.x, stair.y)) return;
         const sx = stair.x * gs; const sy = stair.y * gs;
         ctx.fillStyle = '#0f0f0f'; ctx.fillRect(sx, sy, gs, gs);
-        ctx.fillStyle = '#a855f7';	
-        for(let i=0; i<gs; i+=6) ctx.fillRect(sx + 4, sy + i, gs - 8, 3);	
+        ctx.fillStyle = '#a855f7';  
+        for(let i=0; i<gs; i+=6) ctx.fillRect(sx + 4, sy + i, gs - 8, 3);   
     });
 
     if (viewMode === 'interior' && data.exit) {
         const ex = data.exit.x * gs; const ey = data.exit.y * gs;
         ctx.fillStyle = 'rgba(250, 204, 21, 0.2)'; ctx.fillRect(ex, ey, gs, gs);
-        ctx.fillStyle = '#facc15';	
+        ctx.fillStyle = '#facc15';  
         for(let i=0; i<3; i++) {
             const oy = (time / 100 + i * 10) % 20;
             ctx.globalAlpha = 1 - (oy/20);
@@ -3175,61 +3231,7 @@ function drawCurrentLevel(time = 0) {
             ctx.fillRect(m.x, m.y, m.size, m.size);
         }
     }
-// WALL RENDER (2.5D) - Only needed for non-cave types to show depth
-if (patternType !== 'cave') {
-    for (let x = 0; x < config.cols; x++) {
-        for (let y = 0; y < config.rows; y++) {
-            const isDecoration = data.decorations && data.decorations.some(d => d.x === x && d.y === y && d.type === 'ruin_building');
 
-            // CRITICAL FIX: Only draw a generic wall if it's a 0 (void) AND NOT taken by a detailed sprite.
-            if (data.grid[x][y] === 0 && !isDecoration) { // KEEP ONLY THIS IF STATEMENT
-                const px = x * gs; const py = y * gs;
-                const wallHeight = gs / 2;
-                const southOpen = (y < config.rows - 1 && data.grid[x][y+1] >= 1);
-                const southRevealed = southOpen && (!config.fogEnabled || isLocationRevealed(data, x, y+1));
-
-                if (southRevealed) {
-                    const grad = ctx.createLinearGradient(px, py+gs-wallHeight, px, py+gs);
-                    grad.addColorStop(0, pal.wall.front);
-                    grad.addColorStop(1, '#0a0a0a');	
-                    ctx.fillStyle = grad;
-                    ctx.fillRect(px, py + gs - wallHeight, gs, wallHeight);
-                    
-                    // Rust/Grime Detail
-                    if ((x+y) % 5 === 0) {
-                        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-                        ctx.fillRect(px + gs/2, py+gs-wallHeight, 2, wallHeight);
-                    }
-
-                    ctx.fillStyle = pal.wall.top;
-                    ctx.fillRect(px, py, gs, gs - wallHeight);
-                    
-                    ctx.fillStyle = pal.wall.highlight;
-                    ctx.fillRect(px, py, gs, 2);	
-                    ctx.fillRect(px, py, 2, gs-wallHeight);	
-                    
-                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-                    ctx.fillRect(px, py+gs, gs, gs*0.4);
-                } else {
-                    let nearRevealed = false;
-                    for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) {
-                        if (x+dx>=0 && x+dx<config.cols && y+dy>=0 && y+dy<config.rows) {
-                            if(data.grid[x+dx][y+dy]>=1 && (!config.fogEnabled || isLocationRevealed(data, x+dx, y+dy))) nearRevealed = true;
-                        }
-                    }
-                    
-                    if(nearRevealed) {
-                        ctx.fillStyle = pal.wall.top;
-                        ctx.fillRect(px, py, gs, gs);
-                        ctx.fillStyle = pal.wall.highlight;
-                        ctx.fillRect(px, py, gs, 2);	
-                        ctx.fillRect(px, py, 2, gs);
-                        ctx.fillStyle = 'rgba(0,0,0,0.3)';	
-                        ctx.fillRect(px + 4, py + 4, gs - 8, gs - 8);
-                    }
-                }
-            }
-        }
     if (data.decorations) for (let deco of data.decorations) {
         if (config.fogEnabled && !isLocationRevealed(data, deco.x, deco.y)) continue;
         
@@ -3242,9 +3244,9 @@ if (patternType !== 'cave') {
         if (deco.type === 'fire_barrel' || deco.type === 'campfire') {
             const flicker = Math.sin(time / 80) * 5 + Math.random() * 3;
             radius = gs * 2.5 + flicker;
-            colorStart = 'rgba(255, 200, 100, 0.6)';	
+            colorStart = 'rgba(255, 200, 100, 0.6)';    
             colorMid = 'rgba(234, 88, 12, 0.2)';
-        }	
+        }   
         else if (deco.type === 'rad_puddle') {
             const pulse = Math.sin(time / 600);
             radius = gs * 2 + (pulse * 10);
@@ -3260,7 +3262,7 @@ if (patternType !== 'cave') {
             if (Math.random() > 0.98) radius = 0;
             else radius = gs * 4 + Math.sin(time / 200)*2;
             colorStart = 'rgba(255, 255, 255, 0.3)';
-            colorMid = 'rgba(224, 242, 254, 0.1)';	
+            colorMid = 'rgba(224, 242, 254, 0.1)';  
         }
         else if (deco.type === 'server_rack') {
             radius = gs * 1.0;
@@ -3282,20 +3284,20 @@ if (patternType !== 'cave') {
     drawCRTEffects(ctx, config.width, config.height);
 
     if (config.showLabels) {
-        ctx.font = "bold 14px 'VT323', monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";	
+        ctx.font = "bold 14px 'VT323', monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";  
         for (let lbl of data.labels) {
             if (config.fogEnabled && !isLocationRevealed(data, Math.floor(lbl.x/config.gridSize), Math.floor(lbl.y/config.gridSize))) continue;
             if (!lbl.visible) continue;
-            const txtW = ctx.measureText(lbl.text).width + 12; const txtH = 20;	
+            const txtW = ctx.measureText(lbl.text).width + 12; const txtH = 20; 
             // Label coordinates (lbl.x, lbl.y) are now relative to the translated context
-            const lx = lbl.x; const ly = lbl.y;	
+            const lx = lbl.x; const ly = lbl.y; 
             
-            ctx.fillStyle = 'rgba(0,0,0,0.85)';	
+            ctx.fillStyle = 'rgba(0,0,0,0.85)'; 
             ctx.fillRect(lx - txtW/2, ly - txtH/2, txtW, txtH);
             
             const isInteractive = viewMode === 'sector' && isEnterable(lbl.text);
-            ctx.strokeStyle = isInteractive ? '#3b82f6' : '#64748b';	
-            ctx.lineWidth = 1;	
+            ctx.strokeStyle = isInteractive ? '#3b82f6' : '#64748b';   
+            ctx.lineWidth = 1;  
             
             // Chromatic Aberration
             const offsets = [{x:-1, c:'rgba(255,0,0,0.7)'}, {x:1, c:'rgba(0,255,255,0.7)'}, {x:0, c: isInteractive ? '#93c5fd' : '#e2e8f0'}];
@@ -3313,7 +3315,7 @@ if (patternType !== 'cave') {
     // --- DRAW TOKENS --- (Tokens are drawn in a new, un-translated context)
     
     for (let t of tokens) {
-        // Token position (t.x, t.y) is in LOGICAL map space.	
+        // Token position (t.x, t.y) is in LOGICAL map space.   
         // We apply the map offset before scaling to position them correctly on the screen.
         const tx = (t.x + mapOffsetX) * RENDER_SCALE;
         const ty = (t.y + mapOffsetY) * RENDER_SCALE;
