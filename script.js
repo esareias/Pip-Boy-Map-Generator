@@ -2584,6 +2584,28 @@ function createRoom(grid, room, conf) {
         }
     }
 }
+function createCorridor(grid, x1, y1, x2, y2, conf) {
+    let x = x1;
+    let y = y1;
+
+    // Horizontal segment
+    while (x !== x2) {
+        if (x >= 0 && y >= 0 && x < conf.cols && y < conf.rows) {
+            grid[x][y] = 1;
+            if (y + 1 < conf.rows) grid[x][y + 1] = 1; // 2‑tile thick corridor
+        }
+        x += (x < x2) ? 1 : -1;
+    }
+
+    // Vertical segment
+    while (y !== y2) {
+        if (x >= 0 && y >= 0 && x < conf.cols && y < conf.rows) {
+            grid[x][y] = 1;
+            if (x + 1 < conf.cols) grid[x + 1][y] = 1; // 2‑tile thick corridor
+        }
+        y += (y < y2) ? 1 : -1;
+    }
+}
 
 function findSafeLabelSpot(roomX, roomY, roomW, roomH, text, stairs) { return { x: Math.floor(roomX + roomW/2), y: Math.floor(roomY + roomH/2) }; }	
 
