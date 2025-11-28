@@ -1168,6 +1168,7 @@ async function init() {
 function zoomIn() {
     if (zoomLevel < MAX_ZOOM) {
         zoomLevel += 0.25;
+        document.getElementById('zoomDisplay').innerText = Math.round(zoomLevel * 100) + '%';
         drawCurrentLevel();
     }
 }
@@ -1175,6 +1176,7 @@ function zoomIn() {
 function zoomOut() {
     if (zoomLevel > MIN_ZOOM) {
         zoomLevel -= 0.25;
+        document.getElementById('zoomDisplay').innerText = Math.round(zoomLevel * 100) + '%';
         drawCurrentLevel();
     }
 }
@@ -1320,11 +1322,12 @@ function handleMouseMove(e) {
         
         // --- Panning Constraint (Prevent map from disappearing entirely) ---
         // Max movement allowed outside the canvas boundary (1/2 canvas size)
-        const maxOverhang = config.width / 2;	
+        const maxOverhang = config.mapWidth / 2;
         const maxPanX = maxOverhang;
-        const minPanX = -config.width + maxOverhang;
+        const minPanX = -config.mapWidth + maxOverhang;
         const maxPanY = maxOverhang;
-        const minPanY = -config.height + maxOverhang;
+        const minPanY = -config.mapHeight + maxOverhang;
+
         
         mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
         mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
