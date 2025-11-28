@@ -3934,15 +3934,26 @@ function drawCurrentLevel(time = 0) {
         const tokenRadius = 15 * RENDER_SCALE;
         
         if (t.img && t.img.complete) {
-            // Draw Image Token (if available)
+            // Save context state
+            ctx.save();
+            
+            // Create circular clipping path
+            ctx.beginPath();
+            ctx.arc(tx, ty, tokenRadius, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.clip(); // Clip to circle
+            
+            // Draw the image (it will be cropped to the circle)
             const imgSize = tokenRadius * 2;
             ctx.drawImage(t.img, tx - tokenRadius, ty - tokenRadius, imgSize, imgSize);
-
-            // Add color ring/border for visibility
+            
+            ctx.restore(); // Restore state (removes clipping)
+            
+            // Now draw the colored ring border AFTER the image
             ctx.strokeStyle = t.color;
             ctx.lineWidth = 2 * RENDER_SCALE;
             ctx.beginPath();
-            ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2);
+            ctx.arc(tx, ty, tokenRadius, 0, Math.PI * 2);
             ctx.stroke();
 
         } else {
