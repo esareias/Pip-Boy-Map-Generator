@@ -1223,7 +1223,7 @@ function animate(time) {
 
 // --- NEW MOUSE HANDLER IMPLEMENTATION ---
 
-function function handleMouseDown(e) {
+function handleMouseDown(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
