@@ -1323,27 +1323,15 @@ const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
         mapOffsetX += dx / (RENDER_SCALE * zoomLevel); // Account for zoom in panning
         mapOffsetY += dy / (RENDER_SCALE * zoomLevel);
         
-// --- Panning Constraint: Prevent map from disappearing entirely ---
-// Adjust pan limits based on zoom (when zoomed in, viewport is smaller, so you can pan further)
-const viewportWidth = config.width / zoomLevel;
-const viewportHeight = config.height / zoomLevel;
+// --- Panning Constraint: Map and viewport are same size, so no complex math needed ---
+const maxPanX = config.mapWidth / 2;
+const minPanX = -config.mapWidth / 2;
+const maxPanY = config.mapHeight / 2;
+const minPanY = -config.mapHeight / 2;
 
-// Only allow panning if the map is bigger than the viewport
-if (config.mapWidth > viewportWidth) {
-    const maxPanX = (config.mapWidth - viewportWidth) / 2;
-    const minPanX = -maxPanX;
-    mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
-} else {
-    mapOffsetX = 0;
-}
+mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
+mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
 
-if (config.mapHeight > viewportHeight) {
-    const maxPanY = (config.mapHeight - viewportHeight) / 2;
-    const minPanY = -maxPanY;
-    mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
-} else {
-    mapOffsetY = 0;
-}
 
         lastPanX = e.clientX;
         lastPanY = e.clientY;
