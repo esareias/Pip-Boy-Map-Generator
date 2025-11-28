@@ -1783,7 +1783,7 @@ function generateInterior(key, name) {
 function clearCurrentLevel() { floorData[currentLevelIndex] = null; log(`LEVEL DATA CLEARED`, '#ef4444'); }
 function purgeAll() { setTimeout(() => { floorData = {}; interiorData = {}; lootLog.innerHTML = ""; currentLevelIndex = 0; viewMode = 'sector'; changeLevel(0); generateCurrentLevel(); log("SYSTEM PURGE COMPLETE", '#ef4444'); }, 500); }
 
-function exportReport() {
+function function exportReport() {
   const textArea = document.getElementById('reportArea');
   const type = document.getElementById('mapType').value.toUpperCase();
   let report = `LOCATION ANALYSIS: ${type}\n\n`;
@@ -1792,32 +1792,40 @@ function exportReport() {
     if(floorData[i]) {
       report += `${LEVELNAMES[i]}\n--------------------------------\n`;
       
-      // NEW: Separate section for enterable locations
-      const enterableLocations = floorData[i].labels.filter(lbl => isEnterable(lbl.text));
-      if (enterableLocations.length > 0) {
-        report += `\nENTERABLE LOCATIONS:\n`;
-        enterableLocations.forEach(lbl => {
+      // Check if labels exist
+      if(floorData[i].labels && floorData[i].labels.length > 0) {
+        // NEW: Separate section for enterable locations
+        const nonStairsLabels = floorData[i].labels.filter(lbl => 
+          !lbl.text.includes('STAIRS') && 
+          !lbl.text.includes('Street') && 
+          !lbl.text.includes('Road') &&
+          !lbl.text.includes('Alley')
+        );
+        
+        if (nonStairsLabels.length > 0) {
+          report += `\nENTERABLE LOCATIONS:\n`;
+          nonStairsLabels.forEach(lbl => {
+            report += `  - ${lbl.text} [GRID: ${Math.floor(lbl.x/config.gridSize)},${Math.floor(lbl.y/config.gridSize)}]\n`;
+          });
+          report += `\n`;
+        }
+        
+        // All labels
+        report += `ALL MAP FEATURES:\n`;
+        floorData[i].labels.forEach(lbl => {
           report += `  - ${lbl.text} [GRID: ${Math.floor(lbl.x/config.gridSize)},${Math.floor(lbl.y/config.gridSize)}]\n`;
         });
         report += `\n`;
       }
       
-      // All labels (including non-enterable like stairs, streets, etc.)
-      report += `ALL MAP FEATURES:\n`;
-      floorData[i].labels.forEach(lbl => {
-        const enterable = isEnterable(lbl.text) ? " [ENTERABLE]" : "";
-        report += `  - ${lbl.text}${enterable} [GRID: ${Math.floor(lbl.x/config.gridSize)},${Math.floor(lbl.y/config.gridSize)}]\n`;
-      });
-      
       // Loot containers
-      if(floorData[i].loot) {
-        report += `\nLOOT CONTAINERS:\n`;
+      if(floorData[i].loot && floorData[i].loot.length > 0) {
+        report += `LOOT CONTAINERS:\n`;
         floorData[i].loot.forEach(l => {
           report += `  - ${l.containerName}: ${l.contents.map(c => c.n).join(', ')}\n`;
         });
+        report += `\n`;
       }
-      
-      report += `\n`;
     }
   }
   
