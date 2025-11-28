@@ -1328,10 +1328,9 @@ const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
 const viewportWidth = config.width / zoomLevel;
 const viewportHeight = config.height / zoomLevel;
 const maxPanX = (config.mapWidth - viewportWidth) / 2;
-const minPanX = -(config.mapWidth - viewportWidth) / 2;
+const minPanX = -maxPanX;
 const maxPanY = (config.mapHeight - viewportHeight) / 2;
-const minPanY = -(config.mapHeight - viewportHeight) / 2;
-
+const minPanY = -maxPanY;
         
         mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
         mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
@@ -1444,8 +1443,8 @@ function handleCanvasAction(e) {
     const rawY = (e.clientY - rect.top) * scaleY;
     
     // Logical coords for interaction (must be corrected by map offset)
-    const logicalMouseX = rawX / RENDER_SCALE;
-    const logicalMouseY = rawY / RENDER_SCALE;
+ const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
+const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
 
     const pannedLogicalX = logicalMouseX - mapOffsetX;
     const pannedLogicalY = logicalMouseY - mapOffsetY;
