@@ -3968,7 +3968,7 @@ ctx.fillRect(0, 0, config.mapWidth, config.mapHeight);
         // Token position needs to account for zoom AND pan
         const tx = (t.x + mapOffsetX) * zoomLevel;
         const ty = (t.y + mapOffsetY) * zoomLevel;
-        const tokenRadius = 15;
+const tokenRadius = 15 * zoomLevel;
         
         if (t.img && t.img.complete) {
             ctx.save();
