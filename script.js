@@ -4011,7 +4011,6 @@ ctx.scale(RENDER_SCALE * zoomLevel, RENDER_SCALE * zoomLevel);
     
     ctx.restore();
       // --- DRAW CRT EFFECTS --- (on top of everything, at canvas size)
-    drawCRTEffects(ctx, canvas.width / RENDER_SCALE, canvas.height / RENDER_SCALE);
 }
 
 // --- GLOBAL EXPOSURE FOR INLINE HTML HANDLERS ---
