@@ -3932,14 +3932,14 @@ ctx.fillRect(0, 0, config.mapWidth, config.mapHeight);
     ctx.globalCompositeOperation = 'source-over';
 
     if (config.showLabels) {
-ctx.font = `bold ${14 / zoomLevel}px 'VT323', monospace`;
+ctx.font = `bold ${40 / zoomLevel}px 'VT323', monospace`;
 ctx.textAlign = "center";
 ctx.textBaseline = "middle";
         for (let lbl of data.labels) {
             if (config.fogEnabled && !isLocationRevealed(data, Math.floor(lbl.x/config.gridSize), Math.floor(lbl.y/config.gridSize))) continue;
             if (!lbl.visible) continue;
-const txtW = ctx.measureText(lbl.text).width + (12 / zoomLevel);
-const txtH = 20 / zoomLevel;
+const txtW = ctx.measureText(lbl.text).width + (36 / zoomLevel);
+const txtH = 44 / zoomLevel;
             // Label coordinates (lbl.x, lbl.y) are now relative to the translated context
             const lx = lbl.x; const ly = lbl.y;	
             
@@ -3948,7 +3948,7 @@ const txtH = 20 / zoomLevel;
             
             const isInteractive = viewMode === 'sector' && isEnterable(lbl.text);
             ctx.strokeStyle = isInteractive ? '#3b82f6' : '#64748b';	
-ctx.lineWidth = 1 / zoomLevel;
+ctx.lineWidth = 2 / zoomLevel;
             
             // Chromatic Aberration
             const offsets = [{x:-1, c:'rgba(255,0,0,0.7)'}, {x:1, c:'rgba(0,255,255,0.7)'}, {x:0, c: isInteractive ? '#93c5fd' : '#e2e8f0'}];
