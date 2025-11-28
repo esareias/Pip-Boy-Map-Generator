@@ -131,12 +131,21 @@
         <div class="flex flex-col mt-4">
             <div class="flex flex-wrap justify-between items-start mb-2 gap-2">
                 <div class="flex flex-col gap-2">
-                    <div class="flex gap-2">
-                        <button onclick="toggleLabels()" id="labelBtn" class="pip-btn text-sm">[ LABELS ]</button>
-                        <button onclick="toggleFog()" id="fogBtn" class="pip-btn text-sm border-yellow-600 text-yellow-600 hover:bg-yellow-900">[ FOG ]</button>
-                        <button onclick="downloadMap()" class="pip-btn text-sm">[ SAVE IMG ]</button>
-                        <button onclick="recordClip()" id="recBtn" class="pip-btn text-sm border-red-500 text-red-500 animate-pulse hover:bg-red-900">[ REC CLIP ]</button>
-                    </div>
+                    <div class="flex gap-2 flex-wrap">
+    <button onclick="toggleLabels()" id="labelBtn" class="pip-btn text-sm">[ LABELS ]</button>
+    <button onclick="toggleFog()" id="fogBtn" class="pip-btn text-sm border-yellow-600 text-yellow-600 hover:bg-yellow-900">[ FOG ]</button>
+    
+    <!-- NEW ZOOM CONTROLS -->
+    <div class="flex gap-1 items-center border border-[var(--dim-color)] px-2 bg-black/40">
+        <button onclick="zoomOut()" class="pip-btn text-sm px-2 py-0">−</button>
+        <span id="zoomDisplay" class="text-sm font-bold opacity-80 min-w-[3rem] text-center">100%</span>
+        <button onclick="zoomIn()" class="pip-btn text-sm px-2 py-0">+</button>
+    </div>
+    
+    <button onclick="downloadMap()" class="pip-btn text-sm">[ SAVE IMG ]</button>
+    <button onclick="recordClip()" id="recBtn" class="pip-btn text-sm border-red-500 text-red-500 animate-pulse hover:bg-red-900">[ REC CLIP ]</button>
+</div>
+
             
                 </div>
                 <button onclick="exportReport()" class="pip-btn text-sm font-bold border-blue-400 text-blue-400 hover:bg-blue-900">[ EXPORT DATA ]</button>
