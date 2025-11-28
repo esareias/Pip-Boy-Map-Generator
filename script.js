@@ -3959,10 +3959,6 @@ ctx.scale(RENDER_SCALE * zoomLevel, RENDER_SCALE * zoomLevel);
         }
     }
     
-    ctx.restore(); // Restore from scaled/translated map context
-    ctx.save(); // Save again for UI overlay
-
-// Restore context to remove zoom and pan transformations
     ctx.restore();
     
     // --- DRAW TOKENS --- (Tokens are drawn in a new, un-zoomed context)
