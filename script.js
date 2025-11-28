@@ -3957,63 +3957,59 @@ ctx.scale(RENDER_SCALE * zoomLevel, RENDER_SCALE * zoomLevel);
     
     ctx.restore(); // Restore from scaled/translated map context
     ctx.save(); // Save again for UI overlay
+
+// Restore context to remove zoom and pan transformations
+    ctx.restore();
     
-    // --- DRAW TOKENS --- (Tokens are drawn in a new, un-translated context)
+    // --- DRAW TOKENS --- (Tokens are drawn in a new, un-zoomed context)
+    ctx.save();
+    ctx.scale(RENDER_SCALE, RENDER_SCALE); // Scale but NO zoom
     
     for (let t of tokens) {
-        // Token position (t.x, t.y) is in LOGICAL map space.	
-        // We apply the map offset before scaling to position them correctly on the screen.
-        const tx = (t.x + mapOffsetX) * RENDER_SCALE;
-        const ty = (t.y + mapOffsetY) * RENDER_SCALE;
-        const tokenRadius = 15 * RENDER_SCALE;
+        // Token position needs to account for zoom AND pan
+        const tx = (t.x + mapOffsetX) * zoomLevel;
+        const ty = (t.y + mapOffsetY) * zoomLevel;
+        const tokenRadius = 15;
         
         if (t.img && t.img.complete) {
-            // Save context state
             ctx.save();
             
-            // Create circular clipping path
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius, 0, Math.PI * 2);
             ctx.closePath();
-            ctx.clip(); // Clip to circle
+            ctx.clip();
             
-            // Draw the image (it will be cropped to the circle)
             const imgSize = tokenRadius * 2;
             ctx.drawImage(t.img, tx - tokenRadius, ty - tokenRadius, imgSize, imgSize);
             
-            ctx.restore(); // Restore state (removes clipping)
+            ctx.restore();
             
-            // Now draw the colored ring border AFTER the image
             ctx.strokeStyle = t.color;
-            ctx.lineWidth = 2 * RENDER_SCALE;
+            ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius, 0, Math.PI * 2);
             ctx.stroke();
 
         } else {
-            // Draw default dot/disc
             ctx.fillStyle = t.color;
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius * 0.8, 0, Math.PI*2);
             ctx.fill();
             
-            // Draw Pulse/Glow
             ctx.strokeStyle = t.color;
-            ctx.lineWidth = 2 * RENDER_SCALE;
+            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(tx, ty, (10 + Math.sin(time/200)*2) * RENDER_SCALE, 0, Math.PI*2);
+            ctx.arc(tx, ty, (10 + Math.sin(time/200)*2), 0, Math.PI*2);
             ctx.stroke();
         }
 
-        // Draw Label
         ctx.fillStyle = '#fff';
-        ctx.font = `bold ${16 * RENDER_SCALE}px monospace`;
+        ctx.font = `bold 16px monospace`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(t.label, tx, ty + tokenRadius + 4 * RENDER_SCALE); // Label below token
+        ctx.fillText(t.label, tx, ty + tokenRadius + 4);
     }
     
-    // Restore the UI overlay context
     ctx.restore();
 }
 
