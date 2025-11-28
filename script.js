@@ -1790,7 +1790,7 @@ function exportReport() {
   
   for(let i = -2; i <= 2; i++) {
     if(floorData[i]) {
-      report += `${LEVELNAMES[i]}\n--------------------------------\n`;
+      report += `${LEVEL_NAMES[i]}\n--------------------------------\n`;
       
       // Check if labels exist
       if(floorData[i].labels && floorData[i].labels.length > 0) {
