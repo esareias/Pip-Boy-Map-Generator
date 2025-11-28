@@ -3931,7 +3931,6 @@ ctx.scale(RENDER_SCALE * zoomLevel, RENDER_SCALE * zoomLevel);
     }
     
     ctx.globalCompositeOperation = 'source-over';
-    drawCRTEffects(ctx, config.width, config.height);
 
     if (config.showLabels) {
         ctx.font = "bold 14px 'VT323', monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";	
@@ -4011,6 +4010,8 @@ ctx.scale(RENDER_SCALE * zoomLevel, RENDER_SCALE * zoomLevel);
     }
     
     ctx.restore();
+      // --- DRAW CRT EFFECTS --- (on top of everything, at canvas size)
+    drawCRTEffects(ctx, canvas.width / RENDER_SCALE, canvas.height / RENDER_SCALE);
 }
 
 // --- GLOBAL EXPOSURE FOR INLINE HTML HANDLERS ---
