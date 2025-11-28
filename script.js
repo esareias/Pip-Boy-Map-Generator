@@ -3936,20 +3936,45 @@ ctx.fillRect(0, 0, config.mapWidth, config.mapHeight);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     
-    // SET MAXIMUM TEXT BOX WIDTH HERE (in pixels)
-    const MAX_LABEL_WIDTH = 180 / zoomLevel; // Adjust this value to your preference
+    const MAX_LABEL_WIDTH = 180 / zoomLevel;
+    const LINE_HEIGHT = 40 / zoomLevel; // Spacing between lines
     
     for (let lbl of data.labels) {
         if (config.fogEnabled && !isLocationRevealed(data, Math.floor(lbl.x/config.gridSize), Math.floor(lbl.y/config.gridSize))) continue;
         if (!lbl.visible) continue;
         
-        // Constrain text width to maximum
-        const measuredWidth = ctx.measureText(lbl.text).width;
-        const txtW = Math.min(measuredWidth + (36 / zoomLevel), MAX_LABEL_WIDTH);
-        const txtH = 44 / zoomLevel;
+        // Split text into lines if too long
+        let lines = [];
+        let measuredWidth = ctx.measureText(lbl.text).width;
+        
+        if (measuredWidth + (36 / zoomLevel) > MAX_LABEL_WIDTH) {
+            // Split by spaces and wrap
+            const words = lbl.text.split(' ');
+            let currentLine = '';
+            
+            for (let word of words) {
+                const testLine = currentLine ? currentLine + ' ' + word : word;
+                const testWidth = ctx.measureText(testLine).width;
+                
+                if (testWidth + (36 / zoomLevel) > MAX_LABEL_WIDTH && currentLine) {
+                    lines.push(currentLine);
+                    currentLine = word;
+                } else {
+                    currentLine = testLine;
+                }
+            }
+            if (currentLine) lines.push(currentLine);
+        } else {
+            lines = [lbl.text];
+        }
+        
+        // Calculate box dimensions based on number of lines
+        const maxLineWidth = Math.max(...lines.map(line => ctx.measureText(line).width));
+        const txtW = Math.min(maxLineWidth + (36 / zoomLevel), MAX_LABEL_WIDTH);
+        const txtH = (44 / zoomLevel) + ((lines.length - 1) * LINE_HEIGHT);
         
         const lx = lbl.x; 
-        const ly = lbl.y;    
+        const ly = lbl.y;
         
         ctx.fillStyle = 'rgba(0,0,0,0.85)';    
         ctx.fillRect(lx - txtW/2, ly - txtH/2, txtW, txtH);
@@ -3958,16 +3983,21 @@ ctx.fillRect(0, 0, config.mapWidth, config.mapHeight);
         ctx.strokeStyle = isInteractive ? '#3b82f6' : '#64748b';    
         ctx.lineWidth = 2 / zoomLevel;
         
-        // Chromatic Aberration - now uses maxWidth to constrain text rendering
-        const maxTextWidth = txtW - (20 / zoomLevel); // Leave some padding
+        // Draw each line with chromatic aberration
         const offsets = [{x:-1, c:'rgba(255,0,0,0.7)'}, {x:1, c:'rgba(0,255,255,0.7)'}, {x:0, c: isInteractive ? '#93c5fd' : '#e2e8f0'}];
-        for(let o of offsets) {
-            ctx.fillStyle = o.c;
-            ctx.fillText(lbl.text, lx + o.x, ly, maxTextWidth); // Added maxWidth parameter
+        
+        for (let i = 0; i < lines.length; i++) {
+            const lineY = ly - (txtH/2) + (22 / zoomLevel) + (i * LINE_HEIGHT);
+            for(let o of offsets) {
+                ctx.fillStyle = o.c;
+                ctx.fillText(lines[i], lx + o.x, lineY);
+            }
         }
+        
         ctx.strokeRect(lx - txtW/2, ly - txtH/2, txtW, txtH);
     }
 }
+
 
     
     ctx.restore();
