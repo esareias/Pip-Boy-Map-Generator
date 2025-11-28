@@ -25,9 +25,9 @@ const characterSelectScreen = document.getElementById('characterSelectScreen');
 const RENDER_SCALE = 2;	
 const MINIMAL_MOVEMENT_THRESHOLD = 5; // Pixels for drag vs click determination
 let config = {
-    width: 800,          // Canvas display size
-    height: 600,
-    mapWidth: 1600,      // NEW: Actual map size (2x larger)
+    width: 1600,       // Make display match map size!
+    height: 1200,
+    mapWidth: 1600,    
     mapHeight: 1200,
     cols: 0,
     rows: 0,
