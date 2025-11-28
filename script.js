@@ -1324,12 +1324,13 @@ const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
         mapOffsetY += dy / (RENDER_SCALE * zoomLevel);
         
         // --- Panning Constraint (Prevent map from disappearing entirely) ---
-        // Max movement allowed outside the canvas boundary (1/2 canvas size)
-        const maxOverhang = config.mapWidth / 2;
-        const maxPanX = maxOverhang;
-        const minPanX = -config.mapWidth + maxOverhang;
-        const maxPanY = maxOverhang;
-        const minPanY = -config.mapHeight + maxOverhang;
+       // Adjust pan limits based on zoom (when zoomed in, viewport is smaller, so you can pan further)
+const viewportWidth = config.width / zoomLevel;
+const viewportHeight = config.height / zoomLevel;
+const maxPanX = (config.mapWidth - viewportWidth) / 2;
+const minPanX = -(config.mapWidth - viewportWidth) / 2;
+const maxPanY = (config.mapHeight - viewportHeight) / 2;
+const minPanY = -(config.mapHeight - viewportHeight) / 2;
 
         
         mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
@@ -1500,17 +1501,18 @@ function handleCanvasAction(e) {
 
     // --- GM ONLY ACTIONS BELOW ---
 
-    // FOG REVEAL
-    if (config.fogEnabled && data.rooms) {
-        const room = data.rooms.find(r => gridX >= r.x && gridX < r.x + r.w && gridY >= r.y && gridY < r.y + r.h);
-        if (room && !room.visited) {
-            room.visited = true;
-            log(`SECTOR REVEALED: ${room.name || 'UNKNOWN'}`, 'var(--pip-green)');
-            clicked = true;
-            syncData();	
-            return;
-        }
+// FOG REVEAL
+if (config.fogEnabled && data.rooms) {
+    const room = data.rooms.find(r => gridX >= r.x && gridX < r.x + r.w && gridY >= r.y && gridY < r.y + r.h);
+    if (room && !room.visited) {
+        room.visited = true;
+        log(`SECTOR REVEALED: ${room.name || 'UNKNOWN'}`, 'var(--pip-green)');
+        clicked = true;
+        drawCurrentLevel();  // ADD THIS LINE
+        syncData();	
+        return;
     }
+}
 
     // --- LOOT INTERACTION (GM ONLY) ---
     if (data.loot) {
