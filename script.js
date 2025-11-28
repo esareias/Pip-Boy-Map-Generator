@@ -988,8 +988,9 @@ async function init() {
     // --------------------------------------------------
 
     // Set High Resolution Canvas
-    canvas.width = config.width * RENDER_SCALE;
-    canvas.height = config.height * RENDER_SCALE;
+   canvas.width = config.width * RENDER_SCALE;  // Keep canvas display at 800x600
+canvas.height = config.height * RENDER_SCALE;
+
     ctx.imageSmoothingEnabled = false;
 
     // FIX: Calculate cols/rows based on fixed gridSize (24) on startup
@@ -1222,12 +1223,14 @@ function animate(time) {
 
 // --- NEW MOUSE HANDLER IMPLEMENTATION ---
 
-function handleMouseDown(e) {
+function function handleMouseDown(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const logicalMouseX = (e.clientX - rect.left) * scaleX / RENDER_SCALE;
-    const logicalMouseY = (e.clientY - rect.top) * scaleY / RENDER_SCALE;
+    
+    // Account for zoom when converting mouse to logical coordinates
+   const logicalMouseX = (e.clientX - rect.left) * scaleX / (RENDER_SCALE * zoomLevel);
+const logicalMouseY = (e.clientY - rect.top) * scaleY / (RENDER_SCALE * zoomLevel);
     
     // Correct the mouse position based on the current pan offset
     const pannedLogicalX = logicalMouseX - mapOffsetX;
@@ -1294,9 +1297,9 @@ function handleMouseMove(e) {
     const rawX = (e.clientX - rect.left) * scaleX;
     const rawY = (e.clientY - rect.top) * scaleY;
 
-    // Logical coords for flashlight (unscaled, un-offset)
-    const logicalMouseX = rawX / RENDER_SCALE;
-    const logicalMouseY = rawY / RENDER_SCALE;
+    // Logical coords for flashlight (account for zoom)
+    const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
+    const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
     
     // *** Panned Logical Coordinates for Map Interaction ***
     const pannedLogicalX = logicalMouseX - mapOffsetX;
@@ -1317,8 +1320,8 @@ function handleMouseMove(e) {
         const dx = e.clientX - lastPanX;
         const dy = e.clientY - lastPanY;
         
-        mapOffsetX += dx / RENDER_SCALE; // Pan must be applied in logical canvas space
-        mapOffsetY += dy / RENDER_SCALE;
+        mapOffsetX += dx / (RENDER_SCALE * zoomLevel); // Account for zoom in panning
+        mapOffsetY += dy / (RENDER_SCALE * zoomLevel);
         
         // --- Panning Constraint (Prevent map from disappearing entirely) ---
         // Max movement allowed outside the canvas boundary (1/2 canvas size)
@@ -1338,6 +1341,7 @@ function handleMouseMove(e) {
         drawCurrentLevel();
         return;
     }
+
 
     // 2. TOOLTIP CHECK (Uses pannedLogicalX/Y for hit testing)
     const data = (viewMode === 'interior') ? interiorData[currentInteriorKey] : floorData[currentLevelIndex];
