@@ -4022,11 +4022,11 @@ ctx.scale(RENDER_SCALE * zoomLevel, RENDER_SCALE * zoomLevel);
 window.init = init;
 window.hostSession = hostSession;
 window.joinSession = joinSession;
-window.openGMTokenDeploy = openGMTokenDeploy; // Renamed
-window.closeGMTokenDeploy = closeGMTokenDeploy; // Renamed
+window.openGMTokenDeploy = openGMTokenDeploy;
+window.closeGMTokenDeploy = closeGMTokenDeploy;
 window.spawnCustomToken = spawnCustomToken;
 window.spawnToken = spawnToken;
-window.selectCharacter = selectCharacter; // New character selector
+window.selectCharacter = selectCharacter;
 window.updateHelperText = updateHelperText;
 window.generateCurrentLevel = generateCurrentLevel;
 window.changeLevel = changeLevel;
@@ -4041,7 +4041,11 @@ window.exportReport = exportReport;
 window.closeModal = closeModal;
 window.copyReport = copyReport;
 window.copyHostId = copyHostId;
-window.sendChatMessage = sendChatMessage; // EXPOSED CHAT FUNCTION
+window.sendChatMessage = sendChatMessage;
+window.zoomIn = zoomIn;
+window.zoomOut = zoomOut;
+
+
 
 // Expose new pan functions for debugging/testing
 window.handleMouseDown = handleMouseDown;
