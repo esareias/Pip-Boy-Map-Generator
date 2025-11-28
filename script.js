@@ -3858,8 +3858,8 @@ ctx.scale(RENDER_SCALE * zoomLevel, RENDER_SCALE * zoomLevel);
 
     // --- LIGHTING ENGINE (Volumetric Pass) ---
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.fillRect(0, 0, config.width, config.height);
-
+ctx.fillRect(0, 0, config.mapWidth, config.mapHeight);
+    
     ctx.globalCompositeOperation = 'lighter';
 
     // Interactive Flashlight (position must be translated back relative to the view)
