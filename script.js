@@ -612,14 +612,27 @@ function updateHelperText() {
     config.mapType = document.getElementById('mapType').value;
     const type = config.mapType;
     const helper = document.getElementById('densityHelper');
-    let subject = "ROOM COUNT";
-    if (type === 'ruins') subject = "BUILDING COUNT";
-    if (type === 'cave') subject = "TUNNEL FILL";
-    helper.innerText = `ADJUSTS: ${subject}`;
-    if (type !== 'vault' && currentLevelIndex > 0) {
-        currentLevelIndex = 0; changeLevel(0);	
-        log("WARN: UPPER LEVELS RESTRICTED FOR THIS SECTOR.", "var(--pip-amber)");
+    
+    let subject = 'ROOM COUNT';
+    if(type === 'ruins') subject = 'BUILDING COUNT';
+    if(type === 'cave') subject = 'TUNNEL FILL';
+    helper.innerText = `ADJUSTS ${subject}`;
+    
+    if(type !== 'vault') {
+        // For non-vault locations, reset to ground floor and clear other levels
+        currentLevelIndex = 0;
+        changeLevel(0);
+        
+        // Clear all non-ground levels
+        for(let i = -2; i <= 2; i++) {
+            if(i !== 0) {
+                floorData[i] = null;
+            }
+        }
+        
+        log(`SECTOR RESET: Ground level only.`, 'var(--pip-amber)');
     } else {
+        // For vaults, just update controls (keeps all levels)
         updateLevelControls();
     }
 }
