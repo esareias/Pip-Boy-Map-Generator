@@ -24,7 +24,20 @@ const characterSelectScreen = document.getElementById('characterSelectScreen');
 // Configuration
 const RENDER_SCALE = 2;	
 const MINIMAL_MOVEMENT_THRESHOLD = 5; // Pixels for drag vs click determination
-let config = { width: 800, height: 600, cols: 0, rows: 0, gridSize: 24, mapType: 'vault', wallColor: '#16ff60', bgColor: '#050505', showLabels: true, fogEnabled: true };
+let config = {
+    width: 800,          // Canvas display size
+    height: 600,
+    mapWidth: 1600,      // NEW: Actual map size (2x larger)
+    mapHeight: 1200,
+    cols: 0,
+    rows: 0,
+    gridSize: 24,
+    mapType: 'vault',
+    wallColor: '#16ff60',
+    bgColor: '#050505',
+    showLabels: true,
+    fogEnabled: true
+};
 
 // Runtime State
 let tumbleweeds = [];
@@ -35,12 +48,16 @@ let userName = "Traveler"; // Global name for chat
 let playerToken = null; // Stores the selected character's name/color/src for chat/map identity
 
 // --- NEW PANNING STATE ---
-let mapOffsetX = 0; // Current global map offset X (in logical pixels)
-let mapOffsetY = 0; // Current global map offset Y (in logical pixels)
+let mapOffsetX = 0;
+let mapOffsetY = 0;
 let isPanning = false;
 let lastPanX = 0;
 let lastPanY = 0;
-// -------------------------
+
+// --- NEW ZOOM STATE ---
+let zoomLevel = 1.0;  // ADD THIS
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 2.0;
 
 // --- Track last loot click for GM override ---
 let lastLootClick = { x: -1, y: -1, time: 0 };
@@ -976,8 +993,8 @@ async function init() {
     ctx.imageSmoothingEnabled = false;
 
     // FIX: Calculate cols/rows based on fixed gridSize (24) on startup
-    config.cols = Math.floor(config.width / config.gridSize);
-    config.rows = Math.floor(config.height / config.gridSize);
+    config.cols = Math.floor(config.mapWidth / config.gridSize);   // Use mapWidth
+    config.rows = Math.floor(config.mapHeight / config.gridSize);  // Use mapHeight
 
     // --- PROCEDURAL FOG TEXTURE GENERATION (Enhanced) ---
     cloudCanvas = document.createElement('canvas');
@@ -1146,6 +1163,20 @@ async function init() {
     // --- CHARACTER SELECTION GATE (Start flow) ---
     showLoginScreen();
     // ----------------------------------------------
+}
+
+function zoomIn() {
+    if (zoomLevel < MAX_ZOOM) {
+        zoomLevel += 0.25;
+        drawCurrentLevel();
+    }
+}
+
+function zoomOut() {
+    if (zoomLevel > MIN_ZOOM) {
+        zoomLevel -= 0.25;
+        drawCurrentLevel();
+    }
 }
 
 function animate(time) {
@@ -3449,7 +3480,7 @@ function drawCurrentLevel(time = 0) {
     
     // BEGIN SCALED RENDER
     ctx.save();
-    ctx.scale(RENDER_SCALE, RENDER_SCALE);
+ctx.scale(RENDER_SCALE * zoomLevel, RENDER_SCALE * zoomLevel);
     
     // *** NEW: Apply Pan Offset to the map drawing coordinate system ***
     ctx.translate(mapOffsetX, mapOffsetY);
