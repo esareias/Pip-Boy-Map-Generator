@@ -1783,7 +1783,7 @@ function generateInterior(key, name) {
 function clearCurrentLevel() { floorData[currentLevelIndex] = null; log(`LEVEL DATA CLEARED`, '#ef4444'); }
 function purgeAll() { setTimeout(() => { floorData = {}; interiorData = {}; lootLog.innerHTML = ""; currentLevelIndex = 0; viewMode = 'sector'; changeLevel(0); generateCurrentLevel(); log("SYSTEM PURGE COMPLETE", '#ef4444'); }, 500); }
 
-function function exportReport() {
+function exportReport() {
   const textArea = document.getElementById('reportArea');
   const type = document.getElementById('mapType').value.toUpperCase();
   let report = `LOCATION ANALYSIS: ${type}\n\n`;
