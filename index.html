@@ -23,7 +23,7 @@
         <div class="bg-[#1a1c1a] border-2 border-[var(--main-color)] p-8 w-full max-w-2xl shadow-[0_0_50px_var(--dim-color)] text-[var(--main-color)] text-center">
             <h2 class="text-4xl font-bold mb-4" id="selectionTitle">SELECT UNIT DESIGNATION</h2>
             <p class="text-lg opacity-70 mb-8" id="selectionSubtitle">CHOOSE YOUR ROLE: OVERSEER (HOST) OR A FIELD AGENT (CLIENT).</p>
-            
+
             <div id="joinInterface" class="hidden-ui flex flex-col items-center mb-6">
                 <p class="text-xl mb-4">ENTER OVERSEER ID TO JOIN SESSION:</p>
                 <div class="flex gap-2 justify-center">
@@ -34,7 +34,7 @@
 
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-6 mb-6" id="initialTokenGrid">
                 </div>
-            
+
             <div class="ui-line"></div>
             <p class="text-xs opacity-50 mt-4">Note: Host ID is automatically generated upon selecting the Overseer role.</p>
         </div>
@@ -55,12 +55,12 @@
             <div class="flex gap-2 items-center">
                 <span class="pip-label text-sm">NETWORK UPLINK:</span>
                 <button onclick="hostSession()" id="hostBtn" class="pip-btn text-sm border-green-500 text-green-500 hidden-ui">[ HOST ]</button>
-                
+
                 <div id="hostIdDisplay" class="flex gap-2 items-center hidden-ui border border-[var(--pip-green-dim)] p-1 rounded-sm">
                     <span id="currentHostId" class="text-lg font-bold"></span>
                     <button onclick="copyHostId()" class="pip-btn text-sm px-2 py-1 border-gray-400 text-gray-400 hover:bg-gray-800">[ COPY ]</button>
                 </div>
-                
+
                 <input type="text" id="joinInput" placeholder="ENTER ID..." class="pip-input text-sm w-32 hidden-ui">
                 <button onclick="joinSession()" id="joinBtn" class="pip-btn text-sm border-blue-500 text-blue-500 hidden-ui">[ JOIN ]</button>
                 <span id="netStatus" class="text-xs opacity-50 ml-2">OFFLINE</span>
@@ -104,7 +104,7 @@
 
         <div class="screen-container" id="screenContainer">
             <div id="tooltip"></div>
-            
+
             <div class="tracking-line"></div>
             <div class="crt-flicker"></div>
 
@@ -121,9 +121,9 @@
             </div>
 
 <canvas id="mapCanvas" width="3200" height="2400"></canvas>
-            
+
             <div class="absolute inset-0 pointer-events-none z-10" style="background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%; mix-blend-mode: overlay;"></div>
-            
+
             <div class="absolute bottom-2 left-2 text-xl font-bold pointer-events-none opacity-80 bg-black/80 px-3 border border-[var(--dim-color)] z-30 tracking-widest">POS: <span id="coordDisplay">0,0</span></div>
             <div class="absolute bottom-2 right-2 text-xl font-bold pointer-events-none text-right bg-black/80 px-3 border border-[var(--dim-color)] z-30 tracking-widest">RENDER: VOLUMETRIC FOG</div>
         </div>
@@ -132,21 +132,28 @@
             <div class="flex flex-wrap justify-between items-start mb-2 gap-2">
                 <div class="flex flex-col gap-2">
                     <div class="flex gap-2 flex-wrap">
-    <button onclick="toggleLabels()" id="labelBtn" class="pip-btn text-sm">[ LABELS ]</button>
-    <button onclick="toggleFog()" id="fogBtn" class="pip-btn text-sm border-yellow-600 text-yellow-600 hover:bg-yellow-900">[ FOG ]</button>
-    
-    <!-- NEW ZOOM CONTROLS -->
-    <div class="flex gap-1 items-center border border-[var(--dim-color)] px-2 bg-black/40">
-        <button onclick="zoomOut()" class="pip-btn text-sm px-2 py-0">−</button>
-        <span id="zoomDisplay" class="text-sm font-bold opacity-80 min-w-[3rem] text-center">100%</span>
-        <button onclick="zoomIn()" class="pip-btn text-sm px-2 py-0">+</button>
-    </div>
-    
-    <button onclick="downloadMap()" class="pip-btn text-sm">[ SAVE IMG ]</button>
-    <button onclick="recordClip()" id="recBtn" class="pip-btn text-sm border-red-500 text-red-500 animate-pulse hover:bg-red-900">[ REC CLIP ]</button>
-</div>
+                        <button onclick="toggleLabels()" id="labelBtn" class="pip-btn text-sm">[ LABELS ]</button>
+                        <button onclick="toggleFog()" id="fogBtn" class="pip-btn text-sm border-yellow-600 text-yellow-600 hover:bg-yellow-900">[ FOG ]</button>
 
-            
+                        <!-- ENHANCED ZOOM CONTROLS WITH SLIDER -->
+                        <div class="flex gap-2 items-center border border-[var(--dim-color)] px-3 py-1 bg-black/40 rounded-sm">
+                            <button onclick="zoomOut()" class="pip-btn text-sm px-2 py-0 border-none hover:bg-[var(--dim-color)]" style="font-size: 1.5rem; min-width: 32px;">−</button>
+                            <input type="range" 
+                                   id="zoomSlider"
+                                   min="0.5" 
+                                   max="2.0" 
+                                   step="0.05"
+                                   value="1.0"
+                                   oninput="setZoomLevel(this.value)"
+                                   class="accent-[var(--main-color)] cursor-pointer"
+                                   style="width: 140px;">
+                            <span id="zoomDisplay" class="text-sm font-bold min-w-[3.5rem] text-center" style="color: var(--main-color); text-shadow: 0 0 8px var(--main-color);">100%</span>
+                            <button onclick="zoomIn()" class="pip-btn text-sm px-2 py-0 border-none hover:bg-[var(--dim-color)]" style="font-size: 1.5rem; min-width: 32px;">+</button>
+                        </div>
+
+                        <button onclick="downloadMap()" class="pip-btn text-sm">[ SAVE IMG ]</button>
+                        <button onclick="recordClip()" id="recBtn" class="pip-btn text-sm border-red-500 text-red-500 animate-pulse hover:bg-red-900">[ REC CLIP ]</button>
+                    </div>
                 </div>
                 <button onclick="exportReport()" class="pip-btn text-sm font-bold border-blue-400 text-blue-400 hover:bg-blue-900">[ EXPORT DATA ]</button>
             </div>
@@ -154,12 +161,12 @@
             <div class="loot-log custom-scrollbar" id="lootLog">
                 <div class="text-[var(--dim-color)]">> SYSTEM INITIALIZED. SENSORY ORACLES ONLINE.</div>
             </div>
-            
+
             <div id="chatInputContainer" class="flex gap-2 mt-2">
                 <input type="text" id="chatInput" placeholder="ENTER MESSAGE..." class="pip-input text-sm flex-grow" disabled>
                 <button onclick="sendChatMessage()" class="pip-btn text-sm px-4 border-blue-400 text-blue-400 hover:bg-blue-900" id="sendChatBtn" disabled>[ SEND ]</button>
             </div>
-            </div>
+        </div>
     </div>
 
     <div id="reportModal">
@@ -184,7 +191,7 @@
             </div>
 
             <div class="grid grid-cols-3 gap-4 mb-6" id="tokenGrid">
-                </div>
+            </div>
 
             <div class="ui-line"></div>
 
@@ -198,6 +205,6 @@
             </div>
         </div>
     </div>
-    <script type="module" src="script.js"></script>
+    <script type="module" src="script_zoom_slider.js"></script>
 </body>
 </html>
