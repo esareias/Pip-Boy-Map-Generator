@@ -3,212 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PIP-BOY 3000 - MAP INTERFACE</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Pip-Boy Cartography Module (Mojave Edition)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
+  }
+}
+</script>
 </head>
-<body>
-    <!-- Character Selection Modal -->
-    <div id="characterSelectScreen" class="character-select-overlay">
-        <div class="character-select-container">
-            <div class="select-header">
-                <h1 id="selectionTitle" class="select-title">SELECT UNIT DESIGNATION</h1>
-                <p id="selectionSubtitle" class="select-subtitle">CHOOSE YOUR ROLE: OVERSEER (HOST) OR A FIELD AGENT (CLIENT).</p>
+<body class="theme-green" id="app-body">
+    <div id="characterSelectScreen" class="fixed inset-0 bg-black/95 z-[30000] flex items-center justify-center backdrop-blur-sm hidden">
+        <div class="bg-[#1a1c1a] border-2 border-[var(--main-color)] p-8 w-full max-w-2xl shadow-[0_0_50px_var(--dim-color)] text-[var(--main-color)] text-center">
+            <h2 class="text-4xl font-bold mb-4" id="selectionTitle">SELECT UNIT DESIGNATION</h2>
+            <p class="text-lg opacity-70 mb-8" id="selectionSubtitle">CHOOSE YOUR ROLE: OVERSEER (HOST) OR A FIELD AGENT (CLIENT).</p>
+
+            <div id="joinInterface" class="hidden-ui flex flex-col items-center mb-6">
+                <p class="text-xl mb-4">ENTER OVERSEER ID TO JOIN SESSION:</p>
+                <div class="flex gap-2 justify-center">
+                    <input type="text" id="autoJoinInput" placeholder="ENTER ID..." class="pip-input text-lg w-48 text-center">
+                    <button onclick="joinSession()" id="autoJoinBtn" class="pip-btn text-lg border-blue-500 text-blue-500">[ CONNECT ]</button>
+                </div>
             </div>
 
-            <!-- Token Grid (Initial Selection) -->
-            <div id="initialTokenGrid" class="token-grid"></div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-6 mb-6" id="initialTokenGrid">
+            </div>
 
-            <!-- Join Interface (After selecting player) -->
-            <div id="joinInterface" class="join-interface hidden-ui">
-                <input type="text" 
-                       id="autoJoinInput" 
-                       placeholder="ENTER OVERSEER ID" 
-                       class="pip-input join-input">
-                <button onclick="joinSession()" class="pip-btn join-btn">CONNECT</button>
+            <div class="ui-line"></div>
+            <p class="text-xs opacity-50 mt-4">Note: Host ID is automatically generated upon selecting the Overseer role.</p>
+        </div>
+    </div>
+
+    <div class="pip-casing hidden-ui" id="mainAppContent">
+        <div class="flex justify-between items-end mb-4">
+            <div>
+                <h1 class="text-5xl font-bold tracking-wider" style="text-shadow: 2px 2px 0px #000, 0 0 15px var(--main-color);">CARTOGRAPHY MODULE</h1>
+                <p class="opacity-70 tracking-widest text-lg">V.29.3 - VAULT-TEC PRO</p>
+            </div>
+            <div class="text-right opacity-60 text-sm">
+                ROBCO INDUSTRIES<br>
+                UNIFIED OPERATING SYSTEM
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center border border-[var(--dim-color)] p-2 mb-4 bg-black/40">
+            <div class="flex gap-2 items-center">
+                <span class="pip-label text-sm">NETWORK UPLINK:</span>
+                <button onclick="hostSession()" id="hostBtn" class="pip-btn text-sm border-green-500 text-green-500 hidden-ui">[ HOST ]</button>
+
+                <div id="hostIdDisplay" class="flex gap-2 items-center hidden-ui border border-[var(--pip-green-dim)] p-1 rounded-sm">
+                    <span id="currentHostId" class="text-lg font-bold"></span>
+                    <button onclick="copyHostId()" class="pip-btn text-sm px-2 py-1 border-gray-400 text-gray-400 hover:bg-gray-800">[ COPY ]</button>
+                </div>
+
+                <input type="text" id="joinInput" placeholder="ENTER ID..." class="pip-input text-sm w-32 hidden-ui">
+                <button onclick="joinSession()" id="joinBtn" class="pip-btn text-sm border-blue-500 text-blue-500 hidden-ui">[ JOIN ]</button>
+                <span id="netStatus" class="text-xs opacity-50 ml-2">OFFLINE</span>
+            </div>
+            <div class="flex gap-2 items-center">
+                <button onclick="openGMTokenDeploy()" id="addTokenBtn" class="pip-btn text-sm">[ + UNIT ]</button>
+            </div>
+        </div>
+
+        <div class="ui-line"></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-black/60 border border-[var(--dim-color)] rounded-sm backdrop-blur-sm" id="gmControls">
+            <div class="flex flex-col gap-2">
+                <label class="pip-label">MAP TYPE</label>
+                <select id="mapType" class="pip-input" onchange="updateHelperText()">
+                    <option value="vault">VAULT SECTOR</option>
+                    <option value="ruins">VEGAS RUINS</option>
+                    <option value="cave">MOJAVE WASTELAND</option>
+                </select>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="pip-label">STRUCTURE DENSITY</label>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold opacity-60 text-[var(--main-color)]">SPARSE</span>
+                    <input type="range" id="density" min="20" max="80" value="45" class="accent-[var(--main-color)] flex-grow cursor-pointer">
+                    <span class="text-xs font-bold opacity-60 text-[var(--main-color)]">DENSE</span>
+                </div>
+                <div id="densityHelper" class="helper-text text-center opacity-80 font-bold">ADJUSTS: ROOM COUNT</div>
+            </div>
+
+            <div class="flex flex-col justify-end gap-2">
+                <button onclick="generateCurrentLevel()" class="pip-btn font-bold" id="scanBtn">>> SCAN LEVEL</button>
+            </div>
+        </div>
+
+        <div class="screen-container" id="screenContainer">
+            <div id="tooltip"></div>
+
+            <div class="tracking-line"></div>
+            <div class="crt-flicker"></div>
+
+            <div class="absolute top-0 w-full flex justify-between items-center p-4 pointer-events-auto z-20 bg-gradient-to-b from-black/90 to-transparent" id="sectorControls">
+                <button onclick="changeLevel(-1)" id="btnDown" class="pip-btn text-sm px-4 rounded-sm">&lt; LOWER</button>
+                <div class="text-2xl font-bold tracking-widest bg-black/80 px-6 py-1 border-b-4 border-[var(--dim-color)] text-shadow-glow" id="levelDisplay">LEVEL 1 (GROUND)</div>
+                <button onclick="changeLevel(1)" id="btnUp" class="pip-btn text-sm px-4 rounded-sm">UPPER &gt;</button>
+            </div>
+
+            <div class="absolute top-0 w-full flex justify-between items-center p-4 pointer-events-auto z-20 bg-gradient-to-b from-black/90 to-transparent hidden-ui" id="interiorControls">
+                <button onclick="exitInterior()" class="pip-btn text-sm px-4 border-blue-400 text-blue-400 hover:bg-blue-900">&lt; EXIT TO SECTOR</button>
+                <div class="text-2xl font-bold tracking-widest bg-black/80 px-6 py-1 border-b-4 border-blue-400 text-blue-400" id="interiorDisplay">INTERIOR</div>
+                <div style="width: 100px;"></div>
+            </div>
+
+            <canvas id="mapCanvas" width="3200" height="2400"></canvas>
+
+            <div class="absolute inset-0 pointer-events-none z-10" style="background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%; mix-blend-mode: overlay;"></div>
+
+            <div class="absolute bottom-2 left-2 text-xl font-bold pointer-events-none opacity-80 bg-black/80 px-3 border border-[var(--dim-color)] z-30 tracking-widest">POS: <span id="coordDisplay">0,0</span></div>
+            <div class="absolute bottom-2 right-2 text-xl font-bold pointer-events-none text-right bg-black/80 px-3 border border-[var(--dim-color)] z-30 tracking-widest">RENDER: VOLUMETRIC FOG</div>
+        </div>
+
+        <div class="flex flex-col mt-4">
+            <div class="flex flex-wrap justify-between items-start mb-2 gap-2">
+                <div class="flex flex-col gap-2">
+                    <div class="flex gap-2 flex-wrap">
+                        <button onclick="toggleLabels()" id="labelBtn" class="pip-btn text-sm">[ LABELS ]</button>
+                        <button onclick="toggleFog()" id="fogBtn" class="pip-btn text-sm border-yellow-600 text-yellow-600 hover:bg-yellow-900">[ FOG ]</button>
+
+                        <!-- ENHANCED ZOOM CONTROLS WITH SLIDER -->
+                        <div class="flex gap-2 items-center border border-[var(--dim-color)] px-3 py-1 bg-black/40">
+                            <button onclick="zoomOut()" class="pip-btn text-sm px-2 py-0 border-none hover:bg-[var(--dim-color)]">−</button>
+                            <input type="range" 
+                                   id="zoomSlider"
+                                   min="0.5" 
+                                   max="2.0" 
+                                   step="0.05"
+                                   value="1.0"
+                                   oninput="setZoomLevel(this.value)"
+                                   class="accent-[var(--main-color)] w-32 cursor-pointer">
+                            <span id="zoomDisplay" class="text-sm font-bold opacity-80 min-w-[3rem] text-center">100%</span>
+                            <button onclick="zoomIn()" class="pip-btn text-sm px-2 py-0 border-none hover:bg-[var(--dim-color)]">+</button>
+                        </div>
+
+                        <button onclick="downloadMap()" class="pip-btn text-sm">[ SAVE IMG ]</button>
+                        <button onclick="recordClip()" id="recBtn" class="pip-btn text-sm border-red-500 text-red-500 animate-pulse hover:bg-red-900">[ REC CLIP ]</button>
+                    </div>
+                </div>
+                <button onclick="exportReport()" class="pip-btn text-sm font-bold border-blue-400 text-blue-400 hover:bg-blue-900">[ EXPORT DATA ]</button>
+            </div>
+            <label class="pip-label mt-2">TERMINAL LOG_</label>
+            <div class="loot-log custom-scrollbar" id="lootLog">
+                <div class="text-[var(--dim-color)]">> SYSTEM INITIALIZED. SENSORY ORACLES ONLINE.</div>
+            </div>
+
+            <div id="chatInputContainer" class="flex gap-2 mt-2">
+                <input type="text" id="chatInput" placeholder="ENTER MESSAGE..." class="pip-input text-sm flex-grow" disabled>
+                <button onclick="sendChatMessage()" class="pip-btn text-sm px-4 border-blue-400 text-blue-400 hover:bg-blue-900" id="sendChatBtn" disabled>[ SEND ]</button>
             </div>
         </div>
     </div>
 
-    <!-- Main Application -->
-    <div id="mainAppContent" class="hidden-ui">
-        <div id="app-body" class="theme-vault">
-            <!-- Header -->
-            <div class="header">
-                <h1 class="title">PIP-BOY 3000 MK IV</h1>
-                <div class="network-status">
-                    <span id="netStatus" style="color: #888;">OFFLINE</span>
-                </div>
-            </div>
-
-            <!-- Main Content Area -->
-            <div class="main-content">
-                <!-- Left Sidebar - GM Controls -->
-                <div class="sidebar" id="gmControls">
-                    <div class="control-section">
-                        <h3 class="section-title">MAP GENERATION</h3>
-
-                        <div class="pip-control-group">
-                            <label class="pip-label">MAP TYPE</label>
-                            <select id="mapType" onchange="updateHelperText(this.value)" class="pip-select">
-                                <option value="vault">VAULT</option>
-                                <option value="ruins">RUINS</option>
-                                <option value="cave" selected>MOJAVE WASTELAND</option>
-                            </select>
-                        </div>
-
-                        <div class="pip-control-group">
-                            <label class="pip-label">DENSITY</label>
-                            <input type="range" id="density" min="15" max="45" value="30" class="pip-slider">
-                            <span class="pip-text">30</span>
-                            <small id="densityHelper" class="helper-text">ADJUSTS TUNNEL FILL</small>
-                        </div>
-
-                        <button onclick="generateCurrentLevel()" class="pip-btn btn-primary">
-                            ≫ SCAN LEVEL
-                        </button>
-                    </div>
-
-                    <div class="control-section">
-                        <h3 class="section-title">LEVEL NAVIGATION</h3>
-
-                        <div class="level-nav">
-                            <button onclick="changeLevel(-1)" class="pip-btn btn-small" id="lowerBtn">
-                                ◂ LOWER
-                            </button>
-                            <span id="levelDisplay" class="level-display">LEVEL 1 (GROUND)</span>
-                            <button onclick="changeLevel(1)" class="pip-btn btn-small" id="upperBtn">
-                                UPPER ▸
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="control-section">
-                        <h3 class="section-title">VIEW CONTROLS</h3>
-
-                        <!-- NEW ZOOM SLIDER -->
-                        <div class="pip-control-group">
-                            <label class="pip-label">ZOOM</label>
-                            <div class="zoom-control">
-                                <button onclick="zoomOut()" class="pip-btn btn-icon">−</button>
-                                <input type="range" 
-                                       id="zoomSlider"
-                                       min="0.5" 
-                                       max="2.0" 
-                                       step="0.05"
-                                       value="1.0"
-                                       oninput="setZoomLevel(this.value)"
-                                       class="pip-slider zoom-slider">
-                                <button onclick="zoomIn()" class="pip-btn btn-icon">+</button>
-                            </div>
-                            <span id="zoomDisplay" class="pip-text zoom-display">100%</span>
-                        </div>
-
-                        <div class="toggle-buttons">
-                            <button onclick="toggleLabels()" id="labelBtn" class="pip-btn btn-toggle">
-                                [ LABELS ]
-                            </button>
-                            <button onclick="toggleFog()" id="fogBtn" class="pip-btn btn-toggle">
-                                [ FOG ]
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="control-section">
-                        <h3 class="section-title">UTILITIES</h3>
-
-                        <button onclick="openGMTokenDeploy()" id="addTokenBtn" class="pip-btn">
-                            DEPLOY UNIT
-                        </button>
-
-                        <div class="utility-buttons">
-                            <button onclick="downloadMap()" class="pip-btn btn-small">SAVE IMG</button>
-                            <button onclick="recordClip()" id="recBtn" class="pip-btn btn-small">REC CLIP</button>
-                            <button onclick="exportData()" class="pip-btn btn-small">[ EXPORT DATA ]</button>
-                        </div>
-                    </div>
-
-                    <!-- Network Controls -->
-                    <div class="control-section">
-                        <h3 class="section-title">NETWORK</h3>
-
-                        <div class="network-controls">
-                            <button onclick="hostSession()" id="hostBtn" class="pip-btn btn-primary">
-                                HOST SESSION
-                            </button>
-
-                            <div id="hostIdDisplay" class="hidden-ui host-id-display">
-                                <label class="pip-label">YOUR HOST ID:</label>
-                                <div class="host-id-box">
-                                    <span id="currentHostId" class="host-id">XXXX-XXXX</span>
-                                    <button onclick="copyHostId()" class="pip-btn btn-icon">📋</button>
-                                </div>
-                            </div>
-
-                            <div id="joinInput" class="join-controls">
-                                <input type="text" id="joinIdInput" placeholder="HOST ID" class="pip-input">
-                                <button onclick="joinSession()" id="joinBtn" class="pip-btn">CONNECT</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Center - Canvas Area -->
-                <div class="canvas-container">
-                    <div id="screenContainer" class="screen-container">
-                        <canvas id="mapCanvas"></canvas>
-
-                        <!-- Tooltip -->
-                        <div id="tooltip" class="tooltip"></div>
-
-                        <!-- Map Info Overlay -->
-                        <div class="map-info">
-                            <span id="posDisplay">POS: 0,0</span>
-                            <span class="map-status">RENDER: VOLUMETRIC FOG</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Sidebar - Logs & Chat -->
-                <div class="sidebar-right">
-                    <div class="log-section">
-                        <h3 class="section-title">LOOT LOG</h3>
-                        <div id="lootLog" class="log-container"></div>
-                    </div>
-
-                    <div class="chat-section">
-                        <h3 class="section-title">COMMS</h3>
-                        <div id="chatLog" class="chat-container"></div>
-                        <div class="chat-input-group">
-                            <input type="text" 
-                                   id="chatInput" 
-                                   placeholder="TYPE MESSAGE..."
-                                   class="pip-input chat-input">
-                            <button onclick="sendChatMessage()" 
-                                    id="sendChatBtn" 
-                                    class="pip-btn btn-icon">
-                                ▸
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- GM Token Deploy Modal -->
-    <div id="gmTokenDeployModal" class="modal">
+    <div id="reportModal">
         <div class="modal-content">
-            <h2 class="modal-title">DEPLOY FIELD UNIT</h2>
-            <div id="tokenGrid" class="token-deploy-grid"></div>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">LOCATION DATA DUMP</h2>
+                <button onclick="closeModal()" class="text-red-500 hover:text-white font-bold text-xl">[ X ]</button>
+            </div>
+            <p class="text-sm opacity-70 mb-2">Copy the data below to archive this location.</p>
+            <textarea id="reportArea" class="report-text" readonly></textarea>
+            <div class="mt-4 flex justify-end">
+                <button onclick="copyReport()" class="pip-btn text-sm">[ COPY TO CLIPBOARD ]</button>
+            </div>
+        </div>
+    </div>
 
-            <div class="custom-token-section">
-                <h3 class="section-title">CUSTOM UNIT</h3>
-                <input type="text" id="customName" placeholder="UNIT NAME" class="pip-input">
-                <input type="text" id="customUrl" placeholder="IMAGE URL" class="pip-input">
-                <button onclick="spawnCustomToken()" class="pip-btn">DEPLOY CUSTOM</button>
+    <div id="gmTokenDeployModal" style="display:none;" class="fixed inset-0 bg-black/90 z-[20000] flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-[#1a1c1a] border-2 border-[var(--main-color)] p-6 w-full max-w-lg shadow-[0_0_30px_var(--dim-color)] text-[var(--main-color)]">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">DEPLOY NEW UNIT</h2>
+                <button onclick="closeGMTokenDeploy()" class="text-red-500 hover:text-white font-bold text-xl">[ X ]</button>
             </div>
 
-            <button onclick="closeGMTokenDeploy()" class="pip-btn btn-secondary">CLOSE</button>
+            <div class="grid grid-cols-3 gap-4 mb-6" id="tokenGrid">
+            </div>
+
+            <div class="ui-line"></div>
+
+            <div class="flex flex-col gap-2 mt-4">
+                <label class="pip-label text-sm">CUSTOM DESIGNATION</label>
+                <div class="flex gap-2">
+                    <input type="text" id="customName" placeholder="UNIT NAME" class="pip-input text-sm w-1/3">
+                    <input type="text" id="customUrl" placeholder="IMAGE URL..." class="pip-input text-sm w-2/3">
+                </div>
+                <button onclick="spawnCustomToken()" class="pip-btn text-sm w-full mt-2">[ DEPLOY CUSTOM ]</button>
+            </div>
         </div>
     </div>
 
