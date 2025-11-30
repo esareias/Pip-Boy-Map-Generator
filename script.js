@@ -1338,17 +1338,26 @@ const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
     }
 
     if (isPanning) {
-        const dx = e.clientX - lastPanX;
-        const dy = e.clientY - lastPanY;
-        
-        mapOffsetX += dx / (RENDER_SCALE * zoomLevel); // Account for zoom in panning
-        mapOffsetY += dy / (RENDER_SCALE * zoomLevel);
+    const dx = e.clientX - lastPanX;
+    const dy = e.clientY - lastPanY;
+    
+    const panSpeed = 2.0;  // Adjust this! (1.0 = normal, 2.0 = 2x faster, 3.0 = 3x faster)
+    
+    mapOffsetX -= dx * panSpeed;
+    mapOffsetY -= dy * panSpeed;
+
         
 // --- Panning Constraint: Map and viewport are same size, so no complex math needed ---
-const maxPanX = config.mapWidth / 2;
-const minPanX = -config.mapWidth / 2;
-const maxPanY = config.mapHeight / 2;
-const minPanY = -config.mapHeight / 2;
+const scaledWidth = config.mapWidth * zoomLevel;
+const scaledHeight = config.mapHeight * zoomLevel;
+const viewportWidth = canvas.width / RENDERSCALE;
+const viewportHeight = canvas.height / RENDERSCALE;
+
+const maxPanX = Math.max(0, (scaledWidth - viewportWidth) / 2);
+const minPanX = -maxPanX;
+const maxPanY = Math.max(0, (scaledHeight - viewportHeight) / 2);
+const minPanY = -maxPanY;
+
 
 mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
 mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
