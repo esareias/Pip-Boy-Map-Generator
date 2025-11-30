@@ -57,7 +57,7 @@ let lastPanY = 0;
 // --- NEW ZOOM STATE ---
 let zoomLevel = 1.0;  // ADD THIS
 const MIN_ZOOM = 0.5;
-const MAX_ZOOM = 2.0;
+const MAX_ZOOM = 4.0;
 
 // --- Track last loot click for GM override ---
 let lastLootClick = { x: -1, y: -1, time: 0 };
@@ -1167,20 +1167,41 @@ canvas.height = config.height * RENDER_SCALE;
 }
 
 function zoomIn() {
-    if (zoomLevel < MAX_ZOOM) {
-        zoomLevel += 0.25;
-        document.getElementById('zoomDisplay').innerText = Math.round(zoomLevel * 100) + '%';
-        drawCurrentLevel();
-    }
+  if (zoomLevel < MAXZOOM) {
+    zoomLevel += 0.25;
+    updateZoomDisplay();
+    drawCurrentLevel();
+  }
 }
 
 function zoomOut() {
-    if (zoomLevel > MIN_ZOOM) {
-        zoomLevel -= 0.25;
-        document.getElementById('zoomDisplay').innerText = Math.round(zoomLevel * 100) + '%';
-        drawCurrentLevel();
-    }
+  if (zoomLevel > MINZOOM) {
+    zoomLevel -= 0.25;
+    updateZoomDisplay();
+    drawCurrentLevel();
+  }
 }
+
+// NEW: Smooth zoom slider function
+function setZoomLevel(value) {
+  zoomLevel = parseFloat(value);
+  updateZoomDisplay();
+  drawCurrentLevel();
+}
+
+function updateZoomDisplay() {
+  const display = document.getElementById('zoomDisplay');
+  if (display) {
+    display.innerText = Math.round(zoomLevel * 100) + '%';
+  }
+
+  // Update slider if it exists
+  const slider = document.getElementById('zoomSlider');
+  if (slider) {
+    slider.value = zoomLevel;
+  }
+}
+
 
 function animate(time) {
     requestAnimationFrame(animate);
@@ -2907,697 +2928,545 @@ function createPixelPattern(colors, type) {
 }
 
 function drawSprite(ctx, type, x, y, size, time) {
-    const cx = x + size/2;
-    const cy = y + size/2;
-
-    // Enhanced shadow for ALL objects
-    const shadowG = ctx.createRadialGradient(cx + 2, cy + size*0.4, 0, cx + 2, cy + size*0.4, size*0.6);
-    shadowG.addColorStop(0, 'rgba(0,0,0,0.5)');
+    const cx = x + size/2; const cy = y + size/2;
+    
+    // Enhanced Soft Shadow
+    const shadowG = ctx.createRadialGradient(cx + 2, cy + size*0.4, 0, cx + 2, cy + size*0.4, size*0.3);
+    shadowG.addColorStop(0, 'rgba(0,0,0,0.6)');
     shadowG.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = shadowG;
-    ctx.fillRect(x, y + size*0.7, size, size*0.3);
+    ctx.fillRect(x, y + size*0.3, size, size*0.3);
 
-    // ========================================
-    // LOOT CONTAINERS - HIGHLY DETAILED
-    // ========================================
+    if (type === 'tree' || type === 'joshua_tree') {
+        const trunkW = size*0.12;
+        const trunkH = size*0.5;
+        ctx.fillStyle = '#3e2723'; ctx.fillRect(cx-trunkW/2, y+size*0.4, trunkW, trunkH);
+        ctx.strokeStyle = '#3e2723'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(cx, cy+size*0.1); ctx.lineTo(cx-size*0.2, cy-size*0.2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx, cy+size*0.2); ctx.lineTo(cx+size*0.2, cy-size*0.1); ctx.stroke();
+        const cl = '#15803d'; const clH = '#22c55e';
+        const drawClump = (bx, by, s) => {
+            ctx.fillStyle = cl; ctx.beginPath(); ctx.arc(bx, by, s, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = clH; ctx.fillRect(bx-2, by-4, 4, 4);	
+        };
+        drawClump(cx, cy-size*0.2, size*0.25);
+        drawClump(cx-size*0.2, cy-size*0.2, size*0.15);
+        drawClump(cx+size*0.2, cy-size*0.1, size*0.15);
+    }	
+    else if (type === 'car') {
+        ctx.fillStyle = '#7f1d1d';	
+        ctx.fillRect(x+4, cy+2, size-8, size*0.25);	
+        
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(x+8, cy+size*0.2, 8, 6);
+        ctx.fillRect(x+size-16, cy+size*0.2, 8, 6);
 
-    // SAFE - Vault style with detail
-    if (type === 'safe') {
-        // Main body
-        ctx.fillStyle = '#4a5568';
-        ctx.fillRect(x + size*0.15, y + size*0.2, size*0.7, size*0.7);
-
-        // Door frame
-        ctx.fillStyle = '#2d3748';
-        ctx.fillRect(x + size*0.2, y + size*0.25, size*0.6, size*0.6);
-
+        ctx.fillStyle = '#b91c1c';	
+        ctx.beginPath(); ctx.moveTo(x+8, cy+2); ctx.lineTo(x+size*0.3, cy-size*0.2); ctx.lineTo(x+size*0.7, cy-size*0.2); ctx.lineTo(x+size-8, cy+2); ctx.fill();
+        
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath(); ctx.moveTo(x+10, cy); ctx.lineTo(x+size*0.32, cy-size*0.15); ctx.lineTo(x+size*0.68, cy-size*0.15); ctx.lineTo(x+size-10, cy); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.3; ctx.beginPath(); ctx.moveTo(x+14, cy); ctx.lineTo(x+18, cy-4); ctx.stroke(); ctx.globalAlpha = 1.0;
+    }
+    else if (type === 'rubble') {
+        ctx.fillStyle = '#57534e';
+        ctx.beginPath(); ctx.arc(cx-4, cy+4, 5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#78716c';
+        ctx.beginPath(); ctx.arc(cx+4, cy+2, 6, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#44403c';
+        ctx.fillRect(cx-2, cy-6, 6, 6);
+    }
+    else if (type === 'tumbleweed') {
+        ctx.strokeStyle = '#a8a29e'; ctx.lineWidth = 1;	
+        ctx.beginPath();
+        for(let i=0; i<12; i++) {	
+            const angle = Math.random() * Math.PI * 2;
+            const rad = Math.random() * size * 0.4;
+            ctx.moveTo(cx + Math.cos(angle)*rad, cy + Math.sin(angle)*rad);
+            ctx.lineTo(cx + Math.cos(angle + 2)*rad, cy + Math.sin(angle + 2)*rad);
+        }
+        ctx.stroke();
+    }
+    else if (type === 'bed') {
+        ctx.fillStyle = '#737373';	
+        ctx.fillRect(x+4, y+4, size-8, size-8);
+        ctx.fillStyle = '#1d4ed8';	
+        ctx.fillRect(x+4, y+size*0.4, size-8, size*0.6-4);
+        ctx.fillStyle = '#fafafa';	
+        ctx.fillRect(x+6, y+6, size-12, size*0.15);
+    }
+     else if (type === 'safe') {
+        // Heavy metal safe
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(x+size*0.2, y+size*0.2, size*0.6, size*0.7);
+        
         // Door highlight
-        ctx.fillStyle = '#718096';
-        ctx.fillRect(x + size*0.2, y + size*0.25, size*0.6, size*0.05);
-
-        // Combination dial
-        ctx.fillStyle = '#1a202c';
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(x+size*0.2, y+size*0.2, size*0.6, size*0.05);
+        
+        // Lock dial
+        ctx.fillStyle = '#475569';
         ctx.beginPath();
-        ctx.arc(cx, cy, size*0.15, 0, Math.PI * 2);
+        ctx.arc(cx, cy, size*0.15, 0, Math.PI*2);
         ctx.fill();
-
-        // Dial detail
-        ctx.strokeStyle = '#cbd5e0';
-        ctx.lineWidth = 2;
+        
+        ctx.fillStyle = '#1e293b';
         ctx.beginPath();
-        ctx.arc(cx, cy, size*0.15, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Dial indicator
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(cx - 1, cy - size*0.15, 2, size*0.08);
-
+        ctx.arc(cx, cy, size*0.1, 0, Math.PI*2);
+        ctx.fill();
+        
         // Handle
-        ctx.fillStyle = '#e2e8f0';
-        ctx.fillRect(x + size*0.75, cy - size*0.08, size*0.12, size*0.16);
-
-        // Rivets
-        ctx.fillStyle = '#1a202c';
-        [[0.22, 0.28], [0.78, 0.28], [0.22, 0.82], [0.78, 0.82]].forEach(([rx, ry]) => {
-            ctx.beginPath();
-            ctx.arc(x + size*rx, y + size*ry, size*0.03, 0, Math.PI * 2);
-            ctx.fill();
-        });
-
-        // Scratches
-        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(x + size*0.3, y + size*0.4);
-        ctx.lineTo(x + size*0.35, y + size*0.5);
-        ctx.stroke();
-    }
-
-    // LOCKER - Tall metal locker with vents
-    else if (type === 'locker') {
-        // Main body
-        ctx.fillStyle = '#718096';
-        ctx.fillRect(x + size*0.2, y + size*0.1, size*0.6, size*0.8);
-
-        // Door division
-        ctx.strokeStyle = '#2d3748';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(cx, y + size*0.1);
-        ctx.lineTo(cx, y + size*0.9);
-        ctx.stroke();
-
-        // Vents (horizontal lines)
-        ctx.strokeStyle = '#4a5568';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 6; i++) {
-            const vy = y + size*0.2 + i * size*0.1;
-            ctx.beginPath();
-            ctx.moveTo(x + size*0.25, vy);
-            ctx.lineTo(x + size*0.45, vy);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x + size*0.55, vy);
-            ctx.lineTo(x + size*0.75, vy);
-            ctx.stroke();
-        }
-
-        // Handles
-        ctx.fillStyle = '#1a202c';
-        ctx.fillRect(x + size*0.35, cy - size*0.05, size*0.08, size*0.1);
-        ctx.fillRect(x + size*0.57, cy - size*0.05, size*0.08, size*0.1);
-
-        // Lock mechanisms
-        ctx.fillStyle = '#fbbf24';
-        ctx.beginPath();
-        ctx.arc(x + size*0.39, cy + size*0.15, size*0.04, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(x + size*0.61, cy + size*0.15, size*0.04, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Dents
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
-        ctx.fillRect(x + size*0.3, y + size*0.5, size*0.15, size*0.08);
-    }
-
-    // FOOTLOCKER - Military chest with straps
-    else if (type === 'footlocker') {
-        // Main body
-        ctx.fillStyle = '#2f855a';
-        ctx.fillRect(x + size*0.1, y + size*0.4, size*0.8, size*0.45);
-
-        // Top angled
-        ctx.beginPath();
-        ctx.moveTo(x + size*0.1, y + size*0.4);
-        ctx.lineTo(x + size*0.15, y + size*0.25);
-        ctx.lineTo(x + size*0.85, y + size*0.25);
-        ctx.lineTo(x + size*0.9, y + size*0.4);
-        ctx.closePath();
-        ctx.fill();
-
-        // Highlight on top
-        ctx.fillStyle = '#38a169';
-        ctx.beginPath();
-        ctx.moveTo(x + size*0.15, y + size*0.25);
-        ctx.lineTo(x + size*0.85, y + size*0.25);
-        ctx.lineTo(x + size*0.85, y + size*0.3);
-        ctx.lineTo(x + size*0.15, y + size*0.3);
-        ctx.closePath();
-        ctx.fill();
-
-        // Metal straps
-        ctx.fillStyle = '#1a202c';
-        ctx.fillRect(x + size*0.1, cy - size*0.05, size*0.8, size*0.08);
-        ctx.fillRect(x + size*0.1, cy + size*0.2, size*0.8, size*0.08);
-
-        // Buckles
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(x + size*0.42, cy - size*0.05, size*0.16, size*0.08);
-        ctx.fillRect(x + size*0.42, cy + size*0.2, size*0.16, size*0.08);
-
-        // Lock
-        ctx.fillStyle = '#e2e8f0';
-        ctx.fillRect(x + size*0.45, y + size*0.38, size*0.1, size*0.08);
-        ctx.fillStyle = '#1a202c';
-        ctx.beginPath();
-        ctx.arc(cx, y + size*0.42, size*0.03, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Wear marks
-        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 3; i++) {
-            ctx.beginPath();
-            ctx.moveTo(x + size*0.2 + i*size*0.2, y + size*0.5);
-            ctx.lineTo(x + size*0.25 + i*size*0.2, y + size*0.6);
-            ctx.stroke();
-        }
-    }
-
-    // FILE CABINET - Office furniture with drawers
-    else if (type === 'file cabinet') {
-        // Main body
-        ctx.fillStyle = '#a0aec0';
-        ctx.fillRect(x + size*0.2, y + size*0.1, size*0.6, size*0.8);
-
-        // Drawer divisions
-        ctx.strokeStyle = '#4a5568';
-        ctx.lineWidth = 2;
-        for (let i = 1; i <= 3; i++) {
-            ctx.beginPath();
-            ctx.moveTo(x + size*0.2, y + size*(0.1 + i*0.2));
-            ctx.lineTo(x + size*0.8, y + size*(0.1 + i*0.2));
-            ctx.stroke();
-        }
-
-        // Drawer handles
-        ctx.fillStyle = '#1a202c';
-        for (let i = 0; i < 4; i++) {
-            const dy = y + size*(0.2 + i*0.2);
-            ctx.fillRect(x + size*0.45, dy, size*0.1, size*0.04);
-        }
-
-        // Labels on drawers
-        ctx.fillStyle = '#e2e8f0';
-        for (let i = 0; i < 4; i++) {
-            const dy = y + size*(0.15 + i*0.2);
-            ctx.fillRect(x + size*0.3, dy, size*0.4, size*0.06);
-        }
-
-        // Top reflection
-        ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        ctx.fillRect(x + size*0.2, y + size*0.1, size*0.6, size*0.05);
-    }
-
-    // MEDKIT - First aid box with red cross
-    else if (type === 'medkit' || type === 'first aid') {
-        // Main body
-        ctx.fillStyle = '#e2e8f0';
-        ctx.fillRect(x + size*0.15, y + size*0.25, size*0.7, size*0.5);
-
-        // Handle
-        ctx.fillStyle = '#cbd5e0';
-        ctx.fillRect(x + size*0.35, y + size*0.15, size*0.3, size*0.15);
-        ctx.fillRect(x + size*0.37, y + size*0.15, size*0.26, size*0.05);
-
-        // Red cross (large and detailed)
-        ctx.fillStyle = '#ef4444';
-        // Vertical bar
-        ctx.fillRect(cx - size*0.08, cy - size*0.18, size*0.16, size*0.36);
-        // Horizontal bar
-        ctx.fillRect(cx - size*0.18, cy - size*0.08, size*0.36, size*0.16);
-
-        // Cross outline
-        ctx.strokeStyle = '#991b1b';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(cx - size*0.08, cy - size*0.18, size*0.16, size*0.36);
-        ctx.strokeRect(cx - size*0.18, cy - size*0.08, size*0.36, size*0.16);
-
-        // Latches
-        ctx.fillStyle = '#9ca3af';
-        ctx.fillRect(x + size*0.18, cy - size*0.03, size*0.08, size*0.06);
-        ctx.fillRect(x + size*0.74, cy - size*0.03, size*0.08, size*0.06);
-
-        // Box outline
-        ctx.strokeStyle = '#9ca3af';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x + size*0.15, y + size*0.25, size*0.7, size*0.5);
-    }
-
-    // AMMO BOX - Military style with stencil
-    else if (type === 'ammo box') {
-        // Main body
-        ctx.fillStyle = '#3f6212';
-        ctx.fillRect(x + size*0.1, y + size*0.3, size*0.8, size*0.5);
-
-        // Lid
-        ctx.fillStyle = '#4d7c0f';
-        ctx.fillRect(x + size*0.1, y + size*0.2, size*0.8, size*0.15);
-
-        // Lid hinge
-        ctx.fillStyle = '#1a202c';
-        ctx.fillRect(x + size*0.12, y + size*0.2, size*0.76, size*0.04);
-
-        // Handle
-        ctx.strokeStyle = '#1a202c';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(x + size*0.35, y + size*0.27);
-        ctx.lineTo(x + size*0.35, y + size*0.15);
-        ctx.lineTo(x + size*0.65, y + size*0.15);
-        ctx.lineTo(x + size*0.65, y + size*0.27);
-        ctx.stroke();
-
-        // Stencil text "AMMO"
-        ctx.fillStyle = '#1a202c';
-        ctx.font = `bold ${size*0.12}px monospace`;
-        ctx.textAlign = 'center';
-        ctx.fillText('AMMO', cx, cy + size*0.05);
-
-        // Warning stripe
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(x + size*0.1, y + size*0.6, size*0.8, size*0.08);
-        ctx.fillStyle = '#1a202c';
-        ctx.fillRect(x + size*0.2, y + size*0.6, size*0.1, size*0.08);
-        ctx.fillRect(x + size*0.4, y + size*0.6, size*0.1, size*0.08);
-        ctx.fillRect(x + size*0.6, y + size*0.6, size*0.1, size*0.08);
-        ctx.fillRect(x + size*0.8, y + size*0.6, size*0.08, size*0.08);
-
-        // Latches
-        ctx.fillStyle = '#cbd5e0';
-        ctx.fillRect(x + size*0.15, cy - size*0.05, size*0.08, size*0.1);
-        ctx.fillRect(x + size*0.77, cy - size*0.05, size*0.08, size*0.1);
-    }
-
-    // VENDING MACHINE - Nuka Cola style
-    else if (type === 'vending machine') {
-        // Main body
-        ctx.fillStyle = '#dc2626';
-        ctx.fillRect(x + size*0.15, y + size*0.1, size*0.7, size*0.8);
-
-        // Glass display
-        ctx.fillStyle = '#3b82f6';
-        ctx.globalAlpha = 0.3;
-        ctx.fillRect(x + size*0.2, y + size*0.2, size*0.6, size*0.4);
-        ctx.globalAlpha = 1.0;
-
-        // Display frame
-        ctx.strokeStyle = '#1e3a8a';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x + size*0.2, y + size*0.2, size*0.6, size*0.4);
-
-        // Bottles visible inside
-        ctx.fillStyle = '#60a5fa';
-        for (let i = 0; i < 3; i++) {
-            for (let j = 0; j < 2; j++) {
-                const bx = x + size*(0.25 + i*0.18);
-                const by = y + size*(0.25 + j*0.18);
-                ctx.fillRect(bx, by, size*0.08, size*0.12);
-                ctx.fillStyle = '#93c5fd';
-                ctx.fillRect(bx, by, size*0.08, size*0.04);
-                ctx.fillStyle = '#60a5fa';
-            }
-        }
-
-        // Coin slot
-        ctx.fillStyle = '#1a202c';
-        ctx.fillRect(x + size*0.4, y + size*0.68, size*0.2, size*0.04);
-
-        // Dispenser door
-        ctx.fillStyle = '#1f2937';
-        ctx.fillRect(x + size*0.25, y + size*0.75, size*0.5, size*0.12);
-
-        // Logo area
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(x + size*0.25, y + size*0.12, size*0.5, size*0.06);
-        ctx.fillStyle = '#1a202c';
-        ctx.font = `bold ${size*0.08}px monospace`;
-        ctx.textAlign = 'center';
-        ctx.fillText('NUKA', cx, y + size*0.17);
-
-        // Side panel lines
-        ctx.strokeStyle = '#991b1b';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(x + size*0.15, y + size*0.3);
-        ctx.lineTo(x + size*0.15, y + size*0.9);
-        ctx.moveTo(x + size*0.85, y + size*0.3);
-        ctx.lineTo(x + size*0.85, y + size*0.9);
-        ctx.stroke();
-    }
-
-    // CRATE - Wooden crate with planks
-    else if (type === 'crate') {
-        // Main body
-        ctx.fillStyle = '#92400e';
-        ctx.fillRect(x + size*0.15, y + size*0.25, size*0.7, size*0.6);
-
-        // Planks (horizontal lines)
-        ctx.fillStyle = '#78350f';
-        for (let i = 0; i < 5; i++) {
-            ctx.fillRect(x + size*0.15, y + size*(0.3 + i*0.12), size*0.7, size*0.06);
-        }
-
-        // Vertical supports
-        ctx.fillStyle = '#451a03';
-        ctx.fillRect(x + size*0.2, y + size*0.25, size*0.06, size*0.6);
-        ctx.fillRect(x + size*0.74, y + size*0.25, size*0.06, size*0.6);
-
-        // Metal corners
-        ctx.fillStyle = '#6b7280';
-        [[0.15, 0.25], [0.79, 0.25], [0.15, 0.79], [0.79, 0.79]].forEach(([rx, ry]) => {
-            ctx.fillRect(x + size*rx, y + size*ry, size*0.06, size*0.06);
-        });
-
-        // Nails
-        ctx.fillStyle = '#1a202c';
-        for (let i = 0; i < 3; i++) {
-            for (let j = 0; j < 3; j++) {
-                ctx.beginPath();
-                ctx.arc(x + size*(0.25 + i*0.25), y + size*(0.35 + j*0.2), size*0.02, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        // Wood grain
-        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 3; i++) {
-            ctx.beginPath();
-            ctx.moveTo(x + size*0.3 + i*size*0.15, y + size*0.4);
-            ctx.lineTo(x + size*0.35 + i*size*0.15, y + size*0.6);
-            ctx.stroke();
-        }
-    }
-
-    // BARREL - Rusted drum with hazard symbols
-    else if (type === 'firebarrel' || type === 'rustedbarrel' || type === 'oildrum') {
-        const isOnFire = type === 'firebarrel';
-
-        // Main body
-        ctx.fillStyle = isOnFire ? '#7c2d12' : '#6b7280';
-        ctx.fillRect(x + size*0.25, y + size*0.2, size*0.5, size*0.65);
-
-        // Rounded top
-        ctx.beginPath();
-        ctx.ellipse(cx, y + size*0.2, size*0.25, size*0.08, 0, Math.PI, 0);
-        ctx.fill();
-
-        // Rounded bottom
-        ctx.beginPath();
-        ctx.ellipse(cx, y + size*0.85, size*0.25, size*0.08, 0, 0, Math.PI);
-        ctx.fill();
-
-        // Barrel ridges
-        ctx.fillStyle = isOnFire ? '#991b1b' : '#4b5563';
-        ctx.fillRect(x + size*0.25, y + size*0.35, size*0.5, size*0.08);
-        ctx.fillRect(x + size*0.25, y + size*0.55, size*0.5, size*0.08);
-        ctx.fillRect(x + size*0.25, y + size*0.75, size*0.5, size*0.08);
-
-        if (isOnFire) {
-            // Fire
-            for (let i = 0; i < 3; i++) {
-                const fx = cx + (Math.random() - 0.5) * size*0.3;
-                const fy = y + size*0.1 + Math.random()*size*0.1;
-                const flameGrad = ctx.createRadialGradient(fx, fy, 0, fx, fy, size*0.15);
-                flameGrad.addColorStop(0, '#fbbf24');
-                flameGrad.addColorStop(0.5, '#f97316');
-                flameGrad.addColorStop(1, 'rgba(239, 68, 68, 0)');
-                ctx.fillStyle = flameGrad;
-                ctx.beginPath();
-                ctx.ellipse(fx, fy, size*0.08, size*0.15, 0, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        } else {
-            // Hazard symbol
-            ctx.fillStyle = '#fbbf24';
-            ctx.beginPath();
-            ctx.arc(cx, cy, size*0.15, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Radiation symbol
-            ctx.fillStyle = '#1a202c';
-            for (let i = 0; i < 3; i++) {
-                const angle = (i * Math.PI * 2 / 3) - Math.PI / 2;
-                ctx.save();
-                ctx.translate(cx, cy);
-                ctx.rotate(angle);
-                ctx.fillRect(-size*0.03, -size*0.12, size*0.06, size*0.10);
-                ctx.beginPath();
-                ctx.arc(0, -size*0.12, size*0.05, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-            }
-
-            // Center dot
-            ctx.beginPath();
-            ctx.arc(cx, cy, size*0.04, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // Rust patches
-        ctx.fillStyle = 'rgba(146, 64, 14, 0.6)';
-        ctx.fillRect(x + size*0.3, y + size*0.5, size*0.15, size*0.1);
-        ctx.fillRect(x + size*0.6, y + size*0.7, size*0.1, size*0.08);
-    }
-
-    // SKELETON - Detailed human remains
-    else if (type === 'skeleton' || type === 'bleachedbones') {
-        ctx.fillStyle = '#e2e8f0';
-
-        // Skull
-        ctx.beginPath();
-        ctx.ellipse(cx, y + size*0.25, size*0.15, size*0.18, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Eye sockets
-        ctx.fillStyle = '#1a202c';
-        ctx.beginPath();
-        ctx.ellipse(cx - size*0.08, y + size*0.22, size*0.04, size*0.06, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(cx + size*0.08, y + size*0.22, size*0.04, size*0.06, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Nasal cavity
-        ctx.beginPath();
-        ctx.moveTo(cx, y + size*0.28);
-        ctx.lineTo(cx - size*0.03, y + size*0.32);
-        ctx.lineTo(cx + size*0.03, y + size*0.32);
-        ctx.closePath();
-        ctx.fill();
-
-        // Jaw
-        ctx.fillStyle = '#e2e8f0';
-        ctx.fillRect(cx - size*0.12, y + size*0.35, size*0.24, size*0.08);
-
-        // Teeth
-        ctx.fillStyle = '#1a202c';
-        for (let i = 0; i < 5; i++) {
-            ctx.fillRect(cx - size*0.1 + i*size*0.04, y + size*0.35, size*0.02, size*0.04);
-        }
-
-        // Ribcage
-        ctx.fillStyle = '#e2e8f0';
-        ctx.strokeStyle = '#cbd5e0';
-        ctx.lineWidth = 2;
-        for (let i = 0; i < 4; i++) {
-            ctx.beginPath();
-            ctx.ellipse(cx, y + size*(0.5 + i*0.08), size*0.2, size*0.06, 0, 0, Math.PI);
-            ctx.stroke();
-        }
-
-        // Spine
-        ctx.fillStyle = '#cbd5e0';
-        ctx.fillRect(cx - size*0.02, y + size*0.45, size*0.04, size*0.35);
-
-        // Pelvis
-        ctx.fillRect(cx - size*0.15, y + size*0.75, size*0.3, size*0.08);
-
-        // Limb bones scattered
-        ctx.save();
-        ctx.translate(cx - size*0.25, cy + size*0.2);
-        ctx.rotate(0.5);
-        ctx.fillRect(-size*0.15, -size*0.02, size*0.3, size*0.04);
-        ctx.restore();
-
-        ctx.save();
-        ctx.translate(cx + size*0.25, cy + size*0.3);
-        ctx.rotate(-0.3);
-        ctx.fillRect(-size*0.15, -size*0.02, size*0.3, size*0.04);
-        ctx.restore();
-    }
-
-    // DESK - Office furniture
-    else if (type === 'desk') {
-        // Desktop
-        ctx.fillStyle = '#92400e';
-        ctx.fillRect(x + size*0.1, y + size*0.4, size*0.8, size*0.12);
-
-        // Desktop highlight
-        ctx.fillStyle = '#b45309';
-        ctx.fillRect(x + size*0.1, y + size*0.4, size*0.8, size*0.03);
-
-        // Legs
-        ctx.fillStyle = '#78350f';
-        ctx.fillRect(x + size*0.15, y + size*0.52, size*0.08, size*0.35);
-        ctx.fillRect(x + size*0.77, y + size*0.52, size*0.08, size*0.35);
-
-        // Drawer
-        ctx.fillStyle = '#a16207';
-        ctx.fillRect(x + size*0.3, y + size*0.55, size*0.4, size*0.2);
-
-        // Drawer handle
-        ctx.fillStyle = '#1a202c';
-        ctx.fillRect(x + size*0.45, y + size*0.63, size*0.1, size*0.04);
-
-        // Wood grain
-        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 4; i++) {
-            ctx.beginPath();
-            ctx.moveTo(x + size*0.2 + i*size*0.15, y + size*0.42);
-            ctx.lineTo(x + size*0.22 + i*size*0.15, y + size*0.5);
-            ctx.stroke();
-        }
-    }
-
-    // TABLE - Simple wooden table
-    else if (type === 'table') {
-        // Tabletop
-        ctx.fillStyle = '#92400e';
-        ctx.fillRect(x + size*0.1, y + size*0.45, size*0.8, size*0.1);
-
-        // Tabletop highlight
-        ctx.fillStyle = '#b45309';
-        ctx.fillRect(x + size*0.1, y + size*0.45, size*0.8, size*0.02);
-
-        // Legs (4 legs visible)
-        ctx.fillStyle = '#78350f';
-        ctx.fillRect(x + size*0.15, y + size*0.55, size*0.06, size*0.35);
-        ctx.fillRect(x + size*0.79, y + size*0.55, size*0.06, size*0.35);
-        ctx.fillRect(x + size*0.35, y + size*0.55, size*0.06, size*0.3);
-        ctx.fillRect(x + size*0.59, y + size*0.55, size*0.06, size*0.3);
-    }
-
-    // CHAIR - Office chair
-    else if (type === 'chair') {
-        // Seat
-        ctx.fillStyle = '#4b5563';
-        ctx.fillRect(x + size*0.25, y + size*0.5, size*0.5, size*0.15);
-
-        // Backrest
-        ctx.fillRect(x + size*0.3, y + size*0.25, size*0.4, size*0.3);
-
-        // Backrest cushion detail
-        ctx.fillStyle = '#6b7280';
-        ctx.fillRect(x + size*0.32, y + size*0.27, size*0.36, size*0.25);
-
-        // Legs/Base
-        ctx.fillStyle = '#1a202c';
-        ctx.fillRect(x + size*0.47, y + size*0.65, size*0.06, size*0.2);
-
-        // Wheel base
-        ctx.beginPath();
-        ctx.arc(cx, y + size*0.85, size*0.15, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Wheels
-        ctx.fillStyle = '#374151';
-        for (let i = 0; i < 4; i++) {
-            const angle = (i * Math.PI / 2);
-            const wx = cx + Math.cos(angle) * size*0.12;
-            const wy = y + size*0.85 + Math.sin(angle) * size*0.12;
-            ctx.beginPath();
-            ctx.arc(wx, wy, size*0.04, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-
-    // BED - Simple wasteland mattress
-    else if (type === 'bed' || type === 'mattress') {
-        // Frame
-        ctx.fillStyle = '#6b7280';
-        ctx.fillRect(x + size*0.1, y + size*0.5, size*0.8, size*0.35);
-
-        // Mattress
         ctx.fillStyle = '#94a3b8';
-        ctx.fillRect(x + size*0.12, y + size*0.45, size*0.76, size*0.3);
-
-        // Mattress lines
-        ctx.strokeStyle = '#64748b';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(x + size*0.12, y + size*0.6);
-        ctx.lineTo(x + size*0.88, y + size*0.6);
-        ctx.stroke();
-
-        // Pillow
-        ctx.fillStyle = '#cbd5e0';
-        ctx.fillRect(x + size*0.15, y + size*0.4, size*0.25, size*0.12);
-
-        // Stains/wear
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
-        ctx.beginPath();
-        ctx.ellipse(cx + size*0.1, cy + size*0.05, size*0.1, size*0.08, 0, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillRect(cx+size*0.2, cy-2, size*0.15, 4);
     }
-
-    // CORPSE - Dead body (different from skeleton)
-    else if (type === 'corpse' || type === 'driedcorpse') {
-        // Body silhouette
-        ctx.fillStyle = '#3f3f46';
-
-        // Head
-        ctx.beginPath();
-        ctx.ellipse(cx - size*0.15, y + size*0.3, size*0.12, size*0.15, -0.3, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Torso
-        ctx.fillRect(cx - size*0.05, y + size*0.4, size*0.3, size*0.35);
-
-        // Arms
-        ctx.save();
-        ctx.translate(cx, y + size*0.5);
-        ctx.rotate(0.5);
-        ctx.fillRect(-size*0.05, -size*0.02, size*0.25, size*0.06);
-        ctx.restore();
-
-        ctx.save();
-        ctx.translate(cx + size*0.1, y + size*0.55);
-        ctx.rotate(-0.8);
-        ctx.fillRect(-size*0.02, -size*0.02, size*0.22, size*0.06);
-        ctx.restore();
-
-        // Legs
-        ctx.fillRect(cx - size*0.02, y + size*0.7, size*0.08, size*0.2);
-        ctx.fillRect(cx + size*0.12, y + size*0.75, size*0.08, size*0.15);
-
-        // Blood pool
-        const bloodGrad = ctx.createRadialGradient(cx, cy + size*0.2, 0, cx, cy + size*0.2, size*0.3);
-        bloodGrad.addColorStop(0, 'rgba(127, 29, 29, 0.6)');
-        bloodGrad.addColorStop(1, 'rgba(127, 29, 29, 0)');
-        ctx.fillStyle = bloodGrad;
-        ctx.beginPath();
-        ctx.ellipse(cx, cy + size*0.2, size*0.3, size*0.15, 0, 0, Math.PI * 2);
-        ctx.fill();
+    else if (type === 'locker') {
+        // Tall metal locker
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(x+size*0.25, y, size*0.5, size*0.9);
+        
+        // Door lines
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(x+size*0.25, y+size*0.3, size*0.5, 2);
+        ctx.fillRect(x+size*0.25, y+size*0.6, size*0.5, 2);
+        
+        // Vents
+        for(let i=0; i<5; i++) {
+            ctx.fillRect(x+size*0.3, y+size*0.1 + i*4, size*0.4, 2);
+        }
+        
+        // Handle
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(cx-2, cy, 4, size*0.15);
     }
-
-    // DEFAULT - Simple colored box for unhandled types
-    else {
-        ctx.fillStyle = '#6b7280';
-        ctx.fillRect(x + size*0.2, y + size*0.2, size*0.6, size*0.6);
+    else if (type === 'toolbox') {
+        // Red toolbox
+        ctx.fillStyle = '#991b1b';
+        ctx.fillRect(x+size*0.2, y+size*0.4, size*0.6, size*0.45);
+        
+        // Top/lid
+        ctx.fillStyle = '#b91c1c';
+        ctx.fillRect(x+size*0.2, y+size*0.25, size*0.6, size*0.15);
+        
+        // Handle
         ctx.strokeStyle = '#374151';
         ctx.lineWidth = 2;
-        ctx.strokeRect(x + size*0.2, y + size*0.2, size*0.6, size*0.6);
-
-        // Label
-        ctx.fillStyle = '#e2e8f0';
-        ctx.font = `${size*0.1}px monospace`;
-        ctx.textAlign = 'center';
-        ctx.fillText('?', cx, cy + size*0.05);
+        ctx.beginPath();
+        ctx.arc(cx, y+size*0.25, size*0.15, Math.PI, 0);
+        ctx.stroke();
+        
+        // Latch
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx-3, y+size*0.4, 6, 4);
     }
+    else if (type === 'medkit' || type === 'first_aid') {
+        // White medical box with red cross
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(x+size*0.2, y+size*0.3, size*0.6, size*0.5);
+        
+        // Red cross
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(cx-2, cy-size*0.2, 4, size*0.4);
+        ctx.fillRect(cx-size*0.15, cy-2, size*0.3, 4);
+        
+        // Handle
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(cx-size*0.1, y+size*0.25, size*0.2, size*0.08);
+    }
+    else if (type === 'footlocker') {
+        // Military footlocker
+        ctx.fillStyle = '#14532d';
+        ctx.fillRect(x+size*0.15, y+size*0.35, size*0.7, size*0.5);
+        
+        // Metal bands
+        ctx.fillStyle = '#374151';
+        ctx.fillRect(x+size*0.15, y+size*0.35, size*0.7, 3);
+        ctx.fillRect(x+size*0.15, y+size*0.6, size*0.7, 3);
+        ctx.fillRect(x+size*0.15, y+size*0.82, size*0.7, 3);
+        
+        // Lock
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx-4, cy, 8, 6);
+    }
+    else if (type === 'file_cabinet') {
+        // Office file cabinet
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(x+size*0.25, y+size*0.1, size*0.5, size*0.8);
+        
+        // Drawers
+        for(let i=0; i<3; i++) {
+            const dy = y+size*0.15 + i*size*0.25;
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(x+size*0.25, dy, size*0.5, 2);
+            
+            // Handles
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(cx-6, dy+4, 12, 3);
+        }
+    }
+    else if (type === 'desk') {
+        // Office desk - existing code is good, keeping it
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(x+2, y+size*0.4, size-4, size*0.3);
+        ctx.fillStyle = '#a16207'; 
+        ctx.fillRect(x+2, y+size*0.4, size-4, 2);	
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(x+2, y+size*0.7, 6, size*0.2);
+        ctx.fillRect(x+size-8, y+size*0.7, 6, size*0.2);
+    }
+    else if (type === 'ammo_box') {
+        // Military ammo crate
+        ctx.fillStyle = '#14532d';
+        ctx.fillRect(x+size*0.2, y+size*0.4, size*0.6, size*0.45);
+        
+        // Yellow warning stripe
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(x+size*0.2, y+size*0.55, size*0.6, size*0.08);
+        
+        // Stencil text effect
+        ctx.fillStyle = '#052e16';
+        ctx.fillRect(x+size*0.25, y+size*0.45, 3, 6);
+        ctx.fillRect(x+size*0.35, y+size*0.45, 3, 6);
+        ctx.fillRect(x+size*0.45, y+size*0.45, 3, 6);
+        
+        // Handles
+        ctx.strokeStyle = '#166534';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x+size*0.25, y+size*0.4);
+        ctx.lineTo(x+size*0.25, y+size*0.35);
+        ctx.lineTo(x+size*0.35, y+size*0.35);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x+size*0.75, y+size*0.4);
+        ctx.lineTo(x+size*0.75, y+size*0.35);
+        ctx.lineTo(x+size*0.65, y+size*0.35);
+        ctx.stroke();
+    }
+    else if (type === 'duffel_bag') {
+        // Canvas duffel bag
+        ctx.fillStyle = '#78716c';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy+size*0.1, size*0.35, size*0.25, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Bag body
+        ctx.fillStyle = '#57534e';
+        ctx.fillRect(x+size*0.25, cy, size*0.5, size*0.35);
+        
+        // Strap
+        ctx.strokeStyle = '#44403c';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy-size*0.1, size*0.2, 0.3, Math.PI-0.3);
+        ctx.stroke();
+    }
+    else if (type === 'corpse') {
+        // Skeleton corpse (reusing existing skeleton code)
+        ctx.fillStyle = '#e5e5e5';
+        ctx.beginPath(); 
+        ctx.arc(cx, cy-2, size*0.12, 0, Math.PI*2); 
+        ctx.fill();	
+        ctx.fillStyle = '#000'; 
+        ctx.fillRect(cx-2, cy-3, 1, 1); 
+        ctx.fillRect(cx+1, cy-3, 1, 1);	
+        ctx.strokeStyle = '#e5e5e5'; 
+        ctx.lineWidth=2;
+        ctx.beginPath(); 
+        ctx.moveTo(cx-3, cy+2); 
+        ctx.lineTo(cx+3, cy+2); 
+        ctx.stroke();
+        ctx.beginPath(); 
+        ctx.moveTo(cx-3, cy+5); 
+        ctx.lineTo(cx+3, cy+5); 
+        ctx.stroke();
+        
+        // Add some bones scattered around
+        ctx.fillStyle = '#d4d4d4';
+        ctx.fillRect(cx+4, cy+3, 6, 2);
+        ctx.fillRect(cx-8, cy+6, 5, 2);
+    }
+    else if (type === 'sack') {
+        // Burlap sack
+        ctx.fillStyle = '#a16207';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy+size*0.2, size*0.3, size*0.35, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Tie at top
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(cx, cy-size*0.05, size*0.15, Math.PI, 0);
+        ctx.stroke();
+        
+        // Texture lines
+        ctx.strokeStyle = '#92400e';
+        ctx.lineWidth = 1;
+        for(let i=0; i<4; i++) {
+            ctx.beginPath();
+            ctx.moveTo(cx-size*0.25, cy+i*4);
+            ctx.lineTo(cx+size*0.25, cy+i*4);
+            ctx.stroke();
+        }
+    }
+    else if (type === 'hollow_rock') {
+        // Rock with dark opening
+        ctx.fillStyle = '#78716c';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, size*0.4, size*0.3, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Darker opening/shadow
+        ctx.fillStyle = '#1c1917';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, size*0.2, size*0.15, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Highlight
+        ctx.fillStyle = '#a8a29e';
+        ctx.beginPath();
+        ctx.ellipse(cx-size*0.15, cy-size*0.1, size*0.1, size*0.08, 0, 0, Math.PI*2);
+        ctx.fill();
+    }
+    else if (type === 'dumpster') {
+        // Large trash dumpster
+        ctx.fillStyle = '#14532d';
+        ctx.fillRect(x+size*0.1, y+size*0.3, size*0.8, size*0.55);
+        
+        // Lid (slightly open)
+        ctx.fillStyle = '#166534';
+        ctx.beginPath();
+        ctx.moveTo(x+size*0.1, y+size*0.3);
+        ctx.lineTo(x+size*0.2, y+size*0.15);
+        ctx.lineTo(x+size*0.9, y+size*0.15);
+        ctx.lineTo(x+size*0.9, y+size*0.3);
+        ctx.fill();
+        
+        // Wheels
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(x+size*0.25, y+size*0.88, size*0.08, 0, Math.PI*2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x+size*0.75, y+size*0.88, size*0.08, 0, Math.PI*2);
+        ctx.fill();
+    }
+    else if (type === 'register' || type === 'cashier') {
+        // Cash register
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(x+size*0.2, y+size*0.4, size*0.6, size*0.4);
+        
+        // Display screen
+        ctx.fillStyle = '#14532d';
+        ctx.fillRect(x+size*0.25, y+size*0.25, size*0.5, size*0.2);
+        
+        // Green display glow
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(x+size*0.28, y+size*0.28, size*0.44, size*0.14);
+        
+        // Keys
+        ctx.fillStyle = '#e2e8f0';
+        for(let row=0; row<2; row++) {
+            for(let col=0; col<3; col++) {
+                ctx.fillRect(x+size*0.25 + col*size*0.15, y+size*0.5 + row*size*0.12, size*0.1, size*0.08);
+            }
+        }
+        
+        // Cash drawer
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(x+size*0.2, y+size*0.75, size*0.6, size*0.1);
+    }
+    else if (type === 'cooler') {
+        // Ice chest/cooler
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(x+size*0.15, y+size*0.35, size*0.7, size*0.5);
+        
+        // White lid
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(x+size*0.15, y+size*0.25, size*0.7, size*0.12);
+        
+        // Handle
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(cx, y+size*0.25, size*0.15, Math.PI, 0);
+        ctx.stroke();
+        
+        // Latch
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx-4, y+size*0.35, 8, 4);
+    }
+    else if (type === 'doctors_bag') {
+        // Classic doctor's bag
+        ctx.fillStyle = '#7c2d12';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy+size*0.1, size*0.35, size*0.3, 0, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Brass clasp
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx-size*0.15, cy-size*0.1, size*0.3, size*0.08);
+        
+        // Handle
+        ctx.strokeStyle = '#92400e';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(cx, cy-size*0.15, size*0.2, 0.5, Math.PI-0.5);
+        ctx.stroke();
+    }
+    else if (type === 'vending_machine') {
+        // NUKA-COLA MACHINE (The Classic Red)
+        // Body
+        ctx.fillStyle = '#991b1b'; // Dark Red
+        ctx.fillRect(x + 4, y - 8, size - 8, size + 4);
+        
+        // Side Highlight
+        ctx.fillStyle = '#ef4444'; // Bright Red
+        ctx.fillRect(x + 4, y - 8, 4, size + 4);
+
+        // Display Window (Glowing Blue/White)
+        const glow = Math.sin(time / 200) * 0.5 + 0.5;
+        ctx.fillStyle = `rgba(200, 255, 255, ${0.3 + glow * 0.2})`;
+        ctx.fillRect(x + size/2, y, size/3, size/2);
+
+        // "Cola" Stripe (White)
+        ctx.fillStyle = '#e5e5e5';
+        ctx.beginPath();
+        ctx.moveTo(x + 4, y + size/2);
+        ctx.bezierCurveTo(x + size/2, y + size/4, x + size/2, y + size*0.8, x + size - 4, y + size/2);
+        ctx.lineTo(x + size - 4, y + size/2 + 2);
+        ctx.bezierCurveTo(x + size/2, y + size*0.8 + 2, x + size/2, y + size/4 + 2, x + 4, y + size/2 + 2);
+        ctx.fill();
+    }
+    else if (type === 'server_rack') {
+        const isServer = type === 'server_rack';
+        ctx.fillStyle = isServer ? '#111827' : '#991b1b';	
+        ctx.fillRect(x+size*0.25, y+size*0.1, size*0.5, size*0.8);
+        ctx.fillStyle = isServer ? '#374151' : '#ef4444';	
+        ctx.fillRect(x+size*0.25, y, size*0.5, size*0.1);
+        
+        if (!isServer) {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(x+size*0.25, y+size*0.5, size*0.5, size*0.1);
+        } else {
+            ctx.fillStyle = '#000';	
+            ctx.fillRect(x+size*0.3, y+size*0.2, size*0.4, size*0.2);
+            // Blinking LEDs
+            if(Math.random() > 0.1) {
+                ctx.fillStyle = (Math.sin(time/100 + x)>0) ? '#22c55e' : '#064e3b';
+                ctx.fillRect(x+size*0.35, y+size*0.6, 2, 2);
+            }
+            if(Math.random() > 0.1) {
+                ctx.fillStyle = (Math.cos(time/150 + y)>0) ? '#ef4444' : '#7f1d1d';
+                ctx.fillRect(x+size*0.45, y+size*0.6, 2, 2);
+            }
+        }
+    }
+    else if (type === 'crate' || type === 'ammo_crate') {
+        ctx.fillStyle = '#14532d';	
+        ctx.fillRect(x+4, y+size*0.4, size-8, size*0.5);
+        ctx.fillStyle = '#166534';	
+        ctx.fillRect(x+4, y+size*0.1, size-8, size*0.3);	
+        ctx.fillStyle = '#052e16'; ctx.fillRect(x+4, y+size*0.4, size-8, 2);	
+        ctx.strokeStyle = '#22c55e'; ctx.lineWidth=1;
+        ctx.strokeRect(x+4, y+size*0.4, size-8, size*0.5);
+    }
+    else if (type === 'wall_terminal' || type === 'desk') {
+        // TERMINAL (RobCo Style)
+        // Desk/Stand
+        ctx.fillStyle = '#4b5563'; // Grey metal
+        ctx.fillRect(x + 2, y + size/2, size - 4, size/2);
+        
+        // Monitor Housing
+        ctx.fillStyle = '#374151'; // Darker metal
+        ctx.beginPath();
+        ctx.arc(cx, y + size/2, size/3, Math.PI, 0); // Rounded top
+        ctx.lineTo(cx + size/3, y + size/2 + 4);
+        ctx.lineTo(cx - size/3, y + size/2 + 4);
+        ctx.fill();
+
+        // Screen (Flickering Green Code)
+        if (Math.random() > 0.05) { // Occasional flicker off
+            ctx.fillStyle = '#14532d'; // Dark Green Base
+            ctx.fill(); // Fill background
+            
+            ctx.fillStyle = '#4ade80'; // Bright Green Text
+            const screenW = size/2;
+            const screenH = size/3;
+            // Draw "Text lines"
+            for(let i=0; i<3; i++) {
+                ctx.fillRect(cx - screenW/3, (y + size/3) + (i*4), Math.random() * screenW/1.5, 2);
+            }
+        }
+    }
+    else if (type === 'table') {
+        const isRound = type === 'table';
+        if (isRound) {
+            ctx.fillStyle = '#78350f';
+            ctx.beginPath(); ctx.ellipse(cx, y+size*0.5, size*0.4, size*0.2, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(cx-2, y+size*0.5, 4, size*0.4);
+        } else {
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(x+2, y+size*0.4, size-4, size*0.3);
+            ctx.fillStyle = '#a16207'; ctx.fillRect(x+2, y+size*0.4, size-4, 2);	
+            ctx.fillStyle = '#451a03';
+            ctx.fillRect(x+2, y+size*0.7, 6, size*0.2);
+            ctx.fillRect(x+size-8, y+size*0.7, 6, size*0.2);
+        }
+    }
+    else if (type === 'skeleton' || type === 'skeleton_blue') {
+        ctx.fillStyle = '#e5e5e5';
+        ctx.beginPath(); ctx.arc(cx, cy-2, size*0.12, 0, Math.PI*2); ctx.fill();	
+        ctx.fillStyle = '#000'; ctx.fillRect(cx-2, cy-3, 1, 1); ctx.fillRect(cx+1, cy-3, 1, 1);	
+        ctx.strokeStyle = '#e5e5e5'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(cx-3, cy+2); ctx.lineTo(cx+3, cy+2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx-3, cy+5); ctx.lineTo(cx+3, cy+5); ctx.stroke();
+    }
+    else if (type === 'fire_barrel') {
+        ctx.fillStyle = '#374151'; ctx.fillRect(x+size*0.25, y+size*0.25, size*0.5, size*0.75);
+        ctx.fillStyle = '#1f2937';	
+        ctx.fillRect(x+size*0.25, y+size*0.4, size*0.5, 2);
+        ctx.fillRect(x+size*0.25, y+size*0.6, size*0.5, 2);
+        
+        const pTime = time / 100;
+        ctx.globalCompositeOperation = 'lighter';
+        for(let i=0; i<8; i++) {
+            const fy = (pTime + i*1.5) % 10;	
+            const fx = Math.sin(pTime + i) * 4;
+            const alpha = 1 - (fy/10);
+            ctx.fillStyle = `rgba(250, 204, 21, ${alpha})`;
+            ctx.fillRect(cx + fx - 2, y + size*0.25 - fy*2, 4, 4);
+        }
+        ctx.globalCompositeOperation = 'source-over';
+    }
+    else if (type === 'rad_puddle') {
+        const pulse = (Math.sin(time / 500) + 1) / 2;	
+        const r = size/2 + (pulse * 4);
+        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        g.addColorStop(0, 'rgba(132, 204, 22, 0.9)');
+        g.addColorStop(0.6, 'rgba(132, 204, 22, 0.4)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.ellipse(cx, cy, r, r*0.6, 0, 0, Math.PI*2); ctx.fill();
+    }
+    else if (type === 'glowing_fungus') {
+        ctx.fillStyle = '#a3e635';
+        ctx.shadowColor = '#a3e635'; ctx.shadowBlur = 10;
+        ctx.beginPath(); ctx.arc(cx, cy+4, size*0.15, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+    else if (type === 'overhead_light') {
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI*2); ctx.fill();
+    }
+    else if (type === 'server_rack') {
+        ctx.fillStyle = '#57534e';	
+        ctx.fillRect(x+8, y+size*0.4, size-16, size*0.4);
+        ctx.fillStyle = '#78716c';	
+        ctx.fillRect(x+8, y+size*0.2, size-16, size*0.2);
+    }
+  
 }
 
 function drawCRTEffects(ctx, width, height) {
@@ -4234,6 +4103,8 @@ window.copyHostId = copyHostId;
 window.sendChatMessage = sendChatMessage;
 window.zoomIn = zoomIn;
 window.zoomOut = zoomOut;
+window.setZoomLevel = setZoomLevel
+window.updateZoomDisplay = updateZoomDisplay
 
 
 
