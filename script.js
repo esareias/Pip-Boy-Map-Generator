@@ -1341,7 +1341,7 @@ const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
     const dx = e.clientX - lastPanX;
     const dy = e.clientY - lastPanY;
     
-    const panSpeed = 1.25;  // Adjust this! (1.0 = normal, 2.0 = 2x faster, 3.0 = 3x faster)
+    const panSpeed = 1.10;  // Adjust this! (1.0 = normal, 2.0 = 2x faster, 3.0 = 3x faster)
     
     mapOffsetX -= dx * panSpeed;
     mapOffsetY -= dy * panSpeed;
