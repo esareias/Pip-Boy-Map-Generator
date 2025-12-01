@@ -24,7 +24,7 @@ const characterSelectScreen = document.getElementById('characterSelectScreen');
 // Configuration
 const RENDER_SCALE = 2;	
 const MINIMAL_MOVEMENT_THRESHOLD = 5; // Pixels for drag vs click determination
-let config = { width: 800, height: 600, cols: 0, rows: 0, gridSize: 24, mapType: 'vault', wallColor: '#16ff60', bgColor: '#050505', showLabels: true, fogEnabled: true };
+let config = { width: 1920, height: 1080, cols: 0, rows: 0, gridSize: 24, mapType: 'vault', wallColor: '#16ff60', bgColor: '#050505', showLabels: true, fogEnabled: true };
 
 // Runtime State
 let tumbleweeds = [];
@@ -38,6 +38,11 @@ let playerToken = null; // Stores the selected character's name/color/src for ch
 let mapOffsetX = 0; // Current global map offset X (in logical pixels)
 let mapOffsetY = 0; // Current global map offset Y (in logical pixels)
 let isPanning = false;
+
+// --- ZOOM STATE ---
+let zoomLevel = 1.0;
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 4.0;
 
 // --- ZOOM STATE ---
 let zoomLevel = 1.0;
@@ -1019,6 +1024,40 @@ async function init() {
     // --- CHARACTER SELECTION GATE (Start flow) ---
     showLoginScreen();
     // ----------------------------------------------
+}
+
+
+function zoomIn() {
+    if (zoomLevel < MAX_ZOOM) {
+        zoomLevel += 0.25;
+        updateZoomDisplay();
+        drawCurrentLevel();
+    }
+}
+
+function zoomOut() {
+    if (zoomLevel > MIN_ZOOM) {
+        zoomLevel -= 0.25;
+        updateZoomDisplay();
+        drawCurrentLevel();
+    }
+}
+
+function setZoomLevel(value) {
+    zoomLevel = parseFloat(value);
+    updateZoomDisplay();
+    drawCurrentLevel();
+}
+
+function updateZoomDisplay() {
+    const display = document.getElementById('zoomDisplay');
+    if (display) {
+        display.innerText = Math.round(zoomLevel * 100) + '%';
+    }
+    const slider = document.getElementById('zoomSlider');
+    if (slider) {
+        slider.value = zoomLevel;
+    }
 }
 
 
@@ -3740,6 +3779,10 @@ window.exitInterior = exitInterior;
 window.toggleLabels = toggleLabels;
 window.toggleFog = toggleFog;
 window.downloadMap = downloadMap;
+window.zoomIn = zoomIn;
+window.zoomOut = zoomOut;
+window.setZoomLevel = setZoomLevel;
+window.updateZoomDisplay = updateZoomDisplay;
 window.zoomIn = zoomIn;
 window.zoomOut = zoomOut;
 window.setZoomLevel = setZoomLevel;
