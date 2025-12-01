@@ -25,7 +25,7 @@ body {
     box-shadow: inset 0 0 60px #000, 0 0 50px rgba(0,0,0,0.8);
     border-radius: 20px;
     padding: 20px;
-    max-width: 1000px;
+    max-width: 1960px; /* CHANGED: Increased to fit 1920px canvas + padding */
     margin: 20px auto;
     position: relative;
 }
@@ -46,8 +46,10 @@ body {
     background-color: #050505;
     overflow: hidden;
     box-shadow: 0 0 40px rgba(0,0,0,0.9), inset 0 0 30px rgba(0,0,0,1);
-    cursor: grab; /* Updated default cursor */
+    cursor: grab;
     max-width: 100%;
+    width: 1920px;  /* ADDED: Fixed width for the screen */
+    height: 1080px; /* ADDED: Fixed height for the screen */
 }
 .screen-container.grabbing {
     cursor: grabbing;
@@ -56,8 +58,13 @@ body {
     cursor: crosshair;
 }
 
-
-canvas { display: block; width: 100%; image-rendering: pixelated; }
+/* CHANGED: Canvas now displays at its natural logical size */
+canvas { 
+    display: block; 
+    width: 1920px;  /* CHANGED: From 100% to fixed 1920px */
+    height: 1080px; /* ADDED: Fixed height */
+    image-rendering: pixelated; 
+}
 
 .tracking-line {
     width: 100%; height: 2px;
@@ -156,7 +163,6 @@ textarea.report-text {
    ZOOM SLIDER STYLES
    ======================================== */
 
-/* Zoom slider container styling */
 input[type="range"]#zoomSlider {
     -webkit-appearance: none;
     appearance: none;
@@ -177,7 +183,6 @@ input[type="range"]#zoomSlider:hover {
     box-shadow: 0 0 10px var(--main-color);
 }
 
-/* Webkit (Chrome, Safari, Edge) slider thumb */
 input[type="range"]#zoomSlider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
@@ -202,7 +207,6 @@ input[type="range"]#zoomSlider::-webkit-slider-thumb:active {
     transform: scale(1.1);
 }
 
-/* Firefox slider thumb */
 input[type="range"]#zoomSlider::-moz-range-thumb {
     width: 20px;
     height: 20px;
@@ -221,7 +225,6 @@ input[type="range"]#zoomSlider::-moz-range-thumb:hover {
                 0 0 8px var(--main-color);
 }
 
-/* Firefox slider track */
 input[type="range"]#zoomSlider::-moz-range-track {
     background: linear-gradient(to right, 
         var(--dim-color) 0%, 
@@ -230,7 +233,6 @@ input[type="range"]#zoomSlider::-moz-range-track {
     border-radius: 4px;
 }
 
-/* Zoom display text enhancement */
 #zoomDisplay {
     font-weight: bold;
     text-shadow: 0 0 8px var(--main-color);
@@ -243,7 +245,6 @@ input[type="range"]#zoomSlider::-moz-range-track {
     to { opacity: 1; }
 }
 
-/* Enhanced zoom button styling */
 .pip-btn[onclick*="zoom"] {
     min-width: 40px;
     font-weight: bold;
