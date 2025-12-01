@@ -38,6 +38,11 @@ let playerToken = null; // Stores the selected character's name/color/src for ch
 let mapOffsetX = 0; // Current global map offset X (in logical pixels)
 let mapOffsetY = 0; // Current global map offset Y (in logical pixels)
 let isPanning = false;
+
+// --- ZOOM STATE ---
+let zoomLevel = 1.0;
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 4.0;
 let lastPanX = 0;
 let lastPanY = 0;
 // -------------------------
@@ -1016,6 +1021,43 @@ async function init() {
     // ----------------------------------------------
 }
 
+function zoomIn() {
+  if (zoomLevel < MAXZOOM) {
+    zoomLevel += 0.25;
+    updateZoomDisplay();
+    drawCurrentLevel();
+  }
+}
+
+function zoomOut() {
+  if (zoomLevel > MINZOOM) {
+    zoomLevel -= 0.25;
+    updateZoomDisplay();
+    drawCurrentLevel();
+  }
+}
+
+// NEW: Smooth zoom slider function
+function setZoomLevel(value) {
+  zoomLevel = parseFloat(value);
+  updateZoomDisplay();
+  drawCurrentLevel();
+}
+
+function updateZoomDisplay() {
+  const display = document.getElementById('zoomDisplay');
+  if (display) {
+    display.innerText = Math.round(zoomLevel * 100) + '%';
+  }
+
+  // Update slider if it exists
+  const slider = document.getElementById('zoomSlider');
+  if (slider) {
+    slider.value = zoomLevel;
+  }
+}
+
+
 function animate(time) {
     requestAnimationFrame(animate);
     
@@ -1061,8 +1103,8 @@ function handleMouseDown(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const logicalMouseX = (e.clientX - rect.left) * scaleX / RENDER_SCALE;
-    const logicalMouseY = (e.clientY - rect.top) * scaleY / RENDER_SCALE;
+    const logicalMouseX = (e.clientX - rect.left) * scaleX / (RENDER_SCALE * zoomLevel);
+    const logicalMouseY = (e.clientY - rect.top) * scaleY / (RENDER_SCALE * zoomLevel);
     
     // Correct the mouse position based on the current pan offset
     const pannedLogicalX = logicalMouseX - mapOffsetX;
@@ -3701,6 +3743,10 @@ window.exitInterior = exitInterior;
 window.toggleLabels = toggleLabels;
 window.toggleFog = toggleFog;
 window.downloadMap = downloadMap;
+window.zoomIn = zoomIn;
+window.zoomOut = zoomOut;
+window.setZoomLevel = setZoomLevel;
+window.updateZoomDisplay = updateZoomDisplay;
 window.recordClip = recordClip;
 window.clearCurrentLevel = clearCurrentLevel;
 window.purgeAll = purgeAll;
