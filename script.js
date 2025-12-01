@@ -2721,58 +2721,1105 @@ function createPixelPattern(colors, type) {
 }
 
 function drawSprite(ctx, type, x, y, size, time) {
-    const cx = x + size/2; const cy = y + size/2;
-    
-    // Enhanced Soft Shadow
-    const shadowG = ctx.createRadialGradient(cx + 2, cy + size*0.4, 0, cx + 2, cy + size*0.4, size*0.3);
-    shadowG.addColorStop(0, 'rgba(0,0,0,0.6)');
+    const cx = x + size/2;
+    const cy = y + size/2;
+
+    // ============================================
+    // UNIVERSAL VOLUMETRIC SHADOW SYSTEM
+    // ============================================
+    const shadowG = ctx.createRadialGradient(cx + 3, cy + size*0.45, 0, cx + 3, cy + size*0.45, size*0.4);
+    shadowG.addColorStop(0, 'rgba(0,0,0,0.8)');
+    shadowG.addColorStop(0.5, 'rgba(0,0,0,0.4)');
     shadowG.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = shadowG;
-    ctx.fillRect(x, y + size*0.3, size, size*0.3);
+    ctx.fillRect(x, y + size*0.35, size, size*0.4);
 
-    if (type === 'tree' || type === 'joshua_tree') {
+    // ============================================
+    // LOOT CONTAINERS - ULTRA PREMIUM EDITION
+    // ============================================
+
+    if (type === 'safe') {
+        // Bank Vault Safe - Heavy Duty Construction
+        const metalGrad = ctx.createLinearGradient(x + size*0.2, y + size*0.2, x + size*0.8, y + size*0.9);
+        metalGrad.addColorStop(0, '#2d3748');
+        metalGrad.addColorStop(0.5, '#1a202c');
+        metalGrad.addColorStop(1, '#0f1419');
+        ctx.fillStyle = metalGrad;
+        ctx.fillRect(x + size*0.2, y + size*0.2, size*0.6, size*0.7);
+
+        // Door Frame Bevel
+        ctx.strokeStyle = '#4a5568';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x + size*0.2, y + size*0.2, size*0.6, size*0.7);
+
+        // Inner Panel
+        ctx.fillStyle = '#171f2a';
+        ctx.fillRect(x + size*0.25, y + size*0.25, size*0.5, size*0.6);
+
+        // Corner Rivets with Highlights
+        ctx.fillStyle = '#718096';
+        [[0.22, 0.22], [0.76, 0.22], [0.22, 0.88], [0.76, 0.88]].forEach(([rx, ry]) => {
+            ctx.beginPath();
+            ctx.arc(x + size*rx, y + size*ry, 2.5, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#a0aec0';
+            ctx.beginPath();
+            ctx.arc(x + size*rx - 0.5, y + size*ry - 0.5, 1, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#718096';
+        });
+
+        // Brass Combination Dial
+        const dialGrad = ctx.createRadialGradient(cx + 2, cy, 0, cx + 2, cy, size*0.15);
+        dialGrad.addColorStop(0, '#fbbf24');
+        dialGrad.addColorStop(0.7, '#d97706');
+        dialGrad.addColorStop(1, '#92400e');
+        ctx.fillStyle = dialGrad;
+        ctx.beginPath();
+        ctx.arc(cx + 2, cy, size*0.15, 0, Math.PI*2);
+        ctx.fill();
+
+        // Dial Center
+        ctx.fillStyle = '#0f1419';
+        ctx.beginPath();
+        ctx.arc(cx + 2, cy, size*0.08, 0, Math.PI*2);
+        ctx.fill();
+
+        // Dial Tick Marks
+        ctx.strokeStyle = '#0f1419';
+        ctx.lineWidth = 1.5;
+        for(let i = 0; i < 12; i++) {
+            const angle = (i / 12) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.moveTo(cx + 2 + Math.cos(angle)*size*0.12, cy + Math.sin(angle)*size*0.12);
+            ctx.lineTo(cx + 2 + Math.cos(angle)*size*0.14, cy + Math.sin(angle)*size*0.14);
+            ctx.stroke();
+        }
+
+        // Rotating Pointer (animated)
+        const rotation = (time / 3000) % (Math.PI*2);
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx + 2, cy);
+        ctx.lineTo(cx + 2 + Math.cos(rotation)*size*0.12, cy + Math.sin(rotation)*size*0.12);
+        ctx.stroke();
+
+        // Heavy Duty Handle
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(x + size*0.82, cy - size*0.1);
+        ctx.lineTo(x + size*0.95, cy - size*0.1);
+        ctx.stroke();
+
+        // Handle Grip Detail
+        const gripGrad = ctx.createLinearGradient(x + size*0.82, cy - size*0.15, x + size*0.95, cy - size*0.05);
+        gripGrad.addColorStop(0, '#64748b');
+        gripGrad.addColorStop(1, '#334155');
+        ctx.fillStyle = gripGrad;
+        ctx.fillRect(x + size*0.88, cy - size*0.15, size*0.08, size*0.1);
+
+        // Wear and Scratches
+        ctx.strokeStyle = 'rgba(160, 174, 192, 0.3)';
+        ctx.lineWidth = 0.5;
+        for(let i = 0; i < 6; i++) {
+            ctx.beginPath();
+            ctx.moveTo(x + size*0.25 + Math.random()*size*0.4, y + size*0.3 + Math.random()*size*0.5);
+            ctx.lineTo(x + size*0.3 + Math.random()*size*0.35, y + size*0.35 + Math.random()*size*0.45);
+            ctx.stroke();
+        }
+    }
+
+    else if (type === 'locker') {
+        // Military-Grade Tall Locker
+        const lockerGrad = ctx.createLinearGradient(x + size*0.25, y, x + size*0.75, y + size*0.9);
+        lockerGrad.addColorStop(0, '#5a6c7d');
+        lockerGrad.addColorStop(0.5, '#475569');
+        lockerGrad.addColorStop(1, '#334155');
+        ctx.fillStyle = lockerGrad;
+        ctx.fillRect(x + size*0.25, y, size*0.5, size*0.9);
+
+        // Door Edge Highlight
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x + size*0.25, y, size*0.5, size*0.9);
+
+        // Door Panel Sections
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(x + size*0.25, y + size*0.3, size*0.5, 2);
+        ctx.fillRect(x + size*0.25, y + size*0.6, size*0.5, 2);
+
+        // Ventilation Slots with Depth
+        ctx.fillStyle = '#0f172a';
+        for(let i = 0; i < 8; i++) {
+            ctx.fillRect(x + size*0.3, y + size*0.08 + i*3.5, size*0.4, 2);
+            // Highlight underneath
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(x + size*0.3, y + size*0.08 + i*3.5 + 2, size*0.4, 0.5);
+            ctx.fillStyle = '#0f172a';
+        }
+
+        // ID Number Plate
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx - size*0.12, y + size*0.35, size*0.24, size*0.08);
+        ctx.fillStyle = '#0f172a';
+        ctx.font = `bold ${size*0.06}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('A-' + Math.floor(Math.random()*99), cx, y + size*0.39);
+
+        // Handle with Latch Mechanism
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx - 3, cy);
+        ctx.lineTo(cx + 3, cy);
+        ctx.stroke();
+
+        // Latch Base
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(cx - 5, cy - 4, 10, 8);
+
+        // Lock Cylinder
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 3, 0, Math.PI*2);
+        ctx.fill();
+        ctx.strokeStyle = '#4a5568';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Dents and Battle Damage
+        ctx.fillStyle = 'rgba(30, 41, 59, 0.5)';
+        for(let i = 0; i < 4; i++) {
+            ctx.beginPath();
+            ctx.arc(x + size*0.3 + Math.random()*size*0.4, y + size*0.15 + Math.random()*size*0.7, 3 + Math.random()*2, 0, Math.PI*2);
+            ctx.fill();
+        }
+
+        // Rust Accumulation
+        ctx.fillStyle = 'rgba(139, 69, 19, 0.4)';
+        for(let i = 0; i < 3; i++) {
+            ctx.beginPath();
+            ctx.arc(x + size*0.26 + Math.random()*size*0.48, y + size*0.1 + Math.random()*size*0.8, 2 + Math.random()*3, 0, Math.PI*2);
+            ctx.fill();
+        }
+    }
+
+    else if (type === 'crate' || type === 'ammo_crate' || type === 'ammo_box') {
+        // Military Supply Crate - Wood & Metal Construction
+        const isAmmo = type.includes('ammo');
+
+        // Wood Plank Main Body with Grain
+        const woodGrad = ctx.createLinearGradient(x + 4, y + size*0.4, x + size - 4, y + size*0.9);
+        woodGrad.addColorStop(0, isAmmo ? '#92400e' : '#1a472a');
+        woodGrad.addColorStop(0.5, isAmmo ? '#78350f' : '#14532d');
+        woodGrad.addColorStop(1, isAmmo ? '#451a03' : '#052e16');
+        ctx.fillStyle = woodGrad;
+        ctx.fillRect(x + 4, y + size*0.4, size - 8, size*0.5);
+
+        // Top Panel
+        ctx.fillStyle = isAmmo ? '#a16207' : '#166534';
+        ctx.fillRect(x + 4, y + size*0.1, size - 8, size*0.3);
+
+        // Realistic Wood Grain Detail
+        ctx.strokeStyle = isAmmo ? 'rgba(69, 26, 3, 0.4)' : 'rgba(5, 46, 22, 0.4)';
+        ctx.lineWidth = 1;
+        for(let i = 0; i < 5; i++) {
+            const yPos = y + size*0.45 + i*((size*0.4)/5);
+            ctx.beginPath();
+            ctx.moveTo(x + 4, yPos);
+            ctx.bezierCurveTo(x + size*0.3, yPos + Math.random()*2 - 1, x + size*0.7, yPos + Math.random()*2 - 1, x + size - 4, yPos);
+            ctx.stroke();
+        }
+
+        // Metal Corner Reinforcements (L-brackets)
+        ctx.fillStyle = '#374151';
+        [[x + 4, y + size*0.4], [x + size - 10, y + size*0.4],
+         [x + 4, y + size*0.85], [x + size - 10, y + size*0.85]].forEach(([cx, cy]) => {
+            // L-bracket shape
+            ctx.fillRect(cx, cy, 6, 12);
+            ctx.fillRect(cx, cy, 12, 6);
+            // Rivet detail
+            ctx.fillStyle = '#1f2937';
+            ctx.beginPath();
+            ctx.arc(cx + 3, cy + 3, 1.5, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#374151';
+        });
+
+        // Metal Strapping Bands
+        ctx.fillStyle = '#4b5563';
+        ctx.fillRect(x + 4, y + size*0.4, size - 8, 3);
+        ctx.fillRect(x + 4, y + size*0.65, size - 8, 3);
+        ctx.fillRect(x + 4, y + size*0.87, size - 8, 3);
+
+        // Band Highlights for Depth
+        ctx.fillStyle = '#6b7280';
+        ctx.fillRect(x + 4, y + size*0.4, size - 8, 1);
+        ctx.fillRect(x + 4, y + size*0.65, size - 8, 1);
+
+        // Military Stenciled Text
+        ctx.fillStyle = isAmmo ? '#fef3c7' : '#86efac';
+        ctx.font = `bold ${size*0.08}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(isAmmo ? 'AMMO' : 'SUPPLY', cx, y + size*0.25);
+        ctx.font = `${size*0.06}px monospace`;
+        ctx.fillText(isAmmo ? '7.62×51MM' : 'MRE TYPE-III', cx, y + size*0.33);
+
+        // Warning Label for Ammunition
+        if(isAmmo) {
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(x + size*0.15, y + size*0.55, size*0.7, size*0.12);
+            ctx.fillStyle = '#fef2f2';
+            ctx.font = `bold ${size*0.05}px monospace`;
+            ctx.fillText('⚠ EXPLOSIVE ⚠', cx, y + size*0.61);
+        }
+
+        // Battle Damage and Weathering
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 1.5;
+        for(let i = 0; i < 3; i++) {
+            ctx.beginPath();
+            ctx.moveTo(x + 6 + Math.random()*(size-12), y + size*0.5 + Math.random()*size*0.3);
+            ctx.lineTo(x + 10 + Math.random()*(size-20), y + size*0.55 + Math.random()*size*0.25);
+            ctx.stroke();
+        }
+    }
+
+    else if (type === 'toolbox') {
+        // Professional Mechanic's Toolbox - Red Enamel
+        const bodyGrad = ctx.createLinearGradient(x + size*0.2, y + size*0.4, x + size*0.8, y + size*0.85);
+        bodyGrad.addColorStop(0, '#dc2626');
+        bodyGrad.addColorStop(0.5, '#991b1b');
+        bodyGrad.addColorStop(1, '#7f1d1d');
+        ctx.fillStyle = bodyGrad;
+        ctx.fillRect(x + size*0.2, y + size*0.4, size*0.6, size*0.45);
+
+        // Lid/Top Tray
+        const lidGrad = ctx.createLinearGradient(x + size*0.2, y + size*0.25, x + size*0.8, y + size*0.4);
+        lidGrad.addColorStop(0, '#ef4444');
+        lidGrad.addColorStop(0.5, '#dc2626');
+        lidGrad.addColorStop(1, '#b91c1c');
+        ctx.fillStyle = lidGrad;
+        ctx.fillRect(x + size*0.2, y + size*0.25, size*0.6, size*0.15);
+
+        // Edge Highlights
+        ctx.strokeStyle = '#fca5a5';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + size*0.2, y + size*0.25, size*0.6, size*0.15);
+        ctx.strokeRect(x + size*0.2, y + size*0.4, size*0.6, size*0.45);
+
+        // Carrying Handle
+        ctx.strokeStyle = '#374151';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(cx, y + size*0.25, size*0.15, Math.PI + 0.3, Math.PI*2 - 0.3);
+        ctx.stroke();
+
+        // Handle Grip Texture Lines
+        ctx.strokeStyle = '#1f2937';
+        ctx.lineWidth = 1;
+        for(let i = 0; i < 6; i++) {
+            const angle = Math.PI + 0.5 + i*0.3;
+            const hx = cx + Math.cos(angle)*size*0.15;
+            const hy = y + size*0.25 + Math.sin(angle)*size*0.15;
+            ctx.beginPath();
+            ctx.moveTo(hx, hy);
+            ctx.lineTo(hx + Math.cos(angle + Math.PI/2)*3, hy + Math.sin(angle + Math.PI/2)*3);
+            ctx.stroke();
+        }
+
+        // Latch Mechanism
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx - 4, y + size*0.4, 8, 5);
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(cx - 2, y + size*0.41, 4, 3);
+
+        // Drawer Divider Lines
+        ctx.fillStyle = '#450a0a';
+        ctx.fillRect(x + size*0.2, y + size*0.55, size*0.6, 2);
+        ctx.fillRect(x + size*0.2, y + size*0.7, size*0.6, 2);
+
+        // Tool Silhouettes in Top Tray
+        ctx.strokeStyle = '#7f1d1d';
+        ctx.lineWidth = 2;
+        // Wrench
+        ctx.beginPath();
+        ctx.moveTo(x + size*0.28, y + size*0.3);
+        ctx.lineTo(x + size*0.35, y + size*0.35);
+        ctx.stroke();
+        // Screwdriver
+        ctx.beginPath();
+        ctx.moveTo(x + size*0.4, y + size*0.3);
+        ctx.lineTo(x + size*0.42, y + size*0.36);
+        ctx.stroke();
+        // Pliers
+        ctx.beginPath();
+        ctx.moveTo(x + size*0.6, y + size*0.3);
+        ctx.lineTo(x + size*0.65, y + size*0.35);
+        ctx.stroke();
+
+        // Scuffs and Scratches from Use
+        ctx.strokeStyle = 'rgba(252, 165, 165, 0.3)';
+        ctx.lineWidth = 1;
+        for(let i = 0; i < 8; i++) {
+            ctx.beginPath();
+            ctx.moveTo(x + size*0.22 + Math.random()*size*0.56, y + size*0.45 + Math.random()*size*0.35);
+            ctx.lineTo(x + size*0.24 + Math.random()*size*0.5, y + size*0.48 + Math.random()*size*0.3);
+            ctx.stroke();
+        }
+
+        // Brand Decal (worn)
+        ctx.fillStyle = 'rgba(254, 252, 232, 0.6)';
+        ctx.font = `bold ${size*0.06}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('CRAFTSMAN', cx, y + size*0.75);
+    }
+
+    else if (type === 'medkit' || type === 'first_aid' || type === 'firstaid') {
+        // Military Medical Kit - White Metal Case
+        const caseGrad = ctx.createLinearGradient(x + size*0.2, y + size*0.3, x + size*0.8, y + size*0.8);
+        caseGrad.addColorStop(0, '#fefefe');
+        caseGrad.addColorStop(0.5, '#f8fafc');
+        caseGrad.addColorStop(1, '#e2e8f0');
+        ctx.fillStyle = caseGrad;
+        ctx.fillRect(x + size*0.2, y + size*0.3, size*0.6, size*0.5);
+
+        // Case Border
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x + size*0.2, y + size*0.3, size*0.6, size*0.5);
+
+        // Red Cross - Bold and Prominent
+        ctx.fillStyle = '#dc2626';
+        // Horizontal bar
+        ctx.fillRect(cx - size*0.2, cy - size*0.05, size*0.4, size*0.1);
+        // Vertical bar
+        ctx.fillRect(cx - size*0.05, cy - size*0.2, size*0.1, size*0.4);
+
+        // Cross Depth/Shadow Effect
+        ctx.fillStyle = '#991b1b';
+        ctx.fillRect(cx - size*0.19, cy - size*0.04, size*0.38, size*0.04);
+        ctx.fillRect(cx - size*0.04, cy - size*0.19, size*0.04, size*0.38);
+
+        // Carrying Handle
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(cx, y + size*0.3, size*0.12, Math.PI + 0.4, Math.PI*2 - 0.4);
+        ctx.stroke();
+
+        // Latch Clips (both sides)
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(x + size*0.18, cy - size*0.08, size*0.08, size*0.16);
+        ctx.fillRect(x + size*0.74, cy - size*0.08, size*0.08, size*0.16);
+
+        // Clip Details
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(x + size*0.2, cy - size*0.05, size*0.04, size*0.1);
+        ctx.fillRect(x + size*0.76, cy - size*0.05, size*0.04, size*0.1);
+
+        // Medical Label Text
+        ctx.fillStyle = '#1e293b';
+        ctx.font = `bold ${size*0.05}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('MEDICAL', cx, y + size*0.87);
+        ctx.font = `${size*0.04}px monospace`;
+        ctx.fillText('FIRST AID', cx, y + size*0.93);
+
+        // Biohazard Warning Sticker (small, corner)
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(x + size*0.75, y + size*0.75, size*0.06, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#0f172a';
+        ctx.font = `bold ${size*0.05}px sans-serif`;
+        ctx.fillText('☣', x + size*0.75, y + size*0.76);
+
+        // Scuffs from Field Use
+        ctx.fillStyle = 'rgba(203, 213, 225, 0.7)';
+        for(let i = 0; i < 5; i++) {
+            ctx.beginPath();
+            ctx.arc(x + size*0.25 + Math.random()*size*0.5, y + size*0.35 + Math.random()*size*0.4, 1 + Math.random()*2, 0, Math.PI*2);
+            ctx.fill();
+        }
+    }
+
+    else if (type === 'duffel_bag' || type === 'duffelbag' || type === 'sack') {
+        // Canvas Duffel Bag / Burlap Sack
+        const isSack = type === 'sack';
+
+        // Main Bag Body with Fabric Texture
+        const fabricGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size*0.4);
+        fabricGrad.addColorStop(0, isSack ? '#a16207' : '#57534e');
+        fabricGrad.addColorStop(0.6, isSack ? '#78350f' : '#44403c');
+        fabricGrad.addColorStop(1, isSack ? '#451a03' : '#292524');
+        ctx.fillStyle = fabricGrad;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + size*0.1, size*0.35, size*0.3, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // Bag Bottom Section
+        ctx.fillStyle = isSack ? '#78350f' : '#44403c';
+        ctx.fillRect(x + size*0.25, cy, size*0.5, size*0.4);
+
+        // Rounded Bottom
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + size*0.4, size*0.25, size*0.1, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        if(isSack) {
+            // Burlap Weave Texture
+            ctx.strokeStyle = 'rgba(69, 26, 3, 0.4)';
+            ctx.lineWidth = 0.5;
+            for(let i = 0; i < 8; i++) {
+                ctx.beginPath();
+                ctx.moveTo(x + size*0.27, cy + i*4);
+                ctx.lineTo(x + size*0.73, cy + i*4);
+                ctx.stroke();
+            }
+
+            // Tie String at Top
+            ctx.strokeStyle = '#92400e';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(cx, cy - size*0.05, size*0.15, Math.PI, 0);
+            ctx.stroke();
+
+            // String Knot
+            ctx.fillStyle = '#78350f';
+            ctx.beginPath();
+            ctx.arc(cx, cy - size*0.05, 4, 0, Math.PI*2);
+            ctx.fill();
+        } else {
+            // Zipper Track
+            ctx.strokeStyle = '#1c1917';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x + size*0.3, cy - size*0.05);
+            ctx.lineTo(x + size*0.7, cy - size*0.05);
+            ctx.stroke();
+
+            // Zipper Teeth Detail
+            ctx.strokeStyle = '#78716c';
+            ctx.lineWidth = 1;
+            for(let i = 0; i < 10; i++) {
+                const zx = x + size*0.3 + i*(size*0.4/10);
+                ctx.beginPath();
+                ctx.moveTo(zx, cy - size*0.07);
+                ctx.lineTo(zx, cy - size*0.03);
+                ctx.stroke();
+            }
+
+            // Zipper Pull Tab
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(x + size*0.65, cy - size*0.08, size*0.06, size*0.06);
+
+            // Shoulder Strap
+            ctx.strokeStyle = '#292524';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(cx, cy - size*0.1, size*0.2, 0.2, Math.PI - 0.2);
+            ctx.stroke();
+
+            // Strap Buckle
+            ctx.fillStyle = '#71717a';
+            ctx.fillRect(cx - size*0.18, cy - size*0.18, size*0.08, size*0.06);
+        }
+
+        // Fabric Wrinkles and Folds
+        ctx.strokeStyle = isSack ? 'rgba(69, 26, 3, 0.5)' : 'rgba(28, 25, 23, 0.5)';
+        ctx.lineWidth = 1;
+        for(let i = 0; i < 4; i++) {
+            ctx.beginPath();
+            ctx.moveTo(x + size*0.3 + Math.random()*size*0.4, cy + i*8);
+            ctx.bezierCurveTo(
+                cx - size*0.1, cy + i*8 + 3,
+                cx + size*0.1, cy + i*8 + 3,
+                x + size*0.35 + Math.random()*size*0.3, cy + i*8 + 6
+            );
+            ctx.stroke();
+        }
+
+        // Dirt and Grime Stains
+        ctx.fillStyle = isSack ? 'rgba(69, 26, 3, 0.3)' : 'rgba(0,0,0,0.2)';
+        for(let i = 0; i < 3; i++) {
+            ctx.beginPath();
+            ctx.arc(x + size*0.3 + Math.random()*size*0.4, cy + size*0.1 + Math.random()*size*0.3, 3 + Math.random()*4, 0, Math.PI*2);
+            ctx.fill();
+        }
+    }
+
+    else if (type === 'footlocker') {
+        // Military Footlocker
+        ctx.fillStyle = '#14532d';
+        ctx.fillRect(x + size*0.15, y + size*0.35, size*0.7, size*0.5);
+
+        // Metal Reinforcement Bands
+        ctx.fillStyle = '#374151';
+        ctx.fillRect(x + size*0.15, y + size*0.35, size*0.7, 3);
+        ctx.fillRect(x + size*0.15, y + size*0.6, size*0.7, 3);
+        ctx.fillRect(x + size*0.15, y + size*0.82, size*0.7, 3);
+
+        // Padlock
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx - 4, cy, 8, 6);
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(cx - 2, cy + 1, 4, 3);
+    }
+
+    else if (type === 'file_cabinet' || type === 'filecabinet') {
+        // Office File Cabinet
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(x + size*0.25, y + size*0.1, size*0.5, size*0.8);
+
+        // Three Drawer System
+        for(let i = 0; i < 3; i++) {
+            const dy = y + size*0.15 + i*size*0.25;
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(x + size*0.25, dy, size*0.5, 2);
+
+            // Drawer Handles
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(cx - 6, dy + 4, 12, 3);
+        }
+    }
+
+    else if (type === 'desk') {
+        // Wooden Office Desk
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(x + 2, y + size*0.4, size - 4, size*0.3);
+        ctx.fillStyle = '#a16207';
+        ctx.fillRect(x + 2, y + size*0.4, size - 4, 2);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(x + 2, y + size*0.7, 6, size*0.2);
+        ctx.fillRect(x + size - 8, y + size*0.7, 6, size*0.2);
+    }
+
+    else if (type === 'dumpster') {
+        // Large Commercial Dumpster
+        ctx.fillStyle = '#14532d';
+        ctx.fillRect(x + size*0.1, y + size*0.3, size*0.8, size*0.55);
+
+        // Lid (slightly open)
+        ctx.fillStyle = '#166534';
+        ctx.beginPath();
+        ctx.moveTo(x + size*0.1, y + size*0.3);
+        ctx.lineTo(x + size*0.2, y + size*0.15);
+        ctx.lineTo(x + size*0.9, y + size*0.15);
+        ctx.lineTo(x + size*0.9, y + size*0.3);
+        ctx.fill();
+
+        // Wheels
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(x + size*0.25, y + size*0.88, size*0.08, 0, Math.PI*2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x + size*0.75, y + size*0.88, size*0.08, 0, Math.PI*2);
+        ctx.fill();
+    }
+
+    else if (type === 'register' || type === 'cashier') {
+        // Electronic Cash Register
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(x + size*0.2, y + size*0.4, size*0.6, size*0.4);
+
+        // Display Screen Housing
+        ctx.fillStyle = '#14532d';
+        ctx.fillRect(x + size*0.25, y + size*0.25, size*0.5, size*0.2);
+
+        // Green LED Display (active)
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(x + size*0.28, y + size*0.28, size*0.44, size*0.14);
+
+        // Keypad Buttons
+        ctx.fillStyle = '#e2e8f0';
+        for(let row = 0; row < 2; row++) {
+            for(let col = 0; col < 3; col++) {
+                ctx.fillRect(x + size*0.25 + col*size*0.15, y + size*0.5 + row*size*0.12, size*0.1, size*0.08);
+            }
+        }
+
+        // Cash Drawer
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(x + size*0.2, y + size*0.75, size*0.6, size*0.1);
+    }
+
+    else if (type === 'cooler') {
+        // Portable Cooler / Ice Chest
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(x + size*0.15, y + size*0.35, size*0.7, size*0.5);
+
+        // White Lid
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(x + size*0.15, y + size*0.25, size*0.7, size*0.12);
+
+        // Carrying Handle
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(cx, y + size*0.25, size*0.15, Math.PI, 0);
+        ctx.stroke();
+
+        // Front Latch
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx - 4, y + size*0.35, 8, 4);
+    }
+
+    else if (type === 'doctors_bag' || type === 'doctorsbag') {
+        // Classic Leather Doctor's Bag
+        ctx.fillStyle = '#7c2d12';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + size*0.1, size*0.35, size*0.3, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // Brass Clasp
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx - size*0.15, cy - size*0.1, size*0.3, size*0.08);
+
+        // Leather Handle
+        ctx.strokeStyle = '#92400e';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(cx, cy - size*0.15, size*0.2, 0.5, Math.PI - 0.5);
+        ctx.stroke();
+    }
+
+    else if (type === 'corpse' || type === 'skeleton' || type === 'skeleton_blue') {
+        // Human Skeleton Remains
+        ctx.fillStyle = '#e5e5e5';
+        ctx.beginPath();
+        ctx.arc(cx, cy - 2, size*0.12, 0, Math.PI*2);
+        ctx.fill();
+
+        // Eye sockets
+        ctx.fillStyle = '#000';
+        ctx.fillRect(cx - 2, cy - 3, 1, 1);
+        ctx.fillRect(cx + 1, cy - 3, 1, 1);
+
+        // Ribcage
+        ctx.strokeStyle = '#e5e5e5';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - 3, cy + 2);
+        ctx.lineTo(cx + 3, cy + 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx - 3, cy + 5);
+        ctx.lineTo(cx + 3, cy + 5);
+        ctx.stroke();
+
+        // Scattered Bones
+        ctx.fillStyle = '#d4d4d4';
+        ctx.fillRect(cx + 4, cy + 3, 6, 2);
+        ctx.fillRect(cx - 8, cy + 6, 5, 2);
+    }
+
+    else if (type === 'hollow_rock' || type === 'hollowrock') {
+        // Hollow Rock Cache
+        ctx.fillStyle = '#78716c';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, size*0.4, size*0.3, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // Dark Opening/Shadow
+        ctx.fillStyle = '#1c1917';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, size*0.2, size*0.15, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // Rock Highlight
+        ctx.fillStyle = '#a8a29e';
+        ctx.beginPath();
+        ctx.ellipse(cx - size*0.15, cy - size*0.1, size*0.1, size*0.08, 0, 0, Math.PI*2);
+        ctx.fill();
+    }
+
+    // ============================================
+    // ENVIRONMENTAL DECORATIONS - ULTRA DETAILED
+    // ============================================
+
+    else if (type === 'radio') {
+        // Vintage Post-Apocalyptic Tube Radio
+        const radioGrad = ctx.createLinearGradient(x + size*0.2, y + size*0.35, x + size*0.8, y + size*0.85);
+        radioGrad.addColorStop(0, '#422006');
+        radioGrad.addColorStop(0.5, '#78350f');
+        radioGrad.addColorStop(1, '#451a03');
+        ctx.fillStyle = radioGrad;
+        ctx.fillRect(x + size*0.2, y + size*0.35, size*0.6, size*0.5);
+
+        // Rounded Bakelite Top
+        ctx.beginPath();
+        ctx.arc(cx, y + size*0.35, size*0.3, Math.PI, 0);
+        ctx.fill();
+
+        // Speaker Grill - Fabric Mesh
+        ctx.fillStyle = '#1c1917';
+        ctx.beginPath();
+        ctx.arc(cx - size*0.05, cy + size*0.05, size*0.15, 0, Math.PI*2);
+        ctx.fill();
+
+        // Perforated Grill Pattern
+        ctx.strokeStyle = '#78716c';
+        ctx.lineWidth = 0.5;
+        for(let i = -6; i < 7; i++) {
+            for(let j = -6; j < 7; j++) {
+                if(i*i + j*j < 36) {
+                    ctx.beginPath();
+                    ctx.arc(cx - size*0.05 + i*3, cy + size*0.05 + j*3, 0.8, 0, Math.PI*2);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // Brass Tuning Dial
+        const dialGrad = ctx.createRadialGradient(cx + size*0.15, cy + size*0.05, 0, cx + size*0.15, cy + size*0.05, size*0.1);
+        dialGrad.addColorStop(0, '#fbbf24');
+        dialGrad.addColorStop(0.7, '#d97706');
+        dialGrad.addColorStop(1, '#92400e');
+        ctx.fillStyle = dialGrad;
+        ctx.beginPath();
+        ctx.arc(cx + size*0.15, cy + size*0.05, size*0.1, 0, Math.PI*2);
+        ctx.fill();
+
+        // Frequency Markings
+        ctx.strokeStyle = '#451a03';
+        ctx.lineWidth = 1;
+        for(let i = 0; i < 20; i++) {
+            const angle = (i / 20) * Math.PI * 1.5 - Math.PI*0.75;
+            const r1 = size*0.08;
+            const r2 = i % 5 === 0 ? size*0.095 : size*0.09;
+            ctx.beginPath();
+            ctx.moveTo(cx + size*0.15 + Math.cos(angle)*r1, cy + size*0.05 + Math.sin(angle)*r1);
+            ctx.lineTo(cx + size*0.15 + Math.cos(angle)*r2, cy + size*0.05 + Math.sin(angle)*r2);
+            ctx.stroke();
+        }
+
+        // Band Label
+        ctx.fillStyle = '#fef3c7';
+        ctx.font = `${size*0.04}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('AM', cx + size*0.15, cy - size*0.08);
+
+        // Telescoping Antenna
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(x + size*0.75, y + size*0.35);
+        ctx.lineTo(x + size*0.85, y + size*0.05);
+        ctx.lineTo(x + size*0.95, y - size*0.15);
+        ctx.stroke();
+
+        // Antenna Segments (dashed)
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 2]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Control Knobs
+        [[0.35, 0.75], [0.5, 0.75], [0.65, 0.75]].forEach(([kx, ky]) => {
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(x + size*kx, y + size*ky, size*0.04, 0, Math.PI*2);
+            ctx.fill();
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            // Knob position indicator
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(x + size*kx, y + size*ky);
+            ctx.lineTo(x + size*kx, y + size*ky - size*0.03);
+            ctx.stroke();
+        });
+
+        // Power Indicator LED (animated)
+        if(Math.sin(time/500) > 0) {
+            const ledGlow = ctx.createRadialGradient(x + size*0.25, y + size*0.4, 0, x + size*0.25, y + size*0.4, size*0.05);
+            ledGlow.addColorStop(0, '#22c55e');
+            ledGlow.addColorStop(1, 'rgba(34, 197, 94, 0)');
+            ctx.fillStyle = ledGlow;
+            ctx.fillRect(x + size*0.2, y + size*0.35, size*0.1, size*0.1);
+        }
+        ctx.fillStyle = Math.sin(time/500) > 0 ? '#22c55e' : '#064e3b';
+        ctx.beginPath();
+        ctx.arc(x + size*0.25, y + size*0.4, 2, 0, Math.PI*2);
+        ctx.fill();
+
+        // Vintage Brand Label
+        ctx.fillStyle = '#fef3c7';
+        ctx.font = `bold ${size*0.05}px serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('RADIATION KING', cx, y + size*0.25);
+
+        // Age and Wear Scratches
+        ctx.strokeStyle = 'rgba(254, 243, 199, 0.2)';
+        ctx.lineWidth = 0.5;
+        for(let i = 0; i < 10; i++) {
+            ctx.beginPath();
+            ctx.moveTo(x + size*0.25 + Math.random()*size*0.5, y + size*0.4 + Math.random()*size*0.4);
+            ctx.lineTo(x + size*0.27 + Math.random()*size*0.46, y + size*0.42 + Math.random()*size*0.36);
+            ctx.stroke();
+        }
+    }
+
+    else if (type === 'campfire' || type === 'fire_barrel' || type === 'firebarrel') {
+        if(type === 'fire_barrel' || type === 'firebarrel') {
+            // Rusted Oil Drum Fire Barrel
+            const barrelGrad = ctx.createLinearGradient(x + size*0.25, y + size*0.25, x + size*0.75, y + size*1);
+            barrelGrad.addColorStop(0, '#475569');
+            barrelGrad.addColorStop(0.5, '#374151');
+            barrelGrad.addColorStop(1, '#1f2937');
+            ctx.fillStyle = barrelGrad;
+            ctx.fillRect(x + size*0.25, y + size*0.25, size*0.5, size*0.75);
+
+            // Barrel Rim
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x + size*0.25, y + size*0.25);
+            ctx.lineTo(x + size*0.75, y + size*0.25);
+            ctx.stroke();
+
+            // Metal Reinforcement Rings
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2;
+            [0.4, 0.6, 0.8].forEach(ringY => {
+                ctx.beginPath();
+                ctx.moveTo(x + size*0.25, y + size*ringY);
+                ctx.lineTo(x + size*0.75, y + size*ringY);
+                ctx.stroke();
+            });
+
+            // Heavy Rust Texture
+            ctx.fillStyle = 'rgba(139, 69, 19, 0.6)';
+            for(let i = 0; i < 15; i++) {
+                ctx.beginPath();
+                ctx.arc(x + size*0.3 + Math.random()*size*0.4, y + size*0.35 + Math.random()*size*0.55, 1 + Math.random()*3, 0, Math.PI*2);
+                ctx.fill();
+            }
+
+            // Dents and Impact Damage
+            ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
+            for(let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.arc(x + size*0.3 + Math.random()*size*0.4, y + size*0.4 + Math.random()*size*0.5, 2 + Math.random()*4, 0, Math.PI*2);
+                ctx.fill();
+            }
+
+            // Burn Marks on Rim
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(x + size*0.25, y + size*0.25, size*0.5, size*0.08);
+        } else {
+            // Stone Circle Campfire
+            ctx.fillStyle = '#78716c';
+            for(let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const rx = cx + Math.cos(angle) * size*0.35;
+                const ry = cy + size*0.25 + Math.sin(angle) * size*0.35;
+                ctx.beginPath();
+                ctx.arc(rx, ry, size*0.08 + Math.random()*size*0.04, 0, Math.PI*2);
+                ctx.fill();
+                // Rock highlight
+                ctx.fillStyle = '#a8a29e';
+                ctx.beginPath();
+                ctx.arc(rx - 2, ry - 2, size*0.03, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = '#78716c';
+            }
+
+            // Charred Wood Logs
+            ctx.fillStyle = '#1c1917';
+            ctx.fillRect(cx - size*0.2, cy + size*0.15, size*0.4, size*0.08);
+            ctx.fillRect(cx - size*0.15, cy + size*0.08, size*0.08, size*0.3);
+
+            // Wood Bark Texture
+            ctx.strokeStyle = '#0a0a0a';
+            ctx.lineWidth = 1;
+            for(let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(cx - size*0.2, cy + size*0.16 + i*2);
+                ctx.lineTo(cx + size*0.2, cy + size*0.16 + i*2);
+                ctx.stroke();
+            }
+        }
+
+        // ========================================
+        // DYNAMIC FIRE ANIMATION - ULTRA REALISTIC
+        // ========================================
+        const flicker1 = Math.sin(time / 80) * 5;
+        const flicker2 = Math.cos(time / 120) * 4;
+        const flicker3 = Math.sin(time / 150) * 6;
+
+        ctx.globalCompositeOperation = 'lighter';
+
+        // Inner Core - White Hot Center
+        const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size*0.12 + flicker1);
+        coreGrad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+        coreGrad.addColorStop(0.3, 'rgba(255, 240, 180, 0.7)');
+        coreGrad.addColorStop(1, 'rgba(255, 200, 100, 0)');
+        ctx.fillStyle = coreGrad;
+        ctx.fillRect(cx - size*0.2, cy - size*0.2, size*0.4, size*0.4);
+
+        // Mid-Range Flame - Orange/Yellow
+        const midGrad = ctx.createRadialGradient(cx, cy - size*0.1, 0, cx, cy - size*0.1, size*0.25 + flicker2);
+        midGrad.addColorStop(0, 'rgba(255, 200, 100, 0.8)');
+        midGrad.addColorStop(0.5, 'rgba(234, 88, 12, 0.6)');
+        midGrad.addColorStop(1, 'rgba(200, 50, 0, 0)');
+        ctx.fillStyle = midGrad;
+        ctx.fillRect(cx - size*0.3, cy - size*0.4, size*0.6, size*0.5);
+
+        // Outer Flame - Deep Red
+        const outerGrad = ctx.createRadialGradient(cx, cy - size*0.15, 0, cx, cy - size*0.15, size*0.35 + flicker3);
+        outerGrad.addColorStop(0, 'rgba(234, 88, 12, 0.5)');
+        outerGrad.addColorStop(0.6, 'rgba(153, 27, 27, 0.3)');
+        outerGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = outerGrad;
+        ctx.fillRect(cx - size*0.4, cy - size*0.5, size*0.8, size*0.6);
+
+        // Flame Licks - Dancing Tendrils
+        for(let i = 0; i < 5; i++) {
+            const lickX = cx + (Math.sin(time/100 + i) * size*0.15);
+            const lickHeight = size*0.3 + Math.sin(time/90 + i*0.5) * size*0.1;
+            const lickGrad = ctx.createLinearGradient(lickX, cy, lickX, cy - lickHeight);
+            lickGrad.addColorStop(0, 'rgba(255, 150, 50, 0.6)');
+            lickGrad.addColorStop(0.7, 'rgba(255, 100, 0, 0.3)');
+            lickGrad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = lickGrad;
+            ctx.fillRect(lickX - 2, cy - lickHeight, 4, lickHeight);
+        }
+
+        // Rising Smoke Puffs
+        ctx.fillStyle = 'rgba(80, 80, 80, 0.3)';
+        for(let i = 0; i < 3; i++) {
+            const smokeY = cy - size*0.4 - (time/20 + i*30) % 50;
+            const smokeX = cx + Math.sin(time/200 + i) * (size*0.2);
+            ctx.beginPath();
+            ctx.arc(smokeX, smokeY, size*0.1 + (time/50 + i*10) % 10, 0, Math.PI*2);
+            ctx.fill();
+        }
+
+        // Floating Embers
+        ctx.fillStyle = 'rgba(255, 150, 50, 0.8)';
+        for(let i = 0; i < 8; i++) {
+            const emberY = cy - (time/15 + i*20) % (size*0.8);
+            const emberX = cx + Math.sin(time/100 + i*0.7) * (size*0.15);
+            const emberSize = 1 + Math.sin(time/50 + i) * 0.5;
+            ctx.beginPath();
+            ctx.arc(emberX, emberY, emberSize, 0, Math.PI*2);
+            ctx.fill();
+        }
+
+        ctx.globalCompositeOperation = 'source-over';
+    }
+
+    else if (type === 'tree' || type === 'joshua_tree' || type === 'joshuatree') {
+        // Post-Apocalyptic Desert Tree
         const trunkW = size*0.12;
         const trunkH = size*0.5;
-        ctx.fillStyle = '#3e2723'; ctx.fillRect(cx-trunkW/2, y+size*0.4, trunkW, trunkH);
-        ctx.strokeStyle = '#3e2723'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.moveTo(cx, cy+size*0.1); ctx.lineTo(cx-size*0.2, cy-size*0.2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cx, cy+size*0.2); ctx.lineTo(cx+size*0.2, cy-size*0.1); ctx.stroke();
-        const cl = '#15803d'; const clH = '#22c55e';
-        const drawClump = (bx, by, s) => {
-            ctx.fillStyle = cl; ctx.beginPath(); ctx.arc(bx, by, s, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = clH; ctx.fillRect(bx-2, by-4, 4, 4);	
-        };
-        drawClump(cx, cy-size*0.2, size*0.25);
-        drawClump(cx-size*0.2, cy-size*0.2, size*0.15);
-        drawClump(cx+size*0.2, cy-size*0.1, size*0.15);
-    }	
-    else if (type === 'car') {
-        ctx.fillStyle = '#7f1d1d';	
-        ctx.fillRect(x+4, cy+2, size-8, size*0.25);	
-        
-        ctx.fillStyle = '#0a0a0a';
-        ctx.fillRect(x+8, cy+size*0.2, 8, 6);
-        ctx.fillRect(x+size-16, cy+size*0.2, 8, 6);
 
-        ctx.fillStyle = '#b91c1c';	
-        ctx.beginPath(); ctx.moveTo(x+8, cy+2); ctx.lineTo(x+size*0.3, cy-size*0.2); ctx.lineTo(x+size*0.7, cy-size*0.2); ctx.lineTo(x+size-8, cy+2); ctx.fill();
-        
-        ctx.fillStyle = '#1e293b';
-        ctx.beginPath(); ctx.moveTo(x+10, cy); ctx.lineTo(x+size*0.32, cy-size*0.15); ctx.lineTo(x+size*0.68, cy-size*0.15); ctx.lineTo(x+size-10, cy); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.3; ctx.beginPath(); ctx.moveTo(x+14, cy); ctx.lineTo(x+18, cy-4); ctx.stroke(); ctx.globalAlpha = 1.0;
-    }
-    else if (type === 'rubble') {
-        ctx.fillStyle = '#57534e';
-        ctx.beginPath(); ctx.arc(cx-4, cy+4, 5, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#78716c';
-        ctx.beginPath(); ctx.arc(cx+4, cy+2, 6, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#44403c';
-        ctx.fillRect(cx-2, cy-6, 6, 6);
-    }
-    else if (type === 'tumbleweed') {
-        ctx.strokeStyle = '#a8a29e'; ctx.lineWidth = 1;	
+        // Trunk with bark texture
+        ctx.fillStyle = '#3e2723';
+        ctx.fillRect(cx - trunkW/2, y + size*0.4, trunkW, trunkH);
+
+        // Branch structure
+        ctx.strokeStyle = '#3e2723';
+        ctx.lineWidth = 3;
         ctx.beginPath();
-        for(let i=0; i<12; i++) {	
+        ctx.moveTo(cx, cy + size*0.1);
+        ctx.lineTo(cx - size*0.2, cy - size*0.2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy + size*0.2);
+        ctx.lineTo(cx + size*0.2, cy - size*0.1);
+        ctx.stroke();
+
+        // Foliage clumps
+        const drawClump = (bx, by, s) => {
+            ctx.fillStyle = '#15803d';
+            ctx.beginPath();
+            ctx.arc(bx, by, s, 0, Math.PI*2);
+            ctx.fill();
+            // Highlight for depth
+            ctx.fillStyle = '#22c55e';
+            ctx.fillRect(bx - 2, by - 4, 4, 4);
+        };
+
+        drawClump(cx, cy - size*0.2, size*0.25);
+        drawClump(cx - size*0.2, cy - size*0.2, size*0.15);
+        drawClump(cx + size*0.2, cy - size*0.1, size*0.15);
+    }
+
+    else if (type === 'car') {
+        // Rusted Post-War Vehicle Wreck
+        // Car body - rusted red
+        ctx.fillStyle = '#7f1d1d';
+        ctx.fillRect(x + 4, cy + 2, size - 8, size*0.25);
+
+        // Wheels (burnt rubber)
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(x + 8, cy + size*0.2, 8, 6);
+        ctx.fillRect(x + size - 16, cy + size*0.2, 8, 6);
+
+        // Hood/roof section
+        ctx.fillStyle = '#b91c1c';
+        ctx.beginPath();
+        ctx.moveTo(x + 8, cy + 2);
+        ctx.lineTo(x + size*0.3, cy - size*0.2);
+        ctx.lineTo(x + size*0.7, cy - size*0.2);
+        ctx.lineTo(x + size - 8, cy + 2);
+        ctx.fill();
+
+        // Windshield (shattered/dark)
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.moveTo(x + 10, cy);
+        ctx.lineTo(x + size*0.32, cy - size*0.15);
+        ctx.lineTo(x + size*0.68, cy - size*0.15);
+        ctx.lineTo(x + size - 10, cy);
+        ctx.fill();
+
+        // Glass reflection/crack
+        ctx.fillStyle = '#fff';
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.moveTo(x + 14, cy);
+        ctx.lineTo(x + 18, cy - 4);
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+    }
+
+    else if (type === 'rubble') {
+        // Debris Pile - Concrete and Rocks
+        ctx.fillStyle = '#57534e';
+        ctx.beginPath();
+        ctx.arc(cx - 4, cy + 4, 5, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#78716c';
+        ctx.beginPath();
+        ctx.arc(cx + 4, cy + 2, 6, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#44403c';
+        ctx.fillRect(cx - 2, cy - 6, 6, 6);
+    }
+
+    else if (type === 'tumbleweed') {
+        // Desert Tumbleweed
+        ctx.strokeStyle = '#a8a29e';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for(let i = 0; i < 12; i++) {
             const angle = Math.random() * Math.PI * 2;
             const rad = Math.random() * size * 0.4;
             ctx.moveTo(cx + Math.cos(angle)*rad, cy + Math.sin(angle)*rad);
@@ -2780,349 +3827,34 @@ function drawSprite(ctx, type, x, y, size, time) {
         }
         ctx.stroke();
     }
+
     else if (type === 'bed') {
-        ctx.fillStyle = '#737373';	
-        ctx.fillRect(x+4, y+4, size-8, size-8);
-        ctx.fillStyle = '#1d4ed8';	
-        ctx.fillRect(x+4, y+size*0.4, size-8, size*0.6-4);
-        ctx.fillStyle = '#fafafa';	
-        ctx.fillRect(x+6, y+6, size-12, size*0.15);
+        // Metal Bed Frame
+        ctx.fillStyle = '#737373';
+        ctx.fillRect(x + 4, y + 4, size - 8, size - 8);
+        // Mattress/bedding
+        ctx.fillStyle = '#1d4ed8';
+        ctx.fillRect(x + 4, y + size*0.4, size - 8, size*0.6 - 4);
+        // Pillow
+        ctx.fillStyle = '#fafafa';
+        ctx.fillRect(x + 6, y + 6, size - 12, size*0.15);
     }
-     else if (type === 'safe') {
-        // Heavy metal safe
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(x+size*0.2, y+size*0.2, size*0.6, size*0.7);
-        
-        // Door highlight
-        ctx.fillStyle = '#334155';
-        ctx.fillRect(x+size*0.2, y+size*0.2, size*0.6, size*0.05);
-        
-        // Lock dial
-        ctx.fillStyle = '#475569';
-        ctx.beginPath();
-        ctx.arc(cx, cy, size*0.15, 0, Math.PI*2);
-        ctx.fill();
-        
-        ctx.fillStyle = '#1e293b';
-        ctx.beginPath();
-        ctx.arc(cx, cy, size*0.1, 0, Math.PI*2);
-        ctx.fill();
-        
-        // Handle
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillRect(cx+size*0.2, cy-2, size*0.15, 4);
-    }
-    else if (type === 'locker') {
-        // Tall metal locker
-        ctx.fillStyle = '#475569';
-        ctx.fillRect(x+size*0.25, y, size*0.5, size*0.9);
-        
-        // Door lines
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(x+size*0.25, y+size*0.3, size*0.5, 2);
-        ctx.fillRect(x+size*0.25, y+size*0.6, size*0.5, 2);
-        
-        // Vents
-        for(let i=0; i<5; i++) {
-            ctx.fillRect(x+size*0.3, y+size*0.1 + i*4, size*0.4, 2);
-        }
-        
-        // Handle
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillRect(cx-2, cy, 4, size*0.15);
-    }
-    else if (type === 'toolbox') {
-        // Red toolbox
+
+    else if (type === 'vending_machine' || type === 'vendingmachine') {
+        // NUKA-COLA Vending Machine
         ctx.fillStyle = '#991b1b';
-        ctx.fillRect(x+size*0.2, y+size*0.4, size*0.6, size*0.45);
-        
-        // Top/lid
-        ctx.fillStyle = '#b91c1c';
-        ctx.fillRect(x+size*0.2, y+size*0.25, size*0.6, size*0.15);
-        
-        // Handle
-        ctx.strokeStyle = '#374151';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(cx, y+size*0.25, size*0.15, Math.PI, 0);
-        ctx.stroke();
-        
-        // Latch
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(cx-3, y+size*0.4, 6, 4);
-    }
-    else if (type === 'medkit' || type === 'first_aid') {
-        // White medical box with red cross
-        ctx.fillStyle = '#f8fafc';
-        ctx.fillRect(x+size*0.2, y+size*0.3, size*0.6, size*0.5);
-        
-        // Red cross
-        ctx.fillStyle = '#dc2626';
-        ctx.fillRect(cx-2, cy-size*0.2, 4, size*0.4);
-        ctx.fillRect(cx-size*0.15, cy-2, size*0.3, 4);
-        
-        // Handle
-        ctx.fillStyle = '#e2e8f0';
-        ctx.fillRect(cx-size*0.1, y+size*0.25, size*0.2, size*0.08);
-    }
-    else if (type === 'footlocker') {
-        // Military footlocker
-        ctx.fillStyle = '#14532d';
-        ctx.fillRect(x+size*0.15, y+size*0.35, size*0.7, size*0.5);
-        
-        // Metal bands
-        ctx.fillStyle = '#374151';
-        ctx.fillRect(x+size*0.15, y+size*0.35, size*0.7, 3);
-        ctx.fillRect(x+size*0.15, y+size*0.6, size*0.7, 3);
-        ctx.fillRect(x+size*0.15, y+size*0.82, size*0.7, 3);
-        
-        // Lock
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(cx-4, cy, 8, 6);
-    }
-    else if (type === 'file_cabinet') {
-        // Office file cabinet
-        ctx.fillStyle = '#64748b';
-        ctx.fillRect(x+size*0.25, y+size*0.1, size*0.5, size*0.8);
-        
-        // Drawers
-        for(let i=0; i<3; i++) {
-            const dy = y+size*0.15 + i*size*0.25;
-            ctx.fillStyle = '#475569';
-            ctx.fillRect(x+size*0.25, dy, size*0.5, 2);
-            
-            // Handles
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillRect(cx-6, dy+4, 12, 3);
-        }
-    }
-    else if (type === 'desk') {
-        // Office desk - existing code is good, keeping it
-        ctx.fillStyle = '#78350f';
-        ctx.fillRect(x+2, y+size*0.4, size-4, size*0.3);
-        ctx.fillStyle = '#a16207'; 
-        ctx.fillRect(x+2, y+size*0.4, size-4, 2);	
-        ctx.fillStyle = '#451a03';
-        ctx.fillRect(x+2, y+size*0.7, 6, size*0.2);
-        ctx.fillRect(x+size-8, y+size*0.7, 6, size*0.2);
-    }
-    else if (type === 'ammo_box') {
-        // Military ammo crate
-        ctx.fillStyle = '#14532d';
-        ctx.fillRect(x+size*0.2, y+size*0.4, size*0.6, size*0.45);
-        
-        // Yellow warning stripe
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(x+size*0.2, y+size*0.55, size*0.6, size*0.08);
-        
-        // Stencil text effect
-        ctx.fillStyle = '#052e16';
-        ctx.fillRect(x+size*0.25, y+size*0.45, 3, 6);
-        ctx.fillRect(x+size*0.35, y+size*0.45, 3, 6);
-        ctx.fillRect(x+size*0.45, y+size*0.45, 3, 6);
-        
-        // Handles
-        ctx.strokeStyle = '#166534';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(x+size*0.25, y+size*0.4);
-        ctx.lineTo(x+size*0.25, y+size*0.35);
-        ctx.lineTo(x+size*0.35, y+size*0.35);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x+size*0.75, y+size*0.4);
-        ctx.lineTo(x+size*0.75, y+size*0.35);
-        ctx.lineTo(x+size*0.65, y+size*0.35);
-        ctx.stroke();
-    }
-    else if (type === 'duffel_bag') {
-        // Canvas duffel bag
-        ctx.fillStyle = '#78716c';
-        ctx.beginPath();
-        ctx.ellipse(cx, cy+size*0.1, size*0.35, size*0.25, 0, 0, Math.PI*2);
-        ctx.fill();
-        
-        // Bag body
-        ctx.fillStyle = '#57534e';
-        ctx.fillRect(x+size*0.25, cy, size*0.5, size*0.35);
-        
-        // Strap
-        ctx.strokeStyle = '#44403c';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(cx, cy-size*0.1, size*0.2, 0.3, Math.PI-0.3);
-        ctx.stroke();
-    }
-    else if (type === 'corpse') {
-        // Skeleton corpse (reusing existing skeleton code)
-        ctx.fillStyle = '#e5e5e5';
-        ctx.beginPath(); 
-        ctx.arc(cx, cy-2, size*0.12, 0, Math.PI*2); 
-        ctx.fill();	
-        ctx.fillStyle = '#000'; 
-        ctx.fillRect(cx-2, cy-3, 1, 1); 
-        ctx.fillRect(cx+1, cy-3, 1, 1);	
-        ctx.strokeStyle = '#e5e5e5'; 
-        ctx.lineWidth=2;
-        ctx.beginPath(); 
-        ctx.moveTo(cx-3, cy+2); 
-        ctx.lineTo(cx+3, cy+2); 
-        ctx.stroke();
-        ctx.beginPath(); 
-        ctx.moveTo(cx-3, cy+5); 
-        ctx.lineTo(cx+3, cy+5); 
-        ctx.stroke();
-        
-        // Add some bones scattered around
-        ctx.fillStyle = '#d4d4d4';
-        ctx.fillRect(cx+4, cy+3, 6, 2);
-        ctx.fillRect(cx-8, cy+6, 5, 2);
-    }
-    else if (type === 'sack') {
-        // Burlap sack
-        ctx.fillStyle = '#a16207';
-        ctx.beginPath();
-        ctx.ellipse(cx, cy+size*0.2, size*0.3, size*0.35, 0, 0, Math.PI*2);
-        ctx.fill();
-        
-        // Tie at top
-        ctx.strokeStyle = '#78350f';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(cx, cy-size*0.05, size*0.15, Math.PI, 0);
-        ctx.stroke();
-        
-        // Texture lines
-        ctx.strokeStyle = '#92400e';
-        ctx.lineWidth = 1;
-        for(let i=0; i<4; i++) {
-            ctx.beginPath();
-            ctx.moveTo(cx-size*0.25, cy+i*4);
-            ctx.lineTo(cx+size*0.25, cy+i*4);
-            ctx.stroke();
-        }
-    }
-    else if (type === 'hollow_rock') {
-        // Rock with dark opening
-        ctx.fillStyle = '#78716c';
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, size*0.4, size*0.3, 0, 0, Math.PI*2);
-        ctx.fill();
-        
-        // Darker opening/shadow
-        ctx.fillStyle = '#1c1917';
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, size*0.2, size*0.15, 0, 0, Math.PI*2);
-        ctx.fill();
-        
-        // Highlight
-        ctx.fillStyle = '#a8a29e';
-        ctx.beginPath();
-        ctx.ellipse(cx-size*0.15, cy-size*0.1, size*0.1, size*0.08, 0, 0, Math.PI*2);
-        ctx.fill();
-    }
-    else if (type === 'dumpster') {
-        // Large trash dumpster
-        ctx.fillStyle = '#14532d';
-        ctx.fillRect(x+size*0.1, y+size*0.3, size*0.8, size*0.55);
-        
-        // Lid (slightly open)
-        ctx.fillStyle = '#166534';
-        ctx.beginPath();
-        ctx.moveTo(x+size*0.1, y+size*0.3);
-        ctx.lineTo(x+size*0.2, y+size*0.15);
-        ctx.lineTo(x+size*0.9, y+size*0.15);
-        ctx.lineTo(x+size*0.9, y+size*0.3);
-        ctx.fill();
-        
-        // Wheels
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(x+size*0.25, y+size*0.88, size*0.08, 0, Math.PI*2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(x+size*0.75, y+size*0.88, size*0.08, 0, Math.PI*2);
-        ctx.fill();
-    }
-    else if (type === 'register' || type === 'cashier') {
-        // Cash register
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(x+size*0.2, y+size*0.4, size*0.6, size*0.4);
-        
-        // Display screen
-        ctx.fillStyle = '#14532d';
-        ctx.fillRect(x+size*0.25, y+size*0.25, size*0.5, size*0.2);
-        
-        // Green display glow
-        ctx.fillStyle = '#22c55e';
-        ctx.fillRect(x+size*0.28, y+size*0.28, size*0.44, size*0.14);
-        
-        // Keys
-        ctx.fillStyle = '#e2e8f0';
-        for(let row=0; row<2; row++) {
-            for(let col=0; col<3; col++) {
-                ctx.fillRect(x+size*0.25 + col*size*0.15, y+size*0.5 + row*size*0.12, size*0.1, size*0.08);
-            }
-        }
-        
-        // Cash drawer
-        ctx.fillStyle = '#475569';
-        ctx.fillRect(x+size*0.2, y+size*0.75, size*0.6, size*0.1);
-    }
-    else if (type === 'cooler') {
-        // Ice chest/cooler
-        ctx.fillStyle = '#dc2626';
-        ctx.fillRect(x+size*0.15, y+size*0.35, size*0.7, size*0.5);
-        
-        // White lid
-        ctx.fillStyle = '#f8fafc';
-        ctx.fillRect(x+size*0.15, y+size*0.25, size*0.7, size*0.12);
-        
-        // Handle
-        ctx.strokeStyle = '#94a3b8';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(cx, y+size*0.25, size*0.15, Math.PI, 0);
-        ctx.stroke();
-        
-        // Latch
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(cx-4, y+size*0.35, 8, 4);
-    }
-    else if (type === 'doctors_bag') {
-        // Classic doctor's bag
-        ctx.fillStyle = '#7c2d12';
-        ctx.beginPath();
-        ctx.ellipse(cx, cy+size*0.1, size*0.35, size*0.3, 0, 0, Math.PI*2);
-        ctx.fill();
-        
-        // Brass clasp
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(cx-size*0.15, cy-size*0.1, size*0.3, size*0.08);
-        
-        // Handle
-        ctx.strokeStyle = '#92400e';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(cx, cy-size*0.15, size*0.2, 0.5, Math.PI-0.5);
-        ctx.stroke();
-    }
-    else if (type === 'vending_machine') {
-        // NUKA-COLA MACHINE (The Classic Red)
-        // Body
-        ctx.fillStyle = '#991b1b'; // Dark Red
         ctx.fillRect(x + 4, y - 8, size - 8, size + 4);
-        
-        // Side Highlight
-        ctx.fillStyle = '#ef4444'; // Bright Red
+
+        // Side panel highlight
+        ctx.fillStyle = '#ef4444';
         ctx.fillRect(x + 4, y - 8, 4, size + 4);
 
-        // Display Window (Glowing Blue/White)
+        // Display window (animated glow)
         const glow = Math.sin(time / 200) * 0.5 + 0.5;
         ctx.fillStyle = `rgba(200, 255, 255, ${0.3 + glow * 0.2})`;
         ctx.fillRect(x + size/2, y, size/3, size/2);
 
-        // "Cola" Stripe (White)
+        // Cola logo stripe
         ctx.fillStyle = '#e5e5e5';
         ctx.beginPath();
         ctx.moveTo(x + 4, y + size/2);
@@ -3131,135 +3863,297 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.bezierCurveTo(x + size/2, y + size*0.8 + 2, x + size/2, y + size/4 + 2, x + 4, y + size/2 + 2);
         ctx.fill();
     }
-    else if (type === 'server_rack') {
-        const isServer = type === 'server_rack';
-        ctx.fillStyle = isServer ? '#111827' : '#991b1b';	
-        ctx.fillRect(x+size*0.25, y+size*0.1, size*0.5, size*0.8);
-        ctx.fillStyle = isServer ? '#374151' : '#ef4444';	
-        ctx.fillRect(x+size*0.25, y, size*0.5, size*0.1);
-        
+
+    else if (type === 'server_rack' || type === 'serverrack' || type === 'vrpod' || type === 'autodoc') {
+        // High-Tech Server/Equipment Rack
+        const isServer = type.includes('server');
+        ctx.fillStyle = isServer ? '#111827' : '#991b1b';
+        ctx.fillRect(x + size*0.25, y + size*0.1, size*0.5, size*0.8);
+        ctx.fillStyle = isServer ? '#374151' : '#ef4444';
+        ctx.fillRect(x + size*0.25, y, size*0.5, size*0.1);
+
         if (!isServer) {
+            // Medical/VR equipment white stripe
             ctx.fillStyle = '#fff';
-            ctx.fillRect(x+size*0.25, y+size*0.5, size*0.5, size*0.1);
+            ctx.fillRect(x + size*0.25, y + size*0.5, size*0.5, size*0.1);
         } else {
-            ctx.fillStyle = '#000';	
-            ctx.fillRect(x+size*0.3, y+size*0.2, size*0.4, size*0.2);
-            // Blinking LEDs
+            // Server screen/panel
+            ctx.fillStyle = '#000';
+            ctx.fillRect(x + size*0.3, y + size*0.2, size*0.4, size*0.2);
+
+            // Blinking Status LEDs
             if(Math.random() > 0.1) {
-                ctx.fillStyle = (Math.sin(time/100 + x)>0) ? '#22c55e' : '#064e3b';
-                ctx.fillRect(x+size*0.35, y+size*0.6, 2, 2);
+                ctx.fillStyle = (Math.sin(time/100 + x) > 0) ? '#22c55e' : '#064e3b';
+                ctx.fillRect(x + size*0.35, y + size*0.6, 2, 2);
             }
             if(Math.random() > 0.1) {
-                ctx.fillStyle = (Math.cos(time/150 + y)>0) ? '#ef4444' : '#7f1d1d';
-                ctx.fillRect(x+size*0.45, y+size*0.6, 2, 2);
+                ctx.fillStyle = (Math.cos(time/150 + y) > 0) ? '#ef4444' : '#7f1d1d';
+                ctx.fillRect(x + size*0.45, y + size*0.6, 2, 2);
             }
         }
     }
-    else if (type === 'crate' || type === 'ammo_crate') {
-        ctx.fillStyle = '#14532d';	
-        ctx.fillRect(x+4, y+size*0.4, size-8, size*0.5);
-        ctx.fillStyle = '#166534';	
-        ctx.fillRect(x+4, y+size*0.1, size-8, size*0.3);	
-        ctx.fillStyle = '#052e16'; ctx.fillRect(x+4, y+size*0.4, size-8, 2);	
-        ctx.strokeStyle = '#22c55e'; ctx.lineWidth=1;
-        ctx.strokeRect(x+4, y+size*0.4, size-8, size*0.5);
-    }
-    else if (type === 'wall_terminal' || type === 'desk') {
-        // TERMINAL (RobCo Style)
-        // Desk/Stand
-        ctx.fillStyle = '#4b5563'; // Grey metal
+
+    else if (type === 'wall_terminal' || type === 'wallterminal' || type === 'terminal') {
+        // RobCo Industries Computer Terminal
+        // Desk/mount
+        ctx.fillStyle = '#4b5563';
         ctx.fillRect(x + 2, y + size/2, size - 4, size/2);
-        
-        // Monitor Housing
-        ctx.fillStyle = '#374151'; // Darker metal
+
+        // Monitor housing
+        ctx.fillStyle = '#374151';
         ctx.beginPath();
-        ctx.arc(cx, y + size/2, size/3, Math.PI, 0); // Rounded top
+        ctx.arc(cx, y + size/2, size/3, Math.PI, 0);
         ctx.lineTo(cx + size/3, y + size/2 + 4);
         ctx.lineTo(cx - size/3, y + size/2 + 4);
         ctx.fill();
 
-        // Screen (Flickering Green Code)
-        if (Math.random() > 0.05) { // Occasional flicker off
-            ctx.fillStyle = '#14532d'; // Dark Green Base
-            ctx.fill(); // Fill background
-            
-            ctx.fillStyle = '#4ade80'; // Bright Green Text
+        // CRT Screen (flickering green code)
+        if (Math.random() > 0.05) {
+            ctx.fillStyle = '#14532d';
+            ctx.fill();
+
+            ctx.fillStyle = '#4ade80';
             const screenW = size/2;
-            const screenH = size/3;
-            // Draw "Text lines"
-            for(let i=0; i<3; i++) {
+            // Simulated text lines
+            for(let i = 0; i < 3; i++) {
                 ctx.fillRect(cx - screenW/3, (y + size/3) + (i*4), Math.random() * screenW/1.5, 2);
             }
         }
     }
+
     else if (type === 'table') {
-        const isRound = type === 'table';
-        if (isRound) {
-            ctx.fillStyle = '#78350f';
-            ctx.beginPath(); ctx.ellipse(cx, y+size*0.5, size*0.4, size*0.2, 0, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#451a03';
-            ctx.fillRect(cx-2, y+size*0.5, 4, size*0.4);
-        } else {
-            ctx.fillStyle = '#78350f';
-            ctx.fillRect(x+2, y+size*0.4, size-4, size*0.3);
-            ctx.fillStyle = '#a16207'; ctx.fillRect(x+2, y+size*0.4, size-4, 2);	
-            ctx.fillStyle = '#451a03';
-            ctx.fillRect(x+2, y+size*0.7, 6, size*0.2);
-            ctx.fillRect(x+size-8, y+size*0.7, 6, size*0.2);
-        }
+        // Round Wooden Table
+        ctx.fillStyle = '#78350f';
+        ctx.beginPath();
+        ctx.ellipse(cx, y + size*0.5, size*0.4, size*0.2, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // Table leg
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(cx - 2, y + size*0.5, 4, size*0.4);
     }
-    else if (type === 'skeleton' || type === 'skeleton_blue') {
-        ctx.fillStyle = '#e5e5e5';
-        ctx.beginPath(); ctx.arc(cx, cy-2, size*0.12, 0, Math.PI*2); ctx.fill();	
-        ctx.fillStyle = '#000'; ctx.fillRect(cx-2, cy-3, 1, 1); ctx.fillRect(cx+1, cy-3, 1, 1);	
-        ctx.strokeStyle = '#e5e5e5'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.moveTo(cx-3, cy+2); ctx.lineTo(cx+3, cy+2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cx-3, cy+5); ctx.lineTo(cx+3, cy+5); ctx.stroke();
-    }
-    else if (type === 'fire_barrel') {
-        ctx.fillStyle = '#374151'; ctx.fillRect(x+size*0.25, y+size*0.25, size*0.5, size*0.75);
-        ctx.fillStyle = '#1f2937';	
-        ctx.fillRect(x+size*0.25, y+size*0.4, size*0.5, 2);
-        ctx.fillRect(x+size*0.25, y+size*0.6, size*0.5, 2);
-        
-        const pTime = time / 100;
-        ctx.globalCompositeOperation = 'lighter';
-        for(let i=0; i<8; i++) {
-            const fy = (pTime + i*1.5) % 10;	
-            const fx = Math.sin(pTime + i) * 4;
-            const alpha = 1 - (fy/10);
-            ctx.fillStyle = `rgba(250, 204, 21, ${alpha})`;
-            ctx.fillRect(cx + fx - 2, y + size*0.25 - fy*2, 4, 4);
-        }
-        ctx.globalCompositeOperation = 'source-over';
-    }
-    else if (type === 'rad_puddle') {
-        const pulse = (Math.sin(time / 500) + 1) / 2;	
+
+    else if (type === 'rad_puddle' || type === 'radpuddle') {
+        // Radioactive Waste Puddle (animated)
+        const pulse = (Math.sin(time / 500) + 1) / 2;
         const r = size/2 + (pulse * 4);
         const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
         g.addColorStop(0, 'rgba(132, 204, 22, 0.9)');
         g.addColorStop(0.6, 'rgba(132, 204, 22, 0.4)');
         g.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = g;
-        ctx.beginPath(); ctx.ellipse(cx, cy, r, r*0.6, 0, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, r, r*0.6, 0, 0, Math.PI*2);
+        ctx.fill();
     }
-    else if (type === 'glowing_fungus') {
+
+    else if (type === 'glowing_fungus' || type === 'glowingfungus') {
+        // Bioluminescent Cave Fungus
         ctx.fillStyle = '#a3e635';
-        ctx.shadowColor = '#a3e635'; ctx.shadowBlur = 10;
-        ctx.beginPath(); ctx.arc(cx, cy+4, size*0.15, 0, Math.PI*2); ctx.fill();
+        ctx.shadowColor = '#a3e635';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(cx, cy + 4, size*0.15, 0, Math.PI*2);
+        ctx.fill();
         ctx.shadowBlur = 0;
     }
-    else if (type === 'overhead_light') {
+
+    else if (type === 'overhead_light' || type === 'overheadlight') {
+        // Ceiling Light Fixture
         ctx.fillStyle = '#e2e8f0';
-        ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx, cy, 3, 0, Math.PI*2);
+        ctx.fill();
     }
-    else if (type === 'server_rack') {
-        ctx.fillStyle = '#57534e';	
-        ctx.fillRect(x+8, y+size*0.4, size-16, size*0.4);
-        ctx.fillStyle = '#78716c';	
-        ctx.fillRect(x+8, y+size*0.2, size-16, size*0.2);
+
+    else if (type === 'gorebag' || type === 'gore_bag') {
+        // Body Bag / Gore Bag
+        ctx.fillStyle = '#44403c';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + size*0.15, size*0.35, size*0.25, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // Zipper line
+        ctx.strokeStyle = '#78716c';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - size*0.1);
+        ctx.lineTo(cx, cy + size*0.35);
+        ctx.stroke();
+
+        // Dark stain
+        ctx.fillStyle = 'rgba(127, 29, 29, 0.6)';
+        ctx.beginPath();
+        ctx.arc(cx + size*0.1, cy + size*0.1, size*0.12, 0, Math.PI*2);
+        ctx.fill();
     }
-  
+
+    else if (type === 'chair') {
+        // Office Chair
+        ctx.fillStyle = '#374151';
+        // Seat
+        ctx.fillRect(x + size*0.2, y + size*0.4, size*0.6, size*0.15);
+        // Backrest
+        ctx.fillRect(x + size*0.25, y + size*0.15, size*0.5, size*0.3);
+        // Leg
+        ctx.fillRect(cx - 2, y + size*0.55, 4, size*0.35);
+    }
+
+    else if (type === 'poster' || type === 'painting') {
+        // Wasteland Propaganda Poster
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(x + size*0.2, y + size*0.1, size*0.6, size*0.8);
+
+        // Faded image area
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(x + size*0.25, y + size*0.2, size*0.5, size*0.3);
+
+        // Text block
+        ctx.fillStyle = '#fef3c7';
+        ctx.fillRect(x + size*0.25, y + size*0.55, size*0.5, size*0.15);
+    }
+
+    else if (type === 'barrel') {
+        // Industrial Barrel
+        ctx.fillStyle = '#0ea5e9';
+        ctx.fillRect(x + size*0.25, y + size*0.2, size*0.5, size*0.7);
+
+        // Rim
+        ctx.strokeStyle = '#0c4a6e';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x + size*0.25, y + size*0.2);
+        ctx.lineTo(x + size*0.75, y + size*0.2);
+        ctx.stroke();
+
+        // Bands
+        [0.5, 0.7].forEach(band => {
+            ctx.beginPath();
+            ctx.moveTo(x + size*0.25, y + size*band);
+            ctx.lineTo(x + size*0.75, y + size*band);
+            ctx.stroke();
+        });
+    }
+
+    else if (type === 'plant' || type === 'cactus') {
+        // Desert Plant/Cactus
+        ctx.fillStyle = '#15803d';
+
+        // Main body
+        ctx.fillRect(cx - size*0.1, cy, size*0.2, size*0.4);
+
+        // Arms
+        ctx.fillRect(cx - size*0.25, cy + size*0.1, size*0.15, size*0.15);
+        ctx.fillRect(cx + size*0.1, cy + size*0.15, size*0.15, size*0.15);
+
+        // Spines
+        ctx.strokeStyle = '#fef3c7';
+        ctx.lineWidth = 1;
+        for(let i = 0; i < 8; i++) {
+            const sy = cy + (i * 5);
+            ctx.beginPath();
+            ctx.moveTo(cx - size*0.1, sy);
+            ctx.lineTo(cx - size*0.12, sy - 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(cx + size*0.1, sy);
+            ctx.lineTo(cx + size*0.12, sy - 2);
+            ctx.stroke();
+        }
+    }
+
+    else if (type === 'lamp' || type === 'lantern') {
+        // Wasteland Lantern
+        // Handle
+        ctx.strokeStyle = '#78716c';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, y + size*0.2, size*0.15, Math.PI, 0);
+        ctx.stroke();
+
+        // Body
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(x + size*0.3, y + size*0.25, size*0.4, size*0.5);
+
+        // Glass panel (glowing)
+        const lampGlow = Math.sin(time/300) * 0.3 + 0.7;
+        ctx.fillStyle = `rgba(251, 191, 36, ${lampGlow})`;
+        ctx.fillRect(x + size*0.35, y + size*0.3, size*0.3, size*0.35);
+    }
+
+    else if (type === 'toolbench' || type === 'workbench') {
+        // Workshop Bench
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(x + 4, y + size*0.3, size - 8, size*0.25);
+
+        // Legs
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(x + 6, y + size*0.55, 4, size*0.35);
+        ctx.fillRect(x + size - 10, y + size*0.55, 4, size*0.35);
+
+        // Tools on bench
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x + size*0.3, y + size*0.35);
+        ctx.lineTo(x + size*0.4, y + size*0.35);
+        ctx.stroke();
+    }
+
+    else if (type === 'pipes' || type === 'vent') {
+        // Industrial Pipes/Vent
+        ctx.fillStyle = '#64748b';
+        // Horizontal pipe
+        ctx.fillRect(x + 4, cy - 3, size - 8, 6);
+
+        // Vertical section
+        ctx.fillRect(cx - 3, y + size*0.2, 6, size*0.6);
+
+        // Rivets
+        ctx.fillStyle = '#1e293b';
+        [0.3, 0.5, 0.7].forEach(pos => {
+            ctx.beginPath();
+            ctx.arc(x + size*pos, cy, 2, 0, Math.PI*2);
+            ctx.fill();
+        });
+    }
+
+    else if (type === 'bookshelf' || type === 'shelf') {
+        // Bookshelf
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(x + size*0.2, y + size*0.1, size*0.6, size*0.8);
+
+        // Shelves
+        ctx.fillStyle = '#451a03';
+        [0.3, 0.5, 0.7].forEach(shelf => {
+            ctx.fillRect(x + size*0.2, y + size*shelf, size*0.6, 3);
+        });
+
+        // Books
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(x + size*0.25, y + size*0.32, size*0.1, size*0.15);
+        ctx.fillStyle = '#1d4ed8';
+        ctx.fillRect(x + size*0.37, y + size*0.32, size*0.08, size*0.15);
+    }
+
+    else {
+        // Default/Unknown sprite - Simple placeholder
+        ctx.fillStyle = '#9ca3af';
+        ctx.beginPath();
+        ctx.arc(cx, cy, size*0.3, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#6b7280';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - size*0.2, cy - size*0.2);
+        ctx.lineTo(cx + size*0.2, cy + size*0.2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx + size*0.2, cy - size*0.2);
+        ctx.lineTo(cx - size*0.2, cy + size*0.2);
+        ctx.stroke();
+    }
 }
 
 function drawCRTEffects(ctx, width, height) {
