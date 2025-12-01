@@ -1021,42 +1021,40 @@ async function init() {
     // ----------------------------------------------
 }
 
+
 function zoomIn() {
-  if (zoomLevel < MAXZOOM) {
-    zoomLevel += 0.25;
-    updateZoomDisplay();
-    drawCurrentLevel();
-  }
+    if (zoomLevel < MAX_ZOOM) {
+        zoomLevel += 0.25;
+        updateZoomDisplay();
+        drawCurrentLevel();
+    }
 }
 
 function zoomOut() {
-  if (zoomLevel > MINZOOM) {
-    zoomLevel -= 0.25;
-    updateZoomDisplay();
-    drawCurrentLevel();
-  }
+    if (zoomLevel > MIN_ZOOM) {
+        zoomLevel -= 0.25;
+        updateZoomDisplay();
+        drawCurrentLevel();
+    }
 }
 
-// NEW: Smooth zoom slider function
 function setZoomLevel(value) {
-  zoomLevel = parseFloat(value);
-  updateZoomDisplay();
-  drawCurrentLevel();
+    zoomLevel = parseFloat(value);
+    updateZoomDisplay();
+    drawCurrentLevel();
 }
 
 function updateZoomDisplay() {
-  const display = document.getElementById('zoomDisplay');
-  if (display) {
-    display.innerText = Math.round(zoomLevel * 100) + '%';
-  }
-
-  // Update slider if it exists
-  const slider = document.getElementById('zoomSlider');
-  if (slider) {
-    slider.value = zoomLevel;
-  }
+    const display = document.getElementById('zoomDisplay');
+    if (display) {
+        display.innerText = Math.round(zoomLevel * 100) + '%';
+    }
+    // Update slider if it exists
+    const slider = document.getElementById('zoomSlider');
+    if (slider) {
+        slider.value = zoomLevel;
+    }
 }
-
 
 function animate(time) {
     requestAnimationFrame(animate);
@@ -3292,7 +3290,7 @@ function drawCurrentLevel(time = 0) {
     
     // BEGIN SCALED RENDER
     ctx.save();
-    ctx.scale(RENDER_SCALE, RENDER_SCALE);
+    ctx.scale(RENDER_SCALE * zoomLevel, RENDER_SCALE * zoomLevel);
     
     // *** NEW: Apply Pan Offset to the map drawing coordinate system ***
     ctx.translate(mapOffsetX, mapOffsetY);
