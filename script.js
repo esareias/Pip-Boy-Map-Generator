@@ -4126,7 +4126,7 @@ window.sendChatMessage = sendChatMessage;
 window.zoomIn = zoomIn;
 window.zoomOut = zoomOut;
 window.setZoomLevel = setZoomLevel;
-window.updateZoomDisplay = updateZoomDisplay;
+window.updateZoomDisplay = updateZoomLevel;
 
 
 
@@ -4136,3 +4136,5 @@ window.handleMouseUp = handleMouseUp;
 // --------------------------------------------------
 
 window.onload = init;
+
+
