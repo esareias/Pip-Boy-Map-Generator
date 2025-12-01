@@ -1172,8 +1172,10 @@ function handleMouseMove(e) {
     const rawY = (e.clientY - rect.top) * scaleY;
 
     // Logical coords for flashlight (unscaled, un-offset)
-    const logicalMouseX = rawX / RENDER_SCALE;
-    const logicalMouseY = rawY / RENDER_SCALE;
+   // NEW (FIXED):
+const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
+const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
+
     
     // *** Panned Logical Coordinates for Map Interaction ***
     const pannedLogicalX = logicalMouseX - mapOffsetX;
