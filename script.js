@@ -9,6 +9,10 @@ const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__f
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
 let db, auth, userId;
+
+// === SCRIPT LOADED: VERSION 5.1 VERIFIED ===
+console.log("🎮 PIP-BOY SCRIPT v5.1 LOADED SUCCESSFULLY");
+
 // --------------------------------------------------
 
 const canvas = document.getElementById('mapCanvas');
