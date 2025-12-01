@@ -44,10 +44,6 @@ let zoomLevel = 1.0;
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 4.0;
 
-// --- ZOOM STATE ---
-let zoomLevel = 1.0;
-const MIN_ZOOM = 0.5;
-const MAX_ZOOM = 4.0;
 let lastPanX = 0;
 let lastPanY = 0;
 // -------------------------
@@ -1027,38 +1023,6 @@ async function init() {
 }
 
 
-function zoomIn() {
-    if (zoomLevel < MAX_ZOOM) {
-        zoomLevel += 0.25;
-        updateZoomDisplay();
-        drawCurrentLevel();
-    }
-}
-
-function zoomOut() {
-    if (zoomLevel > MIN_ZOOM) {
-        zoomLevel -= 0.25;
-        updateZoomDisplay();
-        drawCurrentLevel();
-    }
-}
-
-function setZoomLevel(value) {
-    zoomLevel = parseFloat(value);
-    updateZoomDisplay();
-    drawCurrentLevel();
-}
-
-function updateZoomDisplay() {
-    const display = document.getElementById('zoomDisplay');
-    if (display) {
-        display.innerText = Math.round(zoomLevel * 100) + '%';
-    }
-    const slider = document.getElementById('zoomSlider');
-    if (slider) {
-        slider.value = zoomLevel;
-    }
-}
 
 
 function zoomIn() {
@@ -3779,10 +3743,6 @@ window.exitInterior = exitInterior;
 window.toggleLabels = toggleLabels;
 window.toggleFog = toggleFog;
 window.downloadMap = downloadMap;
-window.zoomIn = zoomIn;
-window.zoomOut = zoomOut;
-window.setZoomLevel = setZoomLevel;
-window.updateZoomDisplay = updateZoomDisplay;
 window.zoomIn = zoomIn;
 window.zoomOut = zoomOut;
 window.setZoomLevel = setZoomLevel;
