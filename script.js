@@ -1350,28 +1350,30 @@ const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
     lastPanX = e.clientX;
     lastPanY = e.clientY;
         
-// --- Panning Constraint: Map and viewport are same size, so no complex math needed ---
 const scaledWidth = config.mapWidth * zoomLevel;
 const scaledHeight = config.mapHeight * zoomLevel;
 const viewportWidth = canvas.width / RENDERSCALE;
 const viewportHeight = canvas.height / RENDERSCALE;
 
+// Calculate how much pan is needed to reach the edges
 const maxPanX = Math.max(0, (scaledWidth - viewportWidth) / 2);
 const minPanX = -maxPanX;
 const maxPanY = Math.max(0, (scaledHeight - viewportHeight) / 2);
 const minPanY = -maxPanY;
 
+// If map is smaller than viewport (zoomed out), center it and prevent panning
+if (scaledWidth < viewportWidth) {
+    mapOffsetX = 0;  // Lock to center
+} else {
+    mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
+}
 
-mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
-mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
+if (scaledHeight < viewportHeight) {
+    mapOffsetY = 0;  // Lock to center
+} else {
+    mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
+}
 
-
-        lastPanX = e.clientX;
-        lastPanY = e.clientY;
-        
-        drawCurrentLevel();
-        return;
-    }
 
 
     // 2. TOOLTIP CHECK (Uses pannedLogicalX/Y for hit testing)
