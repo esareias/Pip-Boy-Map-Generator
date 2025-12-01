@@ -1350,12 +1350,12 @@ const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
     lastPanX = e.clientX;
     lastPanY = e.clientY;
         
+// --- Panning Constraint ---
 const scaledWidth = config.mapWidth * zoomLevel;
 const scaledHeight = config.mapHeight * zoomLevel;
 const viewportWidth = canvas.width / RENDERSCALE;
 const viewportHeight = canvas.height / RENDERSCALE;
 
-// Calculate how much pan is needed to reach the edges
 const maxPanX = Math.max(0, (scaledWidth - viewportWidth) / 2);
 const minPanX = -maxPanX;
 const maxPanY = Math.max(0, (scaledHeight - viewportHeight) / 2);
@@ -1373,6 +1373,12 @@ if (scaledHeight < viewportHeight) {
 } else {
     mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
 }
+
+lastPanX = e.clientX;
+lastPanY = e.clientY;
+
+drawCurrentLevel();
+return;
 
 
 
@@ -4090,6 +4096,8 @@ const tokenRadius = 15 * zoomLevel;
       // --- DRAW CRT EFFECTS --- (on top of everything, at canvas size)
 }
 
+}
+
 // --- GLOBAL EXPOSURE FOR INLINE HTML HANDLERS ---
 // Expose functions used in onclick="..." attributes to the global scope
 window.init = init;
@@ -4117,8 +4125,8 @@ window.copyHostId = copyHostId;
 window.sendChatMessage = sendChatMessage;
 window.zoomIn = zoomIn;
 window.zoomOut = zoomOut;
-window.setZoomLevel = setZoomLevel
-window.updateZoomDisplay = updateZoomDisplay
+window.setZoomLevel = setZoomLevel;
+window.updateZoomDisplay = updateZoomDisplay;
 
 
 
@@ -4128,4 +4136,5 @@ window.handleMouseUp = handleMouseUp;
 // --------------------------------------------------
 
 window.onload = init;
+
 
