@@ -4130,7 +4130,7 @@ window.sendChatMessage = sendChatMessage;
 window.zoomIn = zoomIn;
 window.zoomOut = zoomOut;
 window.setZoomLevel = setZoomLevel;
-window.updateZoomDisplay = updateZoomLevel;
+window.updateZoomDisplay = updateZoomDisplay;
 
 
 
