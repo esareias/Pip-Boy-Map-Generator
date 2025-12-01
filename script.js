@@ -1049,7 +1049,6 @@ function updateZoomDisplay() {
     if (display) {
         display.innerText = Math.round(zoomLevel * 100) + '%';
     }
-    // Update slider if it exists
     const slider = document.getElementById('zoomSlider');
     if (slider) {
         slider.value = zoomLevel;
