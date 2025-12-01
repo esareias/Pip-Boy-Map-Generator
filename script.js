@@ -1199,16 +1199,22 @@ const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
         mapOffsetX += dx / RENDER_SCALE; // Pan must be applied in logical canvas space
         mapOffsetY += dy / RENDER_SCALE;
         
-        // --- Panning Constraint (Prevent map from disappearing entirely) ---
-        // Max movement allowed outside the canvas boundary (1/2 canvas size)
-        const maxOverhang = config.width / 2;	
-        const maxPanX = maxOverhang;
-        const minPanX = -config.width + maxOverhang;
-        const maxPanY = maxOverhang;
-        const minPanY = -config.height + maxOverhang;
-        
-        mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
-        mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
+     // --- Panning Constraint (Prevent map from disappearing entirely) ---
+// Account for zoom: when zoomed out, allow more panning
+const viewportWidth = config.width / zoomLevel;
+const viewportHeight = config.height / zoomLevel;
+
+// Allow panning 1/2 viewport beyond edges
+const maxOverhang = Math.max(viewportWidth, viewportHeight) / 2;
+
+const maxPanX = maxOverhang;
+const minPanX = -config.width + viewportWidth - maxOverhang;
+const maxPanY = maxOverhang;
+const minPanY = -config.height + viewportHeight - maxOverhang;
+
+mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
+mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
+
 
         lastPanX = e.clientX;
         lastPanY = e.clientY;
