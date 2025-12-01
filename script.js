@@ -4102,9 +4102,10 @@ const tokenRadius = 15 * zoomLevel;
 
 }
 
-// --- GLOBAL EXPOSURE FOR INLINE HTML HANDLERS ---
-// Expose functions used in onclick="..." attributes to the global scope
-window.init = init;
+
+// --- GLOBAL EXPOSURE SETUP ---
+function setupWindowBindings() {
+    window.init = init;
 window.hostSession = hostSession;
 window.joinSession = joinSession;
 window.openGMTokenDeploy = openGMTokenDeploy;
@@ -4140,5 +4141,10 @@ window.handleMouseUp = handleMouseUp;
 // --------------------------------------------------
 
 window.onload = init;
+}
+
+// Call setup immediately when module loads
+setupWindowBindings();
+
 
 
