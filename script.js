@@ -241,7 +241,7 @@ const BUILDING_ARCHETYPES = {
             "Medical Storage", "Morgue", "Nurse Station", "Operating Theater", "Patient Ward", "Pharmacy",
             "Prosthetics Lab", "Psych Ward", "Quarantine Cell", "Scrub Room", "Triage Center", "X-Ray Room"
         ],
-        unique: ["AI Diagnosis Core", "Auto-Doc Chamber", "Chief"s Office", "Cryo-Storage", "Experimental Lab"]
+        unique: ["AI Diagnosis Core", "Auto-Doc Chamber", "Chief's Office", "Cryo-Storage", "Experimental Lab"]
     },
     POLICE: {
         keywords: ["JAIL", "OUTPOST", "POLICE", "PRECINCT", "PRISON", "SECURITY", "STATION"],
@@ -251,7 +251,7 @@ const BUILDING_ARCHETYPES = {
             "Evidence Locker", "Holding Cells", "Interrogation Room", "Kennel", "Locker Room", "Riot Gear Storage",
             "Shooting Range", "Surveillance Hub"
         ],
-        unique: ["Chief"s Office", "Execution Chamber", "SWAT Gear Storage", "Secure Evidence Vault"]
+        unique: ["Chief's Office", "Execution Chamber", "SWAT Gear Storage", "Secure Evidence Vault"]
     },
     INDUSTRIAL: {
         keywords: ["ASSEMBLY", "FACTORY", "INDUSTRIAL", "PLANT", "POWER", "REFINERY", "WORKS"],
@@ -265,14 +265,14 @@ const BUILDING_ARCHETYPES = {
     },
     VAULT: {
         keywords: ["SHELTER", "VAULT"],
-        mandatory: ["Entrance Airlock", "Overseer"s Office"],
+        mandatory: ["Entrance Airlock", "Overseer's Office"],
         allowed: [
             "Atrium (Hub)", "Barber Shop", "Cafeteria", "Classroom", "Clinic", "Cryo-Stasis Array",
             "G.O.A.T. Exam Room", "Gear Storage", "Gym", "Hydroponics Bay", "Hydroponics Jungle", "Kitchen",
             "Maintenance Tunnel", "Quarters", "Reactor Core", "Security Station", "Social Lounge", "Storage Closet",
             "VR Pods", "Water Purification"
         ],
-        unique: ["Entrance Airlock", "Mainframe/ZAX Room", "Overseer"s Office", "Overseer"s Tunnel", "Reactor Core", "Secret Experiment Lab", "ZAX Mainframe"]
+        unique: ["Entrance Airlock", "Mainframe/ZAX Room", "Overseer's Office", "Overseer's Tunnel", "Reactor Core", "Secret Experiment Lab", "ZAX Mainframe"]
     },
     ENTERTAINMENT: {
         keywords: ["CASINO", "CLUB", "HOTEL", "LOUNGE", "RESORT", "SPA", "THEATER"],
@@ -282,7 +282,7 @@ const BUILDING_ARCHETYPES = {
             "Kitchen", "Manager's Office", "Pool Area", "Security Room", "Stage", "Suite",
             "VIP Lounge", "Vault"
         ],
-        unique: ["Broadcast Booth", "Director"s Office", "High Roller Room", "Penthouse Suite"]
+        unique: ["Broadcast Booth", "Director's Office", "High Roller Room", "Penthouse Suite"]
     },
     COMMERCIAL: {
         keywords: ["AGENCY", "BANK", "CORP", "OFFICE", "SKYSCRAPER", "TOWER"],
@@ -291,7 +291,7 @@ const BUILDING_ARCHETYPES = {
             "Break Room", "Conference Room", "Copy Room", "Cubicle Farm", "Executive Suite", "File Storage",
             "Janitor Closet", "Mail Room", "Restroom", "Server Farm", "Server Room"
         ],
-        unique: ["CEO"s Penthouse", "Mainframe Core", "Secret Wall Safe"]
+        unique: ["CEO's Penthouse", "Mainframe Core", "Secret Wall Safe"]
     },
     RETAIL: {
         keywords: ["BAR", "BODEGA", "DINER", "GROCERY", "MALL", "MARKET", "MART", "SALOON", "SHOP", "STORE"],
@@ -309,7 +309,7 @@ const BUILDING_ARCHETYPES = {
             "Bat Roost", "Bear Den", "Crystal Formation", "Damp Cavern", "Fissure", "Glowing Mushroom Grove",
             "Narrow Tunnel", "Pre-War Skeleton", "Rockfall", "Subterranean River", "Supply Cache", "Underground Lake"
         ],
-        unique: ["Crash Site", "Hidden Pre-War Bunker", "Legendary Creature Den", "Queen"s Nest"]
+        unique: ["Crash Site", "Hidden Pre-War Bunker", "Legendary Creature Den", "Queen's Nest"]
     },
     BUNKER: {
         keywords: ["BASE", "BUNKER", "MILITARY", "OUTPOST", "SHELTER", "SILO"],
@@ -330,7 +330,7 @@ const BUILDING_ARCHETYPES = {
         keywords: ["ALTAR", "CATHEDRAL", "CHURCH", "SHRINE", "TEMPLE"],
         mandatory: ["Altar", "Nave"],
         allowed: ["Bell Tower", "Confessional", "Crypt", "Dormitory", "Graveyard", "Pews", "Ritual Chamber", "Sacristy"],
-        unique: ["High Priest"s Chamber", "Reliquary", "Sacrificial Pit"]
+        unique: ["High Priest's Chamber", "Reliquary", "Sacrificial Pit"]
     },
     INSTITUTIONAL: {
         keywords: ["ACADEMY", "ADMIN", "COLLEGE", "COURT", "HALL", "LIBRARY", "POST", "SCHOOL", "UNIVERSITY"],
@@ -339,7 +339,7 @@ const BUILDING_ARCHETYPES = {
             "Auditorium", "Boiler Room", "Cafeteria", "Classroom", "Faculty Lounge", "Gymnasium",
             "Janitor Closet", "Library Archives", "Locker Room", "Restroom", "Storage"
         ],
-        unique: ["Broadcast PA Room", "Dean"s Study", "Evidence Vault", "Principal"s Office", "Rare Book Wing"]
+        unique: ["Broadcast PA Room", "Dean's Study", "Evidence Vault", "Principal's Office", "Rare Book Wing"]
     },
     GENERIC: {
         keywords: [],
@@ -374,7 +374,7 @@ const ROOM_RELATIONS = {
     "Overseer's Office": { tags: ["Command", "Clean"], link: [], avoid: ["Dirty"] },
     "Atrium": { tags: ["Hub", "Clean"], link: [], avoid: [] },
     "Hydroponics Bay": { tags: ["Life", "Humid"], link: ["Cafeteria", "Water Purification"], avoid: ["Reactor Core", "Armory"] },
-    "Overseer's Tunnel": { tags: ["Secret", "Transition"], link: ["Overseer"s Office", "Escape Hatch"], avoid: ["Public", "Atrium"] },
+    "Overseer's Tunnel": { tags: ["Secret", "Transition"], link: ["Overseer's Office", "Escape Hatch"], avoid: ["Public", "Atrium"] },
     "Cryo-Stasis Array": { tags: ["Cold", "Tech"], link: ["Med Bay", "Reactor Core"], avoid: ["Kitchen", "Gym"] },
     "G.O.A.T. Classroom": { tags: ["Social", "Clean"], link: ["Atrium", "Cafeteria"], avoid: ["Reactor", "Maintenance"] },
     "ZAX Mainframe": { tags: ["Tech", "Boss"], link: ["Server Room", "Reactor Core"], avoid: ["Living", "Water"] },
@@ -409,7 +409,7 @@ const ROOM_RELATIONS = {
     "Slave Pen": { tags: ["Hostile", "Prison"], link: [], avoid: ["Luxury"] },
 
     // --- OFFICES & INTERIORS ---
-    "Cubicle Farm": { tags: ["Office", "Boring"], link: ["Conference Room", "Break Room", "Manager"s Office"], avoid: ["Industrial", "Nature"] },
+    "Cubicle Farm": { tags: ["Office", "Boring"], link: ["Conference Room", "Break Room", "Manager's Office"], avoid: ["Industrial", "Nature"] },
     "Executive Suite": { tags: ["Office", "Luxury"], link: ["Conference Room", "Private Bath"], avoid: ["Cubicle Farm", "Janitor Closet"] },
     "Server Room": { tags: ["Tech", "Cold"], link: ["IT Office", "Cooling System"], avoid: ["Water"] },
     "Prosthetics Lab": { tags: ["Medical", "Tech"], link: ["Operating Theater", "Storage"], avoid: ["Kitchen"] },
@@ -2603,7 +2603,7 @@ const NAMES = {
         "Nuka-Cola Billboard", "Super Mutant Stronghold", "Slave Pen", "Slaver Auction Block",
         "Ruined Library", "Collapsed Skyscraper", "Ghoulish Church", "Retro Diner",
         "Comic Book Store", "Hardware Store", "Car Dealership", "Red Rocket Station"
-    },
+    ],
     cave_surface: [
         "Radscorpion Burrow", "Raider Camp", "Red Rocket", "Farmhouse",
         "Relay Tower", "Cave Entrance", "Canyon Pass", "Factory Ruin",
@@ -2616,7 +2616,7 @@ const NAMES = {
         "Hermit's Shack", "Tribal Altar", "Prospector Camp", "Cazador Nest",
         "Bighorner Grazing Spot", "Abandoned Mine Shack", "Powder Ganger Camp", "Old Nuclear Test Site",
         "Sunset Sarsaparilla Truck"
-    },
+    ],
     cave_underground: [
         "Cave Den", "Mine Shaft", "Underground Spring", "Collapsed Tunnel",
         "Fissure Wall", "Mushroom Grotto", "Sump Chamber", "Burial Site",
@@ -2625,7 +2625,7 @@ const NAMES = {
         "Subterranean River", "Legendary Creature Den", "Queen's Nest", "Geyser Vent",
         "Magma Rift", "Pre-War Bunker Entrance", "Lost Vault Door", "Tribal Painting Chamber",
         "Bear Hibernation Spot", "Nightstalker Den"
-    }
+    ]
 };
 // ---------------------------------------------
 
