@@ -1179,6 +1179,8 @@ function handleMouseUp(e) {
 }
 
 function handleMouseDown(e) {
+     e.preventDefault(); // ← ADD THIS LINE
+    
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
