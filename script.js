@@ -2782,7 +2782,7 @@ function createPixelPattern(colors, type) {
 
 function drawSprite(ctx, type, x, y, size, time) {
     // Prevent rendering with invalid sizes
-  if (size <= 0 || !isFinite(size)) return;
+ if (size < 12 || !isFinite(size) || isNaN(size)) return;
     
     const cx = x + size/2;
     const cy = y + size/2;
