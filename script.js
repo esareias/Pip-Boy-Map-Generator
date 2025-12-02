@@ -3847,25 +3847,7 @@ function drawSprite(ctx, type, x, y, size, time) {
             size * 0.6
         );
 
-        // Outer Flame - Deep Red
-        const outerGrad = ctx.createRadialGradient(
-            cx,
-            cy - size * 0.15,
-            0,
-            cx,
-            cy - size * 0.15,
-            Math.abs(size * 0.35 + flicker3)
-        );
-        outerGrad.addColorStop(0, "rgba(234,88,12,0.5)");
-        outerGrad.addColorStop(0.6, "rgba(153,27,27,0.3)");
-        outerGrad.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = outerGrad;
-        ctx.fillRect(
-            cx - size * 0.4,
-            cy - size * 0.5,
-            size * 0.8,
-            size * 0.6
-        );
+       
 
         // Flame Licks - Dancing Tendrils
         for(let i = 0; i < 5; i++) {
