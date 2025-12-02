@@ -3885,7 +3885,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.globalCompositeOperation = "source-over";
     }
 
-    else if (type === 'tree' || type === 'joshua_tree' || type === 'joshuatree') {
+     else if (type === 'tree' || type === 'joshua_tree' || type === 'joshuatree') {
         // Post-Apocalyptic Desert Tree
         const trunkW = size*0.12;
         const trunkH = size*0.5;
