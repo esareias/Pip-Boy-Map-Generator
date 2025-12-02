@@ -1167,16 +1167,24 @@ function handleMouseUp(e) {
     if (draggedToken) {
         draggedToken = null;
         syncData();	
-        isPanning = false;
-        return;
+        return; // Exit early, don't check for clicks when token dragging
     }
     
-    if (isPanning && Math.abs(e.clientX - lastPanX) < MINIMAL_MOVEMENT_THRESHOLD && Math.abs(e.clientY - lastPanY) < MINIMAL_MOVEMENT_THRESHOLD) {
-        handleCanvasAction(e);	
+    // If panning happened, check if it was minimal (= a click, not a drag)
+    if (isPanning) {
+        const wasDragging = Math.abs(e.clientX - lastPanX) >= MINIMAL_MOVEMENT_THRESHOLD || 
+                           Math.abs(e.clientY - lastPanY) >= MINIMAL_MOVEMENT_THRESHOLD;
+        
+        if (!wasDragging) {
+            // Movement was minimal = this was a click, not a pan
+            handleCanvasAction(e);
+        }
     }
     
     isPanning = false;
+    draggedToken = null;
 }
+
 
 function handleMouseDown(e) {
      e.preventDefault(); // ← ADD THIS LINE
