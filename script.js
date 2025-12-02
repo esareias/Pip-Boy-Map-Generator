@@ -1165,14 +1165,12 @@ function handleMouseUp(e) {
     screenContainer.classList.remove('grabbing');
     
     if (draggedToken) {
-        // If we were dragging a token, stop and sync.
         draggedToken = null;
         syncData();	
-        isPanning = false; // Just in case, reset
+        isPanning = false;
         return;
     }
     
-    // If dragging movement was minimal, execute a click action
     if (isPanning && Math.abs(e.clientX - lastPanX) < MINIMAL_MOVEMENT_THRESHOLD && Math.abs(e.clientY - lastPanY) < MINIMAL_MOVEMENT_THRESHOLD) {
         handleCanvasAction(e);	
     }
@@ -1180,80 +1178,7 @@ function handleMouseUp(e) {
     isPanning = false;
 }
 
-
-function handleMouseMove(e) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    
-    // Raw canvas coords (scaled, not offset)
-    const rawX = (e.clientX - rect.left) * scaleX;
-    const rawY = (e.clientY - rect.top) * scaleY;
-
-    // Logical coords for flashlight (unscaled, un-offset)
-   // NEW (FIXED):
-const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
-const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
-
-    
-    // *** Panned Logical Coordinates for Map Interaction ***
-    const pannedLogicalX = logicalMouseX - mapOffsetX;
-    const pannedLogicalY = logicalMouseY - mapOffsetY;
-
-    mousePos = { x: logicalMouseX, y: logicalMouseY };
-
-    // 1. HANDLE DRAGGING / PANNING
-    if (draggedToken) {
-        // Token is dragged: position is calculated from current mouse, then corrected by pan offset
-        draggedToken.x = pannedLogicalX;
-        draggedToken.y = pannedLogicalY;
-        screenContainer.classList.add('grabbing');
-        return;	
-    }
-
-    if (isPanning) {
-        const dx = e.clientX - lastPanX;
-        const dy = e.clientY - lastPanY;
-        
-        mapOffsetX += dx / RENDER_SCALE; // Pan must be applied in logical canvas space
-        mapOffsetY += dy / RENDER_SCALE;
-        
-     // --- Panning Constraint (Prevent map from disappearing entirely) ---
-// Account for zoom: when zoomed out, allow more panning
-const viewportWidth = config.width / zoomLevel;
-const viewportHeight = config.height / zoomLevel;
-
-// Allow panning 1/2 viewport beyond edges
-const maxOverhang = Math.max(viewportWidth, viewportHeight) / 2;
-
-const maxPanX = maxOverhang;
-const minPanX = -config.width + viewportWidth - maxOverhang;
-const maxPanY = maxOverhang;
-const minPanY = -config.height + viewportHeight - maxOverhang;
-
-mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
-mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
-
-
-        lastPanX = e.clientX;
-        lastPanY = e.clientY;
-        
-        drawCurrentLevel();
-        return;
-    }
-
-    // 2. TOOLTIP CHECK (Uses pannedLogicalX/Y for hit testing)
-    const data = (viewMode === 'interior') ? interiorData[currentInteriorKey] : floorData[currentLevelIndex];
-    if (!data) return;
-
-    const gridX = Math.floor(pannedLogicalX / config.gridSize);
-    const gridY = Math.floor(pannedLogicalY / config.gridSize);
-    
-    document.getElementById('coordDisplay').innerText = `${gridX},${gridY}`;
-    let hovering = false;
-
-    // --- LOOT TOOLTIP ---
-    if (!hovering && function handleMouseDown(e) {
+function handleMouseDown(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
@@ -1261,11 +1186,9 @@ mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
     const logicalMouseX = (e.clientX - rect.left) * scaleX / (RENDER_SCALE * zoomLevel);
     const logicalMouseY = (e.clientY - rect.top) * scaleY / (RENDER_SCALE * zoomLevel);
 
-    // Correct the mouse position based on the current pan offset
     const pannedLogicalX = logicalMouseX - mapOffsetX;
     const pannedLogicalY = logicalMouseY - mapOffsetY;
 
-    // 1. CHECK TOKEN DRAG START (GM ONLY)
     if (!isClient) {
         const isDeleteAttempt = e.altKey || e.ctrlKey || e.metaKey;
 
@@ -1273,31 +1196,24 @@ mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
             const dx = pannedLogicalX - t.x;
             const dy = pannedLogicalY - t.y;
 
-            if (dx*dx + dy*dy < 400) { // 20px radius hit check
+            if (dx*dx + dy*dy < 400) {
                 if (isDeleteAttempt) {
-                    // Delete token
                     tokens = tokens.filter(tok => tok !== t);
                     log(`UNIT REMOVED: ${t.label}`, "#ef4444");
                     syncData();
                 } else {
-                    // Start dragging
                     draggedToken = t;
                     screenContainer.classList.remove("crosshair");
                     screenContainer.classList.add("grabbing");
-
-                    // Record start position for click/drag detection
                     lastPanX = e.clientX;
                     lastPanY = e.clientY;
-
-                    // **FIX: Prevent panning when dragging token**
                     isPanning = false;
                 }
-                return; // Stop here, token action started
+                return;
             }
         }
     }
 
-    // 2. START PANNING (only if no token was grabbed)
     if (!draggedToken) {
         isPanning = true;
         lastPanX = e.clientX;
@@ -1306,27 +1222,6 @@ mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
     }
 }
 
-function handleMouseUp(e) {
-    screenContainer.classList.remove("grabbing");
-
-    if (draggedToken) {
-        // If we were dragging a token, stop and sync.
-        draggedToken = null;
-        syncData();
-        isPanning = false;
-        return;
-    }
-
-    // If dragging movement was minimal, execute a click action
-    if (isPanning && 
-        Math.abs(e.clientX - lastPanX) < MINIMAL_MOVEMENT_THRESHOLD && 
-        Math.abs(e.clientY - lastPanY) < MINIMAL_MOVEMENT_THRESHOLD) {
-        handleCanvasAction(e);
-    }
-
-    isPanning = false;
-}
-
 function handleMouseMove(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
@@ -1335,37 +1230,31 @@ function handleMouseMove(e) {
     const rawX = (e.clientX - rect.left) * scaleX;
     const rawY = (e.clientY - rect.top) * scaleY;
 
-    // Logical coords for flashlight
     const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
     const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
 
-    // Panned Logical Coordinates for Map Interaction
     const pannedLogicalX = logicalMouseX - mapOffsetX;
     const pannedLogicalY = logicalMouseY - mapOffsetY;
 
     mousePos = { x: logicalMouseX, y: logicalMouseY };
 
-    // 1. HANDLE TOKEN DRAGGING (takes priority over panning)
     if (draggedToken) {
         draggedToken.x = pannedLogicalX;
         draggedToken.y = pannedLogicalY;
         screenContainer.classList.add("grabbing");
-        return; // **FIX: Exit early, don't pan while dragging token**
+        return;
     }
 
-    // 2. HANDLE MAP PANNING (only if not dragging a token)
     if (isPanning) {
         const dx = e.clientX - lastPanX;
         const dy = e.clientY - lastPanY;
 
-        mapOffsetX += dx / (RENDER_SCALE);
-        mapOffsetY += dy / (RENDER_SCALE);
+        mapOffsetX += dx / RENDER_SCALE;
+        mapOffsetY += dy / RENDER_SCALE;
 
-        // --- Panning Constraint: Prevent map from disappearing entirely ---
         const viewportWidth = config.width / zoomLevel;
         const viewportHeight = config.height / zoomLevel;
 
-        // Allow panning 1/2 map width/height in any direction
         const maxOffsetX = config.width * 0.5;
         const minOffsetX = -config.width * 0.5;
         const maxOffsetY = config.height * 0.5;
@@ -1378,76 +1267,81 @@ function handleMouseMove(e) {
         lastPanY = e.clientY;
 
         screenContainer.classList.add("grabbing");
+        drawCurrentLevel();
         return;
     }
 
-    // 3. TOOLTIP HOVER (only when not dragging or panning)
-    const data = getCurrentLevelData();
+    const data = (viewMode === 'interior') ? interiorData[currentInteriorKey] : floorData[currentLevelIndex];
     if (!data) return;
 
     const gridX = Math.floor(pannedLogicalX / config.gridSize);
     const gridY = Math.floor(pannedLogicalY / config.gridSize);
 
-    let hoverText = "";
+    document.getElementById('coordDisplay').innerText = `${gridX},${gridY}`;
+    let hovering = false;
 
-    // Check if mouse is over a token
+    // Check tokens
     for (let t of tokens) {
         const dx = pannedLogicalX - t.x;
         const dy = pannedLogicalY - t.y;
         if (dx*dx + dy*dy < 400) {
-            hoverText = `${t.label}`;
+            tooltip.innerText = `${t.label}`;
+            tooltip.style.left = e.clientX + 15 + "px";
+            tooltip.style.top = e.clientY + 15 + "px";
+            tooltip.style.display = "block";
+            hovering = true;
             break;
         }
     }
 
     // Check decorations
-    if (!hoverText && data.decorations) {
+    if (!hovering && data.decorations) {
         for (let deco of data.decorations) {
             if (deco.x === gridX && deco.y === gridY) {
-                hoverText = deco.type.toUpperCase();
+                tooltip.innerText = deco.type.toUpperCase();
+                tooltip.style.left = e.clientX + 15 + "px";
+                tooltip.style.top = e.clientY + 15 + "px";
+                tooltip.style.display = "block";
+                hovering = true;
                 break;
             }
         }
     }
 
-    // Check loot containers
-    if (!hoverText && data.loot) {
+    // Check loot
+    if (!hovering && data.loot) {
         for (let item of data.loot) {
             if (item.x === gridX && item.y === gridY) {
-                hoverText = item.containerName.toUpperCase();
-                if (item.isLocked) {
-                    hoverText += ` [LOCKED]`;
-                }
-                if (item.looted) {
-                    hoverText += ` [EMPTY]`;
-                }
+                let hoverText = item.containerName.toUpperCase();
+                if (item.isLocked) hoverText += ` [LOCKED]`;
+                if (item.looted) hoverText += ` [EMPTY]`;
+                tooltip.innerText = hoverText;
+                tooltip.style.left = e.clientX + 15 + "px";
+                tooltip.style.top = e.clientY + 15 + "px";
+                tooltip.style.display = "block";
+                hovering = true;
                 break;
             }
         }
     }
 
     // Check labels
-    if (!hoverText && data.labels) {
+    if (!hovering && data.labels) {
         for (let lbl of data.labels) {
             const dx = Math.abs(pannedLogicalX - lbl.x);
             const dy = Math.abs(pannedLogicalY - lbl.y);
             if (dx < 40 && dy < 15 && lbl.visible) {
-                hoverText = lbl.text;
+                tooltip.innerText = lbl.text;
+                tooltip.style.left = e.clientX + 15 + "px";
+                tooltip.style.top = e.clientY + 15 + "px";
+                tooltip.style.display = "block";
+                hovering = true;
                 break;
             }
         }
     }
 
-    if (hoverText) {
-        tooltip.innerText = hoverText;
-        tooltip.style.left = e.clientX + 15 + "px";
-        tooltip.style.top = e.clientY + 15 + "px";
-        tooltip.style.display = "block";
-    } else {
-        tooltip.style.display = "none";
-    }
-}
-    
+    // Check exit
     if (!hovering && viewMode === 'interior' && data.exit && data.exit.x === gridX && data.exit.y === gridY) {
         tooltip.style.display = 'block';
         tooltip.style.left = (e.clientX + 15) + 'px';
@@ -1457,191 +1351,29 @@ function handleMouseMove(e) {
         hovering = true;
     }
 
-    // 3. TOKEN DELETE HOVER HINT (GM ONLY)
+    // Check delete
     if (!hovering && !isClient && (e.altKey || e.ctrlKey || e.metaKey)) {
         for (let t of tokens) {
-             // Hit test using the *corrected* mouse position against token's stored map position (t.x, t.y)
-             const dx = pannedLogicalX - t.x;
-             const dy = pannedLogicalY - t.y;
-             if (dx*dx + dy*dy < 400) { // 20px radius hit check
-                 tooltip.style.display = 'block';
-                 tooltip.style.left = (e.clientX + 15) + 'px';
-                 tooltip.style.top = (e.clientY + 15) + 'px';
-                 tooltip.innerText = `[ DELETE ${t.label} ]`;
-                 screenContainer.classList.add('crosshair');
-                 hovering = true;
-                 break;
+            const dx = pannedLogicalX - t.x;
+            const dy = pannedLogicalY - t.y;
+            if (dx*dx + dy*dy < 400) {
+                tooltip.style.display = 'block';
+                tooltip.style.left = (e.clientX + 15) + 'px';
+                tooltip.style.top = (e.clientY + 15) + 'px';
+                tooltip.innerText = `[ DELETE ${t.label} ]`;
+                screenContainer.classList.add('crosshair');
+                hovering = true;
+                break;
             }
         }
     }
 
-
-    if (!hovering) { tooltip.style.display = 'none'; screenContainer.classList.remove('crosshair'); }
-}
-
-// Renamed from handleCanvasClick
-function handleCanvasAction(e) {
-    const data = (viewMode === 'interior') ? interiorData[currentInteriorKey] : floorData[currentLevelIndex];
-    if(!data) return;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    
-    // Raw canvas coords
-    const rawX = (e.clientX - rect.left) * scaleX;
-    const rawY = (e.clientY - rect.top) * scaleY;
-    
-    // Logical coords for interaction (must be corrected by map offset)
-const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
-const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
-
-    const pannedLogicalX = logicalMouseX - mapOffsetX;
-    const pannedLogicalY = logicalMouseY - mapOffsetY;
-    
-    // Grid coords based on corrected mouse position
-    const gridX = Math.floor(pannedLogicalX / config.gridSize);
-    const gridY = Math.floor(pannedLogicalY / config.gridSize);
-    
-    let clicked = false;
-    const currentTime = Date.now();
-    
-    // 1. CHECK TOKEN DELETE (GM ONLY)
-    if (!isClient) {
-        const isDeleteAttempt = e.altKey || e.ctrlKey || e.metaKey;	
-        if (isDeleteAttempt) {
-            for (let i = 0; i < tokens.length; i++) {
-                let t = tokens[i];
-                // Hit test using the *corrected* mouse position
-                const dx = pannedLogicalX - t.x;
-                const dy = pannedLogicalY - t.y;
-
-                if (dx*dx + dy*dy < 400) {	
-                    log(`UNIT REMOVED: ${t.label}`, '#ef4444');
-                    tokens.splice(i, 1);	
-                    syncData();
-                    return;	
-                }
-            }
-        }
-    }
-
-    // 2. CLIENT RESTRICTION CHECK (Clients can only click visible labels for info)
-    if (isClient) {
-        // Only allow label visibility toggle/info log
-        if (viewMode === 'sector') {
-            for (let lbl of data.labels) {
-                const lx = lbl.x; const ly = lbl.y;
-                if (Math.abs(pannedLogicalX - lx) < 40 && Math.abs(pannedLogicalY - ly) < 15) {
-                    if (!isEnterable(lbl.text)) {
-                        lbl.visible = !lbl.visible;
-                        log(`${lbl.text} LABEL TOGGLED [Visible: ${lbl.visible}]`);
-                        // Client cannot sync data to host, but they can update their local map data
-                        // The GM is the source of truth, so this local change might be overwritten on next sync. 
-                        // Ideally, clients only request map changes from GM, but for local flavor, we allow it.
-                        // NOTE: The current PeerJS setup only supports GM->Client broadcast.
-                        clicked = true;
-                    }
-                }
-            }
-        }
-        return; // Stop client interaction here.
-    }
-
-    // --- GM ONLY ACTIONS BELOW ---
-
-    // FOG REVEAL
-    if (config.fogEnabled && data.rooms) {
-        const room = data.rooms.find(r => gridX >= r.x && gridX < r.x + r.w && gridY >= r.y && gridY < r.y + r.h);
-        if (room && !room.visited) {
-            room.visited = true;
-            log(`SECTOR REVEALED: ${room.name || 'UNKNOWN'}`, 'var(--pip-green)');
-            clicked = true;
-            syncData();	
-            return;
-        }
-    }
-
-    // --- LOOT INTERACTION (GM ONLY) ---
-    if (data.loot) {
-        for(let item of data.loot) {
-            if (item.x === gridX && item.y === gridY) {
-                if (item.looted) {
-                    log(`NOTE: ${item.containerName} is already emptied.`, 'var(--dim-color)');
-                }	
-                else if (item.isLocked) {
-                    const isDoubleClick = lastLootClick.x === gridX && lastLootClick.y === gridY && (currentTime - lastLootClick.time < DOUBLE_CLICK_TIME);
-
-                    if (isDoubleClick) {
-                        // GM Double-Click Override (Success)
-                        item.isLocked = false;
-                        item.looted = true;
-                        log(`ACCESS GRANTED: ${item.containerName} force-unlocked by Overseer.`, 'var(--pip-green)');
-                        logLoot(item.containerName, item.contents);
-                        // Reset click state
-                        lastLootClick = { x: -1, y: -1, time: 0 };	
-                    } else {
-                        // First click on a locked item (Logs Challenge)
-                        log(`ACCESS DENIED: ${item.containerName} is locked. Challenge required. ${item.lockDetail}`, '#ef4444');
-                        lastLootClick = { x: gridX, y: gridY, time: currentTime };
-                    }
-                }	
-                else {
-                    // Unlocked container - loot it
-                    item.looted = true;
-                    logLoot(item.containerName, item.contents);
-                    lastLootClick = { x: -1, y: -1, time: 0 }; // Clear state
-                }
-                
-                clicked = true;
-                syncData(); // Sync looted status immediately
-            }
-        }
-    }
-    // ------------------------------------------
-    
-    // RADIO INTERACTION
-    if (!clicked && data.decorations) {
-         for(let deco of data.decorations) {
-              if (config.fogEnabled && !isLocationRevealed(data, deco.x, deco.y)) continue;
-              if (deco.x === gridX && deco.y === gridY && deco.type === 'radio') {
-                   const tunes = ["'Distant gunfire'", "'Buzzing neon lights'", "'Howling wind'", "'Geiger counter clicking'", "'Dripping water'", "'A Lone Voice'", "'No Signal'"];
-                   log(`RADIO TUNED: 🎵 ${tunes[Math.floor(Math.random()*tunes.length)]}`, 'var(--pip-amber)');
-                   clicked = true;
-              }
-         }
-    }
-
-    // EXIT INTERIOR
-    if (!clicked && viewMode === 'interior' && data.exit && data.exit.x === gridX && data.exit.y === gridY) {
-         exitInterior();	
-         clicked = true;
-         // syncData() called inside exitInterior
-    }
-
-    // ENTER INTERIOR / TOGGLE LABELS
-    if (!clicked && viewMode === 'sector') {
-        for (let lbl of data.labels) {
-            const lx = lbl.x; const ly = lbl.y;
-            // Check panned logical mouse against un-panned label position
-            if (Math.abs(pannedLogicalX - lx) < 40 && Math.abs(pannedLogicalY - ly) < 15) {
-                if (isEnterable(lbl.text)) {
-                    enterInterior(lbl);
-                    clicked = true;
-                    // syncData() called inside enterInterior
-                }
-                else {
-                    // Toggle non-enterable labels like STREET or STAIRS
-                    lbl.visible = !lbl.visible;
-                    log(`${lbl.text} LABEL TOGGLED [Visible: ${lbl.visible}]`);
-                    syncData(); // Sync label visibility
-                }
-                clicked = true;
-            }
-        }
+    if (!hovering) {
+        tooltip.style.display = 'none';
+        screenContainer.classList.remove('crosshair');
     }
 }
 
-// --- END NEW MOUSE HANDLER IMPLEMENTATION ---
 
 function isLocationRevealed(data, x, y) {
     if (!data.rooms) return true;
