@@ -3692,7 +3692,7 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.lineTo(x + size*0.27 + Math.random()*size*0.46, y + size*0.42 + Math.random()*size*0.36);
             ctx.stroke();
         }
-    }
+    } 
 
      else if (
         type === "campfire" ||
