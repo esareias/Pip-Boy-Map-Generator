@@ -2781,21 +2781,30 @@ function createPixelPattern(colors, type) {
 }
 
 function drawSprite(ctx, type, x, y, size, time) {
-    size = Math.abs(size); // FORCE POSITIVE
-    if (size < 12) return; // Too small
-    
-    const cx = x + size/2;
-    const cy = y + size/2;
+    // Normalize and hard‑guard size
+    size = Math.abs(size);
+    if (!size || !isFinite(size) || size < 12) return;
+
+    const cx = x + size / 2;
+    const cy = y + size / 2;
 
     // ============================================
     // UNIVERSAL VOLUMETRIC SHADOW SYSTEM
     // ============================================
-    const shadowG = ctx.createRadialGradient(cx + 3, cy + size*0.45, 0, cx + 3, cy + size*0.45, size*0.4);
-    shadowG.addColorStop(0, 'rgba(0,0,0,0.8)');
-    shadowG.addColorStop(0.5, 'rgba(0,0,0,0.4)');
-    shadowG.addColorStop(1, 'rgba(0,0,0,0)');
+    // r0 = 0, r1 = abs(size*0.4) so it can never be negative
+    const shadowG = ctx.createRadialGradient(
+        cx + 3,
+        cy + size * 0.45,
+        0,
+        cx + 3,
+        cy + size * 0.45,
+        Math.abs(size * 0.4)
+    );
+    shadowG.addColorStop(0, "rgba(0,0,0,0.8)");
+    shadowG.addColorStop(0.5, "rgba(0,0,0,0.4)");
+    shadowG.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = shadowG;
-    ctx.fillRect(x, y + size*0.35, size, size*0.4);
+    ctx.fillRect(x, y + size * 0.35, size, size * 0.4);
 
     // ============================================
     // LOOT CONTAINERS - ULTRA PREMIUM EDITION
@@ -3510,65 +3519,94 @@ function drawSprite(ctx, type, x, y, size, time) {
     // ENVIRONMENTAL DECORATIONS - ULTRA DETAILED
     // ============================================
 
-    else if (type === 'radio') {
+     else if (type === "radio") {
         // Vintage Post-Apocalyptic Tube Radio
-        const radioGrad = ctx.createLinearGradient(x + size*0.2, y + size*0.35, x + size*0.8, y + size*0.85);
-        radioGrad.addColorStop(0, '#422006');
-        radioGrad.addColorStop(0.5, '#78350f');
-        radioGrad.addColorStop(1, '#451a03');
+        const radioGrad = ctx.createLinearGradient(
+            x + size * 0.2,
+            y + size * 0.35,
+            x + size * 0.8,
+            y + size * 0.85
+        );
+        radioGrad.addColorStop(0, "#422006");
+        radioGrad.addColorStop(0.5, "#78350f");
+        radioGrad.addColorStop(1, "#451a03");
         ctx.fillStyle = radioGrad;
-        ctx.fillRect(x + size*0.2, y + size*0.35, size*0.6, size*0.5);
+        ctx.fillRect(x + size * 0.2, y + size * 0.35, size * 0.6, size * 0.5);
 
         // Rounded Bakelite Top
         ctx.beginPath();
-        ctx.arc(cx, y + size*0.35, size*0.3, Math.PI, 0);
+        ctx.arc(cx, y + size * 0.35, size * 0.3, Math.PI, 0);
         ctx.fill();
 
-        // Speaker Grill - Fabric Mesh
-        ctx.fillStyle = '#1c1917';
+        // Speaker Grill – Fabric Mesh
+        ctx.fillStyle = "#1c1917";
         ctx.beginPath();
-        ctx.arc(cx - size*0.05, cy + size*0.05, size*0.15, 0, Math.PI*2);
+        ctx.arc(cx - size * 0.05, cy + size * 0.05, size * 0.15, 0, Math.PI * 2);
         ctx.fill();
 
         // Perforated Grill Pattern
-        ctx.strokeStyle = '#78716c';
+        ctx.strokeStyle = "#78716c";
         ctx.lineWidth = 0.5;
-        for(let i = -6; i < 7; i++) {
-            for(let j = -6; j < 7; j++) {
-                if(i*i + j*j < 36) {
+        for (let i = -6; i < 7; i++) {
+            for (let j = -6; j < 7; j++) {
+                if (i * i + j * j < 36) {
                     ctx.beginPath();
-                    ctx.arc(cx - size*0.05 + i*3, cy + size*0.05 + j*3, 0.8, 0, Math.PI*2);
+                    ctx.arc(
+                        cx - size * 0.05 + i * 3,
+                        cy + size * 0.05 + j * 3,
+                        0.8,
+                        0,
+                        Math.PI * 2
+                    );
                     ctx.stroke();
                 }
             }
         }
 
- // Brass Tuning Dial
-try {
-    const dialGrad = ctx.createRadialGradient(cx + size*0.15, cy + size*0.05, 0, cx + size*0.15, cy + size*0.05, size*0.1);
-    dialGrad.addColorStop(0, '#fbbf24');
-    dialGrad.addColorStop(0.7, '#d97706');
-    dialGrad.addColorStop(1, '#92400e');
-    ctx.fillStyle = dialGrad;
-} catch(e) {
-    // Fallback to solid color if gradient fails
-    ctx.fillStyle = '#fbbf24';
-}
-ctx.beginPath();
-ctx.arc(cx + size*0.15, cy + size*0.05, size*0.1, 0, Math.PI*2);
-ctx.fill();
+        // Brass Tuning Dial – radius forced positive
+        try {
+            const dialGrad = ctx.createRadialGradient(
+                cx + size * 0.15,
+                cy + size * 0.05,
+                0,
+                cx + size * 0.15,
+                cy + size * 0.05,
+                Math.abs(size * 0.1)
+            );
+            dialGrad.addColorStop(0, "#fbbf24");
+            dialGrad.addColorStop(0.7, "#d97706");
+            dialGrad.addColorStop(1, "#92400e");
+            ctx.fillStyle = dialGrad;
+        } catch (e) {
+            ctx.fillStyle = "#fbbf24";
+        }
+        ctx.beginPath();
+        ctx.arc(
+            cx + size * 0.15,
+            cy + size * 0.05,
+            size * 0.1,
+            0,
+            Math.PI * 2
+        );
+        ctx.fill();
 
-
-        // Frequency Markings
-        ctx.strokeStyle = '#451a03';
+        // Frequency Markings (no gradients here, just lines)
+        ctx.strokeStyle = "#451a03";
         ctx.lineWidth = 1;
-        for(let i = 0; i < 20; i++) {
-            const angle = (i / 20) * Math.PI * 1.5 - Math.PI*0.75;
-            const r1 = size*0.08;
-            const r2 = i % 5 === 0 ? size*0.095 : size*0.09;
+        for (let i = 0; i < 20; i++) {
+            const angle = (i / 20) * Math.PI * 1.5 - Math.PI * 0.75;
+            const r1 = size * 0.08;
+            const r2 = i % 5 === 0 ? size * 0.095 : size * 0.09;
+            // r1/r2 are derived from positive size, so safe now
             ctx.beginPath();
-            ctx.moveTo(cx + size*0.15 + Math.cos(angle)*r1, cy + size*0.05 + Math.sin(angle)*r1);
-            ctx.lineTo(cx + size*0.15 + Math.cos(angle)*r2, cy + size*0.05 + Math.sin(angle)*r2);
+            ctx.moveTo(
+                cx + size * 0.15 + Math.cos(angle) * r1,
+                cy + size * 0.05 + Math.sin(angle) * r1
+            );
+            ctx.lineTo(
+                cx + size * 0.15 + Math.cos(angle) * r2,
+                cy + size * 0.05 + Math.sin(angle) * r2
+            );
             ctx.stroke();
         }
 
@@ -3614,16 +3652,29 @@ ctx.fill();
         });
 
         // Power Indicator LED (animated)
-        if(Math.sin(time/500) > 0) {
-            const ledGlow = ctx.createRadialGradient(x + size*0.25, y + size*0.4, 0, x + size*0.25, y + size*0.4, size*0.05);
-            ledGlow.addColorStop(0, '#22c55e');
-            ledGlow.addColorStop(1, 'rgba(34, 197, 94, 0)');
+          if (Math.sin(time / 500) > 0) {
+            const ledGlow = ctx.createRadialGradient(
+                x + size * 0.25,
+                y + size * 0.4,
+                0,
+                x + size * 0.25,
+                y + size * 0.4,
+                Math.abs(size * 0.05)
+            );
+            ledGlow.addColorStop(0, "#22c55e");
+            ledGlow.addColorStop(1, "rgba(34, 197, 94, 0)");
             ctx.fillStyle = ledGlow;
-            ctx.fillRect(x + size*0.2, y + size*0.35, size*0.1, size*0.1);
+            ctx.fillRect(
+                x + size * 0.2,
+                y + size * 0.35,
+                size * 0.1,
+                size * 0.1
+            );
         }
-        ctx.fillStyle = Math.sin(time/500) > 0 ? '#22c55e' : '#064e3b';
+        ctx.fillStyle =
+            Math.sin(time / 500) > 0 ? "#22c55e" : "#064e3b";
         ctx.beginPath();
-        ctx.arc(x + size*0.25, y + size*0.4, 2, 0, Math.PI*2);
+        ctx.arc(x + size * 0.25, y + size * 0.4, 2, 0, Math.PI * 2);
         ctx.fill();
 
         // Vintage Brand Label
@@ -3643,8 +3694,11 @@ ctx.fill();
         }
     }
 
-    else if (type === 'campfire' || type === 'fire_barrel' || type === 'firebarrel') {
-        if(type === 'fire_barrel' || type === 'firebarrel') {
+   else if (
+        type === "campfire" ||
+        type === "fire_barrel" ||
+        type === "firebarrel"
+    ) {
             // Rusted Oil Drum Fire Barrel
             const barrelGrad = ctx.createLinearGradient(x + size*0.25, y + size*0.25, x + size*0.75, y + size*1);
             barrelGrad.addColorStop(0, '#475569');
@@ -3727,35 +3781,91 @@ ctx.fill();
         // ========================================
         // DYNAMIC FIRE ANIMATION - ULTRA REALISTIC
         // ========================================
-        const flicker1 = Math.sin(time / 80) * 5;
+         const flicker1 = Math.sin(time / 80) * 5;
         const flicker2 = Math.cos(time / 120) * 4;
         const flicker3 = Math.sin(time / 150) * 6;
 
-        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalCompositeOperation = "lighter";
 
-        // Inner Core - White Hot Center
-        const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size*0.12 + flicker1);
-        coreGrad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-        coreGrad.addColorStop(0.3, 'rgba(255, 240, 180, 0.7)');
-        coreGrad.addColorStop(1, 'rgba(255, 200, 100, 0)');
+        // Inner Core
+        const coreGrad = ctx.createRadialGradient(
+            cx,
+            cy,
+            0,
+            cx,
+            cy,
+            Math.abs(size * 0.12 + flicker1)
+        );
+        coreGrad.addColorStop(0, "rgba(255,255,255,0.9)");
+        coreGrad.addColorStop(0.3, "rgba(255,240,180,0.7)");
+        coreGrad.addColorStop(1, "rgba(255,200,100,0)");
         ctx.fillStyle = coreGrad;
-        ctx.fillRect(cx - size*0.2, cy - size*0.2, size*0.4, size*0.4);
+        ctx.fillRect(
+            cx - size * 0.2,
+            cy - size * 0.2,
+            size * 0.4,
+            size * 0.4
+        );
 
-        // Mid-Range Flame - Orange/Yellow
-        const midGrad = ctx.createRadialGradient(cx, cy - size*0.1, 0, cx, cy - size*0.1, size*0.25 + flicker2);
-        midGrad.addColorStop(0, 'rgba(255, 200, 100, 0.8)');
-        midGrad.addColorStop(0.5, 'rgba(234, 88, 12, 0.6)');
-        midGrad.addColorStop(1, 'rgba(200, 50, 0, 0)');
+        // Mid-range flame
+        const midGrad = ctx.createRadialGradient(
+            cx,
+            cy - size * 0.1,
+            0,
+            cx,
+            cy - size * 0.1,
+            Math.abs(size * 0.25 + flicker2)
+        );
+        midGrad.addColorStop(0, "rgba(255,200,100,0.8)");
+        midGrad.addColorStop(0.5, "rgba(234,88,12,0.6)");
+        midGrad.addColorStop(1, "rgba(200,50,0,0)");
         ctx.fillStyle = midGrad;
-        ctx.fillRect(cx - size*0.3, cy - size*0.4, size*0.6, size*0.5);
+        ctx.fillRect(
+            cx - size * 0.3,
+            cy - size * 0.4,
+            size * 0.6,
+            size * 0.5
+        );
+
+        // Outer flame
+        const outerGrad = ctx.createRadialGradient(
+            cx,
+            cy - size * 0.15,
+            0,
+            cx,
+            cy - size * 0.15,
+            Math.abs(size * 0.35 + flicker3)
+        );
+        outerGrad.addColorStop(0, "rgba(234,88,12,0.5)");
+        outerGrad.addColorStop(0.6, "rgba(153,27,27,0.3)");
+        outerGrad.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = outerGrad;
+        ctx.fillRect(
+            cx - size * 0.4,
+            cy - size * 0.5,
+            size * 0.8,
+            size * 0.6
+        );
 
         // Outer Flame - Deep Red
-        const outerGrad = ctx.createRadialGradient(cx, cy - size*0.15, 0, cx, cy - size*0.15, size*0.35 + flicker3);
-        outerGrad.addColorStop(0, 'rgba(234, 88, 12, 0.5)');
-        outerGrad.addColorStop(0.6, 'rgba(153, 27, 27, 0.3)');
-        outerGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        const outerGrad = ctx.createRadialGradient(
+            cx,
+            cy - size * 0.15,
+            0,
+            cx,
+            cy - size * 0.15,
+            Math.abs(size * 0.35 + flicker3)
+        );
+        outerGrad.addColorStop(0, "rgba(234,88,12,0.5)");
+        outerGrad.addColorStop(0.6, "rgba(153,27,27,0.3)");
+        outerGrad.addColorStop(1, "rgba(0,0,0,0)");
         ctx.fillStyle = outerGrad;
-        ctx.fillRect(cx - size*0.4, cy - size*0.5, size*0.8, size*0.6);
+        ctx.fillRect(
+            cx - size * 0.4,
+            cy - size * 0.5,
+            size * 0.8,
+            size * 0.6
+        );
 
         // Flame Licks - Dancing Tendrils
         for(let i = 0; i < 5; i++) {
@@ -3790,7 +3900,7 @@ ctx.fill();
             ctx.fill();
         }
 
-        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalCompositeOperation = "source-over";
     }
 
     else if (type === 'tree' || type === 'joshua_tree' || type === 'joshuatree') {
