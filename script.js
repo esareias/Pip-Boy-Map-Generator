@@ -2781,7 +2781,7 @@ function createPixelPattern(colors, type) {
 }
 
 function drawSprite(ctx, type, x, y, size, time) {
-    // Normalize and hard‑guard size
+    // Normalize and guard size
     size = Math.abs(size);
     if (!size || !isFinite(size) || size < 12) return;
 
@@ -2791,20 +2791,20 @@ function drawSprite(ctx, type, x, y, size, time) {
     // ============================================
     // UNIVERSAL VOLUMETRIC SHADOW SYSTEM
     // ============================================
-    // r0 = 0, r1 = abs(size*0.4) so it can never be negative
     const shadowG = ctx.createRadialGradient(
         cx + 3,
         cy + size * 0.45,
         0,
         cx + 3,
         cy + size * 0.45,
-        Math.abs(size * 0.4)
+        Math.abs(size * 0.4)   // <<< THIS is the critical fix
     );
     shadowG.addColorStop(0, "rgba(0,0,0,0.8)");
     shadowG.addColorStop(0.5, "rgba(0,0,0,0.4)");
     shadowG.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = shadowG;
     ctx.fillRect(x, y + size * 0.35, size, size * 0.4);
+
 
     // ============================================
     // LOOT CONTAINERS - ULTRA PREMIUM EDITION
