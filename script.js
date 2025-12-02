@@ -1363,6 +1363,7 @@ function handleMouseMove(e) {
 function handleMouseUp(e) {
     screenContainer.classList.remove('grabbing');
     
+    // Handle token dragging
     if (draggedToken) {
         draggedToken = null;
         syncData();
@@ -1370,15 +1371,17 @@ function handleMouseUp(e) {
         return;
     }
     
-    // If minimal movement occurred, treat as a click
-    if (!isPanning || (Math.abs(e.clientX - lastPanX) < MINIMAL_MOVEMENT_THRESHOLD && Math.abs(e.clientY - lastPanY) < MINIMAL_MOVEMENT_THRESHOLD)) {
+    // Check if this was a click (minimal movement) vs a drag
+    const wasDragging = Math.abs(e.clientX - lastPanX) >= MINIMAL_MOVEMENT_THRESHOLD || 
+                        Math.abs(e.clientY - lastPanY) >= MINIMAL_MOVEMENT_THRESHOLD;
+    
+    // If it was NOT a drag, treat it as a click
+    if (!wasDragging) {
         handleCanvasAction(e);
     }
     
     isPanning = false;
 }
-
-
 
 function isLocationRevealed(data, x, y) {
     if (!data.rooms) return true;
