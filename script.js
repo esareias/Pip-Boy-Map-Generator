@@ -2781,11 +2781,12 @@ function createPixelPattern(colors, type) {
 }
 
 function drawSprite(ctx, type, x, y, size, time) {
-    // Prevent rendering with invalid sizes
-if (!size || size <= 0 || !isFinite(size) || isNaN(size)) {
-        console.warn('Invalid sprite size:', size, 'type:', type);
+ // Critical: Block negative/invalid sizes
+    if (!size || size <= 0 || !isFinite(size) || isNaN(size)) {
         return;
-    }    
+    }
+    if (size < 12) return;
+    
     const cx = x + size/2;
     const cy = y + size/2;
 
@@ -3545,15 +3546,21 @@ if (!size || size <= 0 || !isFinite(size) || isNaN(size)) {
             }
         }
 
-        // Brass Tuning Dial
-        const dialGrad = ctx.createRadialGradient(cx + size*0.15, cy + size*0.05, 0, cx + size*0.15, cy + size*0.05, size*0.1);
-        dialGrad.addColorStop(0, '#fbbf24');
-        dialGrad.addColorStop(0.7, '#d97706');
-        dialGrad.addColorStop(1, '#92400e');
-        ctx.fillStyle = dialGrad;
-        ctx.beginPath();
-        ctx.arc(cx + size*0.15, cy + size*0.05, size*0.1, 0, Math.PI*2);
-        ctx.fill();
+ // Brass Tuning Dial
+try {
+    const dialGrad = ctx.createRadialGradient(cx + size*0.15, cy + size*0.05, 0, cx + size*0.15, cy + size*0.05, size*0.1);
+    dialGrad.addColorStop(0, '#fbbf24');
+    dialGrad.addColorStop(0.7, '#d97706');
+    dialGrad.addColorStop(1, '#92400e');
+    ctx.fillStyle = dialGrad;
+} catch(e) {
+    // Fallback to solid color if gradient fails
+    ctx.fillStyle = '#fbbf24';
+}
+ctx.beginPath();
+ctx.arc(cx + size*0.15, cy + size*0.05, size*0.1, 0, Math.PI*2);
+ctx.fill();
+
 
         // Frequency Markings
         ctx.strokeStyle = '#451a03';
