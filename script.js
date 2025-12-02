@@ -265,12 +265,12 @@ const BUILDING_ARCHETYPES = {
     },
     VAULT: {
         keywords: ["SHELTER", "VAULT"],
-        mandatory: ["Entrance Airlock", "Overseer's Office"],
+        mandatory: ["Entrance Airlock"],
         allowed: [
             "Atrium (Hub)", "Barber Shop", "Cafeteria", "Classroom", "Clinic", "Cryo-Stasis Array",
             "G.O.A.T. Exam Room", "Gear Storage", "Gym", "Hydroponics Bay", "Hydroponics Jungle", "Kitchen",
             "Maintenance Tunnel", "Quarters", "Reactor Core", "Security Station", "Social Lounge", "Storage Closet",
-            "VR Pods", "Water Purification"
+            "VR Pods", "Water Purification", "Overseer's Office"
         ],
         unique: ["Entrance Airlock", "Mainframe/ZAX Room", "Overseer's Office", "Overseer's Tunnel", "Reactor Core", "Secret Experiment Lab", "ZAX Mainframe"]
     },
