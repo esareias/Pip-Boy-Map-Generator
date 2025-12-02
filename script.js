@@ -233,125 +233,84 @@ function spawnToken(name, color, src) {
 
 // 🧠 PART 1: BUILDING ARCHETYPES (Logic kept same)
 const BUILDING_ARCHETYPES = {
-    MEDICAL: {
-        keywords: ["CLINIC", "DOCTOR", "ER ", "HOSPITAL", "LAB", "MEDICAL"],
-        mandatory: ["ER Waiting Room", "Lobby"],
-        allowed: [
-            "Bio-Hazard Containment", "Burn Ward", "Cafeteria", "Doctor's Office", "Gene Therapy", "Gift Shop",
-            "Medical Storage", "Morgue", "Nurse Station", "Operating Theater", "Patient Ward", "Pharmacy",
-            "Prosthetics Lab", "Psych Ward", "Quarantine Cell", "Scrub Room", "Triage Center", "X-Ray Room"
-        ],
-        unique: ["AI Diagnosis Core", "Auto-Doc Chamber", "Chief's Office", "Cryo-Storage", "Experimental Lab"]
+    MEDICAL: {	
+        keywords: ["HOSPITAL", "CLINIC", "MEDICAL", "DOCTOR", "LAB", "ER "],	
+        mandatory: ["Lobby", "ER Waiting Room"],	
+        allowed: ["Triage Center", "Patient Ward", "Nurse Station", "Operating Theater", "Pharmacy", "X-Ray Room", "Quarantine Cell", "Morgue", "Cafeteria", "Doctor's Office", "Medical Storage", "Gift Shop", "Scrub Room", "Burn Ward"],	
+        unique: ["Chief's Office", "Auto-Doc Chamber", "Experimental Lab", "Cryo-Storage"]	
     },
-    POLICE: {
-        keywords: ["JAIL", "OUTPOST", "POLICE", "PRECINCT", "PRISON", "SECURITY", "STATION"],
-        mandatory: ["Desk Sergeant", "Precinct Lobby"],
-        allowed: [
-            "Armory", "Briefing Room", "Bullpen", "Detective's Office", "Drone Bay", "Drunk Tank",
-            "Evidence Locker", "Holding Cells", "Interrogation Room", "Kennel", "Locker Room", "Riot Gear Storage",
-            "Shooting Range", "Surveillance Hub"
-        ],
-        unique: ["Chief's Office", "Execution Chamber", "SWAT Gear Storage", "Secure Evidence Vault"]
+    POLICE: {	
+        keywords: ["POLICE", "PRECINCT", "STATION", "OUTPOST", "SECURITY", "JAIL", "PRISON"],	
+        mandatory: ["Precinct Lobby", "Desk Sergeant"],	
+        allowed: ["Bullpen", "Holding Cells", "Interrogation Room", "Evidence Locker", "Armory", "Shooting Range", "Locker Room", "Briefing Room", "Detective's Office", "Kennel", "Drunk Tank"],	
+        unique: ["Chief's Office", "SWAT Gear Storage", "Secure Evidence Vault"]	
     },
-    INDUSTRIAL: {
-        keywords: ["ASSEMBLY", "FACTORY", "INDUSTRIAL", "PLANT", "POWER", "REFINERY", "WORKS"],
-        mandatory: ["Assembly Floor", "Loading Dock"],
-        allowed: [
-            "Boiler Room", "Break Room", "Catwalks", "Conveyor Maze", "Cooling Tunnel", "Foreman's Office",
-            "Fusion Core Assembly", "Generator Room", "Hazmat Disposal", "Locker Room", "Machine Shop", "Parts Storage",
-            "Robotics Bay", "Smelting Pit", "Vat Room", "Waste Compactor"
-        ],
-        unique: ["Main Control Room", "Prototype Assembly", "QA Testing Lab", "Reactor Core"]
+    INDUSTRIAL: {	
+        keywords: ["FACTORY", "PLANT", "POWER", "INDUSTRIAL", "ASSEMBLY", "WORKS", "REFINERY"],	
+        mandatory: ["Loading Dock", "Assembly Floor"],	
+        allowed: ["Machine Shop", "Foreman's Office", "Catwalks", "Generator Room", "Parts Storage", "Conveyor Maze", "Hazmat Disposal", "Locker Room", "Break Room", "Vat Room", "Boiler Room", "Smelting Pit"],	
+        unique: ["Main Control Room", "Reactor Core", "Prototype Assembly"]	
     },
-    VAULT: {
-        keywords: ["SHELTER", "VAULT"],
-        mandatory: ["Entrance Airlock", "Overseer's Office"],
-        allowed: [
-            "Atrium (Hub)", "Barber Shop", "Cafeteria", "Classroom", "Clinic", "Cryo-Stasis Array",
-            "G.O.A.T. Exam Room", "Gear Storage", "Gym", "Hydroponics Bay", "Hydroponics Jungle", "Kitchen",
-            "Maintenance Tunnel", "Quarters", "Reactor Core", "Security Station", "Social Lounge", "Storage Closet",
-            "VR Pods", "Water Purification"
-        ],
-        unique: ["Entrance Airlock", "Mainframe/ZAX Room", "Overseer's Office", "Overseer's Tunnel", "Reactor Core", "Secret Experiment Lab", "ZAX Mainframe"]
+    ENTERTAINMENT: {	
+        keywords: ["CASINO", "HOTEL", "THEATER", "RESORT", "SPA", "CLUB", "LOUNGE"],	
+        mandatory: ["Grand Lobby", "Reception"],	
+        allowed: ["Ballroom", "Bar", "Guest Room", "Suite", "Kitchen", "Casino Floor", "Stage", "Backstage", "Dressing Room", "Manager's Office", "Vault", "Security Room", "Pool Area", "VIP Lounge"],	
+        unique: ["Penthouse Suite", "High Roller Room", "Director's Office", "Broadcast Booth"]	
     },
-    ENTERTAINMENT: {
-        keywords: ["CASINO", "CLUB", "HOTEL", "LOUNGE", "RESORT", "SPA", "THEATER"],
-        mandatory: ["Grand Lobby", "Reception"],
-        allowed: [
-            "Backstage", "Ballroom", "Bar", "Casino Floor", "Dressing Room", "Guest Room",
-            "Kitchen", "Manager's Office", "Pool Area", "Security Room", "Stage", "Suite",
-            "VIP Lounge", "Vault"
-        ],
-        unique: ["Broadcast Booth", "Director's Office", "High Roller Room", "Penthouse Suite"]
+    COMMERCIAL: {	
+        keywords: ["OFFICE", "SKYSCRAPER", "TOWER", "BANK", "AGENCY", "CORP"],	
+        mandatory: ["Lobby", "Security Desk"],	
+        allowed: ["Cubicle Farm", "Conference Room", "Executive Suite", "Break Room", "Server Room", "File Storage", "Mail Room", "Janitor Closet", "Restroom", "Server Farm", "Copy Room"],	
+        unique: ["CEO's Penthouse", "Mainframe Core", "Secret Wall Safe"]	
     },
-    COMMERCIAL: {
-        keywords: ["AGENCY", "BANK", "CORP", "OFFICE", "SKYSCRAPER", "TOWER"],
-        mandatory: ["Lobby", "Security Desk"],
-        allowed: [
-            "Break Room", "Conference Room", "Copy Room", "Cubicle Farm", "Executive Suite", "File Storage",
-            "Janitor Closet", "Mail Room", "Restroom", "Server Farm", "Server Room"
-        ],
-        unique: ["CEO's Penthouse", "Mainframe Core", "Secret Wall Safe"]
+    RETAIL: {	
+        keywords: ["SHOP", "STORE", "MART", "BODEGA", "GROCERY", "MARKET", "MALL", "DINER", "BAR", "SALOON"],	
+        mandatory: ["Sales Floor"],	
+        allowed: ["Cashier Counter", "Stockroom", "Manager's Office", "Restroom", "Loading Bay", "Changing Rooms", "Cold Storage", "Kitchenette", "Alley Access"],	
+        unique: ["Safe Room", "Pharmacy Counter", "Hidden Basement"]	
     },
-    RETAIL: {
-        keywords: ["BAR", "BODEGA", "DINER", "GROCERY", "MALL", "MARKET", "MART", "SALOON", "SHOP", "STORE"],
-        mandatory: ["Sales Floor"],
-        allowed: [
-            "Alley Access", "Cashier Counter", "Changing Rooms", "Cold Storage", "Kitchenette", "Loading Bay",
-            "Manager's Office", "Restroom", "Stockroom"
-        ],
-        unique: ["Hidden Basement", "Pharmacy Counter", "Safe Room"]
-    },
-    NATURAL: {
-        keywords: ["BURROW", "CAVE", "CLIFF", "DEN", "GROTTO", "HOLE", "NEST", "PASS"],
-        mandatory: ["Cave Entrance"],
-        allowed: [
-            "Bat Roost", "Bear Den", "Crystal Formation", "Damp Cavern", "Fissure", "Glowing Mushroom Grove",
-            "Narrow Tunnel", "Pre-War Skeleton", "Rockfall", "Subterranean River", "Supply Cache", "Underground Lake"
-        ],
-        unique: ["Crash Site", "Hidden Pre-War Bunker", "Legendary Creature Den", "Queen's Nest"]
+    // REWORKED: Split into distinct "Wasteland" vibes to avoid Offices in caves
+    NATURAL: {	
+        keywords: ["CAVE", "HOLE", "BURROW", "DEN", "CLIFF", "PASS", "NEST", "GROTTO"],	
+        mandatory: ["Cave Entrance"],	
+        allowed: ["Damp Cavern", "Narrow Tunnel", "Underground Lake", "Glowing Mushroom Grove", "Rockfall", "Bear Den", "Pre-War Skeleton", "Supply Cache", "Fissure", "Bat Roost", "Crystal Formation", "Subterranean River"],	
+        unique: ["Queen's Nest", "Hidden Pre-War Bunker", "Crash Site", "Legendary Creature Den"]	
     },
     BUNKER: {
-        keywords: ["BASE", "BUNKER", "MILITARY", "OUTPOST", "SHELTER", "SILO"],
+        keywords: ["BUNKER", "SHELTER", "SILO", "BASE", "OUTPOST", "MILITARY"],
         mandatory: ["Blast Door", "Decontamination"],
-        allowed: [
-            "Armory", "Barracks", "Comms Room", "Firing Range", "Generator", "Med Bay",
-            "Mess Hall", "Officer Quarters", "Storage", "War Room"
-        ],
-        unique: ["Command Center", "Missile Silo", "Power Armor Station"]
+        allowed: ["Barracks", "Mess Hall", "Armory", "Comms Room", "Generator", "Storage", "Officer Quarters", "War Room", "Firing Range", "Med Bay"],
+        unique: ["Missile Silo", "Command Center", "Power Armor Station"]
     },
     SEWER: {
-        keywords: ["DRAIN", "METRO", "SEWER", "SUBWAY", "TUNNEL"],
-        mandatory: ["Drainage Pipe", "Maintenance Access"],
-        allowed: ["Catwalk", "Collapsed Section", "Pump Room", "Raider Camp", "Rat Nest", "Sludge Pit", "Sluice Gate", "Worker Tunnel"],
+        keywords: ["SEWER", "DRAIN", "TUNNEL", "METRO", "SUBWAY"],
+        mandatory: ["Maintenance Access", "Drainage Pipe"],
+        allowed: ["Sluice Gate", "Pump Room", "Worker Tunnel", "Collapsed Section", "Rat Nest", "Raider Camp", "Sludge Pit", "Catwalk"],
         unique: ["Ghoulish Shrine", "Lost Engineering Deck", "Mutant Lair"]
     },
     CULT: {
-        keywords: ["ALTAR", "CATHEDRAL", "CHURCH", "SHRINE", "TEMPLE"],
-        mandatory: ["Altar", "Nave"],
-        allowed: ["Bell Tower", "Confessional", "Crypt", "Dormitory", "Graveyard", "Pews", "Ritual Chamber", "Sacristy"],
-        unique: ["High Priest's Chamber", "Reliquary", "Sacrificial Pit"]
+        keywords: ["CHURCH", "CATHEDRAL", "SHRINE", "TEMPLE", "ALTAR"],
+        mandatory: ["Nave", "Altar"],
+        allowed: ["Pews", "Confessional", "Crypt", "Bell Tower", "Sacristy", "Graveyard", "Ritual Chamber", "Dormitory"],
+        unique: ["Reliquary", "High Priest's Chamber", "Sacrificial Pit"]
+    },
+    VAULT: {	
+        keywords: ["VAULT", "SHELTER"],	
+        mandatory: ["Entrance Airlock", "Overseer's Office"],	
+        allowed: ["Atrium (Hub)", "Cafeteria", "Kitchen", "Clinic", "Quarters", "Classroom", "Water Purification", "Reactor Core", "Storage Closet", "Security Station", "Gym", "Hydroponics Jungle", "VR Pods"],	
+        unique: ["Entrance Airlock", "Overseer's Office", "Reactor Core", "Mainframe/ZAX Room", "Secret Experiment Lab"]	
     },
     INSTITUTIONAL: {
-        keywords: ["ACADEMY", "ADMIN", "COLLEGE", "COURT", "HALL", "LIBRARY", "POST", "SCHOOL", "UNIVERSITY"],
-        mandatory: ["Admin Office", "Main Hall"],
-        allowed: [
-            "Auditorium", "Boiler Room", "Cafeteria", "Classroom", "Faculty Lounge", "Gymnasium",
-            "Janitor Closet", "Library Archives", "Locker Room", "Restroom", "Storage"
-        ],
-        unique: ["Broadcast PA Room", "Dean's Study", "Evidence Vault", "Principal's Office", "Rare Book Wing"]
+        keywords: ["SCHOOL", "ACADEMY", "LIBRARY", "UNIVERSITY", "COLLEGE", "COURT", "POST", "ADMIN", "HALL"],
+        mandatory: ["Main Hall", "Admin Office"],
+        allowed: ["Classroom", "Auditorium", "Cafeteria", "Library Archives", "Restroom", "Janitor Closet", "Boiler Room", "Storage", "Gymnasium", "Locker Room", "Faculty Lounge"],
+        unique: ["Principal's Office", "Dean's Study", "Evidence Vault", "Rare Book Wing", "Broadcast PA Room"]
     },
-    GENERIC: {
-        keywords: [],
-        mandatory: ["Entrance"],
-        allowed: ["Hallway", "Restroom", "Room", "Storage", "Utility"],
-        unique: []
-    }
+        GENERIC: { keywords: [], mandatory: ["Entrance"], allowed: ["Room", "Hallway", "Storage", "Utility", "Restroom"], unique: [] }
 };
 
 // REFACTORED: Added Hallway to prevent logic chains breaking
 const ROOM_RELATIONS = {
-
     // --- CAVE & NATURAL ---
     "Cave Entrance": { tags: ["Nature", "Transition"], link: ["Damp Cavern", "Narrow Tunnel", "Bear Den"], avoid: ["Office", "Clean"] },
     "Damp Cavern": { tags: ["Nature"], link: ["Underground Lake", "Glowing Mushroom Grove", "Narrow Tunnel", "Bat Roost"], avoid: ["Clean", "Tech"] },
@@ -360,26 +319,7 @@ const ROOM_RELATIONS = {
     "Glowing Mushroom Grove": { tags: ["Nature", "Light"], link: ["Damp Cavern", "Toxic Pit"], avoid: [] },
     "Bear Den": { tags: ["Nature", "Danger"], link: ["Narrow Tunnel", "Bone Pile"], avoid: ["Civilized"] },
     "Queen's Nest": { tags: ["Nature", "Boss"], link: ["Narrow Tunnel"], avoid: ["Safe"] },
-    "Underground River": { tags: ["Water", "Nature"], link: ["Flooded Cavern", "Damp Cavern"], avoid: ["Fire", "Dry"] },
-    "Cazador Nest": { tags: ["Nature", "Danger"], link: ["Cliff Edge", "Bone Pile"], avoid: ["Civilized", "Water"] },
-    "Sulfur Vent": { tags: ["Hazard", "Nature"], link: ["Geyser", "Magma Rift"], avoid: ["Ice", "Living"] },
-    "Tribal Burial Ground": { tags: ["Spiritual", "Quiet"], link: ["Painted Cavern", "Narrow Tunnel"], avoid: ["Tech", "Loud"] },
-    "Gecko Hatchery": { tags: ["Nature", "Danger"], link: ["Radioactive Pool", "Damp Cavern"], avoid: ["Clean"] },
-    "Radscorpion Burrow": { tags: ["Nature", "Hazard"], link: [], avoid: ["Civilized", "Tech"] },
-    "Gecko Hunting Grounds": { tags: ["Nature", "Exterior"], link: [], avoid: ["Interior"] },
-    "Coyote Den": { tags: ["Nature", "Small"], link: [], avoid: ["Tech"] },
-    "Sulfur Pits": { tags: ["Nature", "Hazard"], link: [], avoid: ["Living"] },
-
-    // --- VAULT ---
-    "Overseer's Office": { tags: ["Command", "Clean"], link: [], avoid: ["Dirty"] },
-    "Atrium": { tags: ["Hub", "Clean"], link: [], avoid: [] },
-    "Hydroponics Bay": { tags: ["Life", "Humid"], link: ["Cafeteria", "Water Purification"], avoid: ["Reactor Core", "Armory"] },
-    "Overseer's Tunnel": { tags: ["Secret", "Transition"], link: ["Overseer's Office", "Escape Hatch"], avoid: ["Public", "Atrium"] },
-    "Cryo-Stasis Array": { tags: ["Cold", "Tech"], link: ["Med Bay", "Reactor Core"], avoid: ["Kitchen", "Gym"] },
-    "G.O.A.T. Classroom": { tags: ["Social", "Clean"], link: ["Atrium", "Cafeteria"], avoid: ["Reactor", "Maintenance"] },
-    "ZAX Mainframe": { tags: ["Tech", "Boss"], link: ["Server Room", "Reactor Core"], avoid: ["Living", "Water"] },
-    "Gear Storage": { tags: ["Storage", "Dirty"], link: ["Entrance Airlock", "Maintenance"], avoid: ["Luxury", "Overseer"] },
-
+    
     // --- BUNKER & MILITARY ---
     "Blast Door": { tags: ["Military", "Secure"], link: ["Decontamination", "Security Station"], avoid: ["Nature"] },
     "Barracks": { tags: ["Military", "Living"], link: ["Mess Hall", "Locker Room", "Showers"], avoid: ["Public"] },
@@ -391,47 +331,47 @@ const ROOM_RELATIONS = {
     "Casino Floor": { tags: ["Loud", "Grand"], link: ["Bar", "High Roller Room", "Vault", "Cashier Cage"], avoid: ["Kitchen", "Bedroom"] },
     "Kitchen": { tags: ["Service", "Loud"], link: ["Cafeteria", "Dining Hall", "Cold Storage", "Pantry"], avoid: ["Bedroom", "Toilet", "Morgue", "Office"] },
     "Morgue": { tags: ["Cold", "Dirty", "Creepy"], link: ["Clinic", "Crematorium", "Autopsy Room"], avoid: ["Kitchen", "Cafeteria", "Nursery"] },
-    "High Roller Suite": { tags: ["Luxury", "Grand"], link: ["Private Bar", "Elevator"], avoid: ["Kitchen", "Maintenance"] },
-
-    // --- CITY RUINS ---
-    "Collapsed Subway Station": { tags: ["Transport", "Ruined"], link: ["Maintenance Tunnel", "Sewer Access"], avoid: ["Penthouse", "Skybridge"] },
-    "Rooftop Sniper Nest": { tags: ["Combat", "High"], link: ["Stairwell", "Fire Escape"], avoid: ["Basement", "Sewer"] },
-    "Chem Lab": { tags: ["Crime", "Tech"], link: ["Gang Hideout", "Storage"], avoid: ["Police", "Public"] },
-    "Makeshift Barricade": { tags: ["Combat", "Transition"], link: ["Street", "Alley"], avoid: ["Clean"] },
-    "Radio Station": { tags: ["Tech", "High"], link: ["Broadcast Tower", "Office"], avoid: ["Sewer", "Cave"] },
-    "Sniper Nest": { tags: ["Combat", "High"], link: [], avoid: ["Basement"] },
-    "Bombed-Out Apartment": { tags: ["Residential", "Ruined"], link: [], avoid: ["Clean"] },
-    "Makeshift Clinic": { tags: ["Medical", "Scrappy"], link: [], avoid: ["Grand"] },
-    "Raider Fighting Pit": { tags: ["Violent", "Social"], link: [], avoid: ["Quiet"] },
-    "Collapsed Subway": { tags: ["Transport", "Ruined"], link: [], avoid: ["High"] },
-    "Nuka-Cola Billboard": { tags: ["Exterior", "High"], link: [], avoid: ["Interior"] },
-    "Super Mutant Stronghold": { tags: ["Hostile", "Gore"], link: [], avoid: ["Clean"] },
-    "Slave Pen": { tags: ["Hostile", "Prison"], link: [], avoid: ["Luxury"] },
-
-    // --- OFFICES & INTERIORS ---
+    
+    // --- OFFICES ---
     "Cubicle Farm": { tags: ["Office", "Boring"], link: ["Conference Room", "Break Room", "Manager's Office"], avoid: ["Industrial", "Nature"] },
     "Executive Suite": { tags: ["Office", "Luxury"], link: ["Conference Room", "Private Bath"], avoid: ["Cubicle Farm", "Janitor Closet"] },
     "Server Room": { tags: ["Tech", "Cold"], link: ["IT Office", "Cooling System"], avoid: ["Water"] },
-    "Prosthetics Lab": { tags: ["Medical", "Tech"], link: ["Operating Theater", "Storage"], avoid: ["Kitchen"] },
-    "Interrogation Cell": { tags: ["Police", "Secure"], link: ["Holding Cells", "Observation Room"], avoid: ["Lobby", "Public"] },
-    "Fusion Core Assembly": { tags: ["Industrial", "Tech"], link: ["Generator Room", "Conveyor Maze"], avoid: ["Living"] },
 
     // --- SEWER ---
     "Drainage Pipe": { tags: ["Sewer", "Dirty"], link: ["Sluice Gate", "Rat Nest"], avoid: ["Clean"] },
     "Rat Nest": { tags: ["Nature", "Dirty"], link: ["Drainage Pipe"], avoid: ["Tech"] },
     "Mutant Lair": { tags: ["Danger", "Dirty"], link: ["Sludge Pit", "Collapsed Section"], avoid: ["Clean"] },
 
-    // --- WASTELAND ---
-    "Hermit's Shack": { tags: ["Civilized", "Small"], link: [], avoid: ["Grand"] },
-    "Crashed Vertibird": { tags: ["Wreckage", "Tech"], link: [], avoid: ["Clean"] },
-    "Tribal Altar": { tags: ["Tribal", "Decorated"], link: [], avoid: ["High Tech"] },
-    "Prospector Camp": { tags: ["Civilized", "Temporary"], link: [], avoid: [] },
-
-    // --- GENERIC CONNECTORS ---
+    // --- GENERIC LINKS ---
     "Hallway": { tags: ["Connector"], link: [], avoid: [] },
     "Corridor": { tags: ["Connector"], link: [], avoid: [] },
-    "Stairs": { tags: ["Connector", "Vertical"], link: [], avoid: [] },
-    "Maintenance Tunnel": { tags: ["Connector", "Dirty"], link: [], avoid: ["Luxury"] }
+    "Stairs": { tags: ["Connector", "Vertical"], link: [], avoid: [] }
+};
+
+const ROOM_LOGIC = {
+    // CAVE / MOJAVE
+    "Radscorpion Burrow": { tags: ["Nature", "Hazard"], avoid: ["Civilized", "Tech"] },
+    "Gecko Hunting Grounds": { tags: ["Nature", "Exterior"], avoid: ["Interior"] },
+    "Coyote Den": { tags: ["Nature", "Small"], avoid: ["Tech"] },
+    "Sulfur Pits": { tags: ["Nature", "Hazard"], avoid: ["Living"] },
+    "Hermit's Shack": { tags: ["Civilized", "Small"], avoid: ["Grand"] },
+    "Crashed Vertibird": { tags: ["Wreckage", "Tech"], avoid: ["Clean"] },
+    "Tribal Altar": { tags: ["Tribal", "Decorated"], avoid: ["High Tech"] },
+    "Prospector Camp": { tags: ["Civilized", "Temporary"], avoid: [] },
+
+    // RUINS / CITY
+    "Sniper Nest": { tags: ["Combat", "High"], avoid: ["Basement"] },
+    "Bombed-Out Apartment": { tags: ["Residential", "Ruined"], avoid: ["Clean"] },
+    "Makeshift Clinic": { tags: ["Medical", "Scrappy"], avoid: ["Grand"] },
+    "Raider Fighting Pit": { tags: ["Violent", "Social"], avoid: ["Quiet"] },
+    "Collapsed Subway": { tags: ["Transport", "Ruined"], avoid: ["High"] },
+    "Nuka-Cola Billboard": { tags: ["Exterior", "High"], avoid: ["Interior"] },
+    "Super Mutant Stronghold": { tags: ["Hostile", "Gore"], avoid: ["Clean"] },
+    "Slave Pen": { tags: ["Hostile", "Prison"], avoid: ["Luxury"] },
+
+    // VAULT
+    "Overseer's Office": { tags: ["Command", "Clean"], avoid: ["Dirty"] },
+    "Atrium": { tags: ["Hub", "Clean"], avoid: [] }
 };
 
 const NON_ENTERABLE = [ "Street", "Crater", "Park", "Alley", "Overpass", "Catwalk", "Ramp", "Pass", "Riverbed", "Tar Pit", "Shore", "Drive-In", "Scrapyard", "Bridge", "Wind Farm", "Solar Array", "Picnic", "Golf", "Ski", "Crash", "Wreck" ];
@@ -1370,6 +1310,169 @@ mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
     if (!hovering) { tooltip.style.display = 'none'; screenContainer.classList.remove('crosshair'); }
 }
 
+// Renamed from handleCanvasClick
+function handleCanvasAction(e) {
+    const data = (viewMode === 'interior') ? interiorData[currentInteriorKey] : floorData[currentLevelIndex];
+    if(!data) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    // Raw canvas coords
+    const rawX = (e.clientX - rect.left) * scaleX;
+    const rawY = (e.clientY - rect.top) * scaleY;
+    
+    // Logical coords for interaction (must be corrected by map offset)
+const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
+const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
+
+    const pannedLogicalX = logicalMouseX - mapOffsetX;
+    const pannedLogicalY = logicalMouseY - mapOffsetY;
+    
+    // Grid coords based on corrected mouse position
+    const gridX = Math.floor(pannedLogicalX / config.gridSize);
+    const gridY = Math.floor(pannedLogicalY / config.gridSize);
+    
+    let clicked = false;
+    const currentTime = Date.now();
+    
+    // 1. CHECK TOKEN DELETE (GM ONLY)
+    if (!isClient) {
+        const isDeleteAttempt = e.altKey || e.ctrlKey || e.metaKey;	
+        if (isDeleteAttempt) {
+            for (let i = 0; i < tokens.length; i++) {
+                let t = tokens[i];
+                // Hit test using the *corrected* mouse position
+                const dx = pannedLogicalX - t.x;
+                const dy = pannedLogicalY - t.y;
+
+                if (dx*dx + dy*dy < 400) {	
+                    log(`UNIT REMOVED: ${t.label}`, '#ef4444');
+                    tokens.splice(i, 1);	
+                    syncData();
+                    return;	
+                }
+            }
+        }
+    }
+
+    // 2. CLIENT RESTRICTION CHECK (Clients can only click visible labels for info)
+    if (isClient) {
+        // Only allow label visibility toggle/info log
+        if (viewMode === 'sector') {
+            for (let lbl of data.labels) {
+                const lx = lbl.x; const ly = lbl.y;
+                if (Math.abs(pannedLogicalX - lx) < 40 && Math.abs(pannedLogicalY - ly) < 15) {
+                    if (!isEnterable(lbl.text)) {
+                        lbl.visible = !lbl.visible;
+                        log(`${lbl.text} LABEL TOGGLED [Visible: ${lbl.visible}]`);
+                        // Client cannot sync data to host, but they can update their local map data
+                        // The GM is the source of truth, so this local change might be overwritten on next sync. 
+                        // Ideally, clients only request map changes from GM, but for local flavor, we allow it.
+                        // NOTE: The current PeerJS setup only supports GM->Client broadcast.
+                        clicked = true;
+                    }
+                }
+            }
+        }
+        return; // Stop client interaction here.
+    }
+
+    // --- GM ONLY ACTIONS BELOW ---
+
+    // FOG REVEAL
+    if (config.fogEnabled && data.rooms) {
+        const room = data.rooms.find(r => gridX >= r.x && gridX < r.x + r.w && gridY >= r.y && gridY < r.y + r.h);
+        if (room && !room.visited) {
+            room.visited = true;
+            log(`SECTOR REVEALED: ${room.name || 'UNKNOWN'}`, 'var(--pip-green)');
+            clicked = true;
+            syncData();	
+            return;
+        }
+    }
+
+    // --- LOOT INTERACTION (GM ONLY) ---
+    if (data.loot) {
+        for(let item of data.loot) {
+            if (item.x === gridX && item.y === gridY) {
+                if (item.looted) {
+                    log(`NOTE: ${item.containerName} is already emptied.`, 'var(--dim-color)');
+                }	
+                else if (item.isLocked) {
+                    const isDoubleClick = lastLootClick.x === gridX && lastLootClick.y === gridY && (currentTime - lastLootClick.time < DOUBLE_CLICK_TIME);
+
+                    if (isDoubleClick) {
+                        // GM Double-Click Override (Success)
+                        item.isLocked = false;
+                        item.looted = true;
+                        log(`ACCESS GRANTED: ${item.containerName} force-unlocked by Overseer.`, 'var(--pip-green)');
+                        logLoot(item.containerName, item.contents);
+                        // Reset click state
+                        lastLootClick = { x: -1, y: -1, time: 0 };	
+                    } else {
+                        // First click on a locked item (Logs Challenge)
+                        log(`ACCESS DENIED: ${item.containerName} is locked. Challenge required. ${item.lockDetail}`, '#ef4444');
+                        lastLootClick = { x: gridX, y: gridY, time: currentTime };
+                    }
+                }	
+                else {
+                    // Unlocked container - loot it
+                    item.looted = true;
+                    logLoot(item.containerName, item.contents);
+                    lastLootClick = { x: -1, y: -1, time: 0 }; // Clear state
+                }
+                
+                clicked = true;
+                syncData(); // Sync looted status immediately
+            }
+        }
+    }
+    // ------------------------------------------
+    
+    // RADIO INTERACTION
+    if (!clicked && data.decorations) {
+         for(let deco of data.decorations) {
+              if (config.fogEnabled && !isLocationRevealed(data, deco.x, deco.y)) continue;
+              if (deco.x === gridX && deco.y === gridY && deco.type === 'radio') {
+                   const tunes = ["'Distant gunfire'", "'Buzzing neon lights'", "'Howling wind'", "'Geiger counter clicking'", "'Dripping water'", "'A Lone Voice'", "'No Signal'"];
+                   log(`RADIO TUNED: 🎵 ${tunes[Math.floor(Math.random()*tunes.length)]}`, 'var(--pip-amber)');
+                   clicked = true;
+              }
+         }
+    }
+
+    // EXIT INTERIOR
+    if (!clicked && viewMode === 'interior' && data.exit && data.exit.x === gridX && data.exit.y === gridY) {
+         exitInterior();	
+         clicked = true;
+         // syncData() called inside exitInterior
+    }
+
+    // ENTER INTERIOR / TOGGLE LABELS
+    if (!clicked && viewMode === 'sector') {
+        for (let lbl of data.labels) {
+            const lx = lbl.x; const ly = lbl.y;
+            // Check panned logical mouse against un-panned label position
+            if (Math.abs(pannedLogicalX - lx) < 40 && Math.abs(pannedLogicalY - ly) < 15) {
+                if (isEnterable(lbl.text)) {
+                    enterInterior(lbl);
+                    clicked = true;
+                    // syncData() called inside enterInterior
+                }
+                else {
+                    // Toggle non-enterable labels like STREET or STAIRS
+                    lbl.visible = !lbl.visible;
+                    log(`${lbl.text} LABEL TOGGLED [Visible: ${lbl.visible}]`);
+                    syncData(); // Sync label visibility
+                }
+                clicked = true;
+            }
+        }
+    }
+}
+
+// --- END NEW MOUSE HANDLER IMPLEMENTATION ---
 
 function isLocationRevealed(data, x, y) {
     if (!data.rooms) return true;
@@ -2429,39 +2532,33 @@ const ITEM_DATABASE = {
 
 // --- MISSING NAMES DEFINITION ADDED HERE ---
 const NAMES = {
-    ruins_street: [
-        "Casino Lobby", "Transit Hub", "Ruined Bodega", "Barricaded Street",
-        "Sniper Nest", "Crater Edge", "Gang Hideout", "Corporate Bullpen",
-        "Hospital ER", "Bank Vault", "Movie Theater", "Police Precinct",
-        "Public Park", "Dead End Alley", "Highway Overpass", "Penthouse",
-        "Speakeasy", "Fire Station", "Power Substation", "Catwalk",
+    ruins_street: [	
+        "Casino Lobby", "Transit Hub", "Ruined Bodega", "Barricaded Street",	
+        "Sniper Nest", "Crater Edge", "Gang Hideout", "Corporate Bullpen",	
+        "Hospital ER", "Bank Vault", "Movie Theater", "Police Precinct",	
+        "Public Park", "Dead End Alley", "Highway Overpass", "Penthouse",	
+        "Speakeasy", "Fire Station", "Power Substation", "Catwalk",	
         "Pawn Shop", "Chem Den", "Radio Tower", "Hotel Ballroom",
-        "Bombed-Out Apartment", "Makeshift Clinic", "Raider Fighting Pit", "Collapsed Subway",
-        "Nuka-Cola Billboard", "Super Mutant Stronghold", "Slave Pen", "Slaver Auction Block",
-        "Ruined Library", "Collapsed Skyscraper", "Ghoulish Church", "Retro Diner",
-        "Comic Book Store", "Hardware Store", "Car Dealership", "Red Rocket Station"
+        "Bombed-Out Apartment", "Makeshift Clinic", "Raider Fighting Pit",
+        "Collapsed Subway", "Nuka-Cola Billboard", "Super Mutant Stronghold", "Slave Pen"
     ],
-    cave_surface: [
-        "Radscorpion Burrow", "Raider Camp", "Red Rocket", "Farmhouse",
-        "Relay Tower", "Cave Entrance", "Canyon Pass", "Factory Ruin",
-        "Train Wreck", "Campsite", "Mine Entrance", "Tar Pit",
-        "Checkpoint", "Drive-In Theater", "Scrapyard", "Crashed B-29",
-        "Satellite Array", "Hunting Lodge", "Cliff Edge", "Rope Bridge",
-        "Dried Riverbed", "Tribal Village", "Brahmin Pen", "Wind Farm",
-        "Solar Array", "Ranger Outpost", "Vertibird Crash", "Nuka-Cola Truck Wreck",
+    cave_surface: [	
+        "Radscorpion Burrow", "Raider Camp", "Red Rocket", "Farmhouse",	
+        "Relay Tower", "Cave Entrance", "Canyon Pass", "Factory Ruin",	
+        "Train Wreck", "Campsite", "Mine Entrance", "Tar Pit", "Checkpoint",	
+        "Drive-In Theater", "Scrapyard", "Crashed B-29", "Satellite Array",	
+        "Hunting Lodge", "Cliff Edge", "Rope Bridge", "Dried Riverbed",	
+        "Tribal Village", "Brahmin Pen", "Wind Farm", "Solar Array",	
+        "Ranger Outpost", "Vertibird Crash", "Nuka-Cola Truck Wreck",	
         "Mysterious Cave", "Gecko Hunting Grounds", "Coyote Den", "Sulfur Pits",
-        "Hermit's Shack", "Tribal Altar", "Prospector Camp", "Cazador Nest",
-        "Bighorner Grazing Spot", "Abandoned Mine Shack", "Powder Ganger Camp", "Old Nuclear Test Site",
-        "Sunset Sarsaparilla Truck"
+        "Hermit's Shack", "Tribal Altar", "Prospector Camp"
     ],
-    cave_underground: [
-        "Cave Den", "Mine Shaft", "Underground Spring", "Collapsed Tunnel",
-        "Fissure Wall", "Mushroom Grotto", "Sump Chamber", "Burial Site",
-        "Supply Cache", "Flooded Cavern", "Glowing Grove", "Ant Nest",
+    cave_underground: [	
+        "Cave Den", "Mine Shaft", "Underground Spring", "Collapsed Tunnel",	
+        "Fissure Wall", "Mushroom Grotto", "Sump Chamber", "Burial Site",	
+        "Supply Cache", "Flooded Cavern", "Glowing Grove", "Ant Nest",	
         "Mole Rat Tunnels", "Underground Lake", "Crystal Formation", "Bat Roost",
-        "Subterranean River", "Legendary Creature Den", "Queen's Nest", "Geyser Vent",
-        "Magma Rift", "Pre-War Bunker Entrance", "Lost Vault Door", "Tribal Painting Chamber",
-        "Bear Hibernation Spot", "Nightstalker Den"
+        "Subterranean River", "Legendary Creature Den", "Queen's Nest"
     ]
 };
 // ---------------------------------------------
@@ -2628,16 +2725,6 @@ function drawSprite(ctx, type, x, y, size, time) {
     const cy = y + size/2;
 
     // ============================================
-    // SEEDED RANDOM HELPER (PREVENTS WIGGLING)
-    // ============================================
-    // Creates deterministic "random" values based on position
-    const seededRandom = (seedX, seedY, salt = 0) => {
-        const seed = seedX * 73856093 + seedY * 19349663 + salt * 83492791;
-        const x_val = Math.sin(seed) * 10000;
-        return x_val - Math.floor(x_val);
-    };
-
-    // ============================================
     // UNIVERSAL VOLUMETRIC SHADOW SYSTEM
     // ============================================
     const shadowG = ctx.createRadialGradient(cx + 3, cy + size*0.45, 0, cx + 3, cy + size*0.45, size*0.4);
@@ -2669,7 +2756,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#171f2a';
         ctx.fillRect(x + size*0.25, y + size*0.25, size*0.5, size*0.6);
 
-        // Corner Rivets with Highlights (FIXED - seeded)
+        // Corner Rivets with Highlights
         ctx.fillStyle = '#718096';
         [[0.22, 0.22], [0.76, 0.22], [0.22, 0.88], [0.76, 0.88]].forEach(([rx, ry]) => {
             ctx.beginPath();
@@ -2734,17 +2821,13 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = gripGrad;
         ctx.fillRect(x + size*0.88, cy - size*0.15, size*0.08, size*0.1);
 
-        // Wear and Scratches (FIXED - seeded)
+        // Wear and Scratches
         ctx.strokeStyle = 'rgba(160, 174, 192, 0.3)';
         ctx.lineWidth = 0.5;
         for(let i = 0; i < 6; i++) {
             ctx.beginPath();
-            const sx1 = x + size*0.25 + seededRandom(x, y, i*10)*size*0.4;
-            const sy1 = y + size*0.3 + seededRandom(x, y, i*10+1)*size*0.5;
-            const sx2 = x + size*0.3 + seededRandom(x, y, i*10+2)*size*0.35;
-            const sy2 = y + size*0.35 + seededRandom(x, y, i*10+3)*size*0.45;
-            ctx.moveTo(sx1, sy1);
-            ctx.lineTo(sx2, sy2);
+            ctx.moveTo(x + size*0.25 + Math.random()*size*0.4, y + size*0.3 + Math.random()*size*0.5);
+            ctx.lineTo(x + size*0.3 + Math.random()*size*0.35, y + size*0.35 + Math.random()*size*0.45);
             ctx.stroke();
         }
     }
@@ -2772,20 +2855,20 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#0f172a';
         for(let i = 0; i < 8; i++) {
             ctx.fillRect(x + size*0.3, y + size*0.08 + i*3.5, size*0.4, 2);
+            // Highlight underneath
             ctx.fillStyle = '#64748b';
             ctx.fillRect(x + size*0.3, y + size*0.08 + i*3.5 + 2, size*0.4, 0.5);
             ctx.fillStyle = '#0f172a';
         }
 
-        // ID Number Plate (FIXED - seeded)
+        // ID Number Plate
         ctx.fillStyle = '#fbbf24';
         ctx.fillRect(cx - size*0.12, y + size*0.35, size*0.24, size*0.08);
         ctx.fillStyle = '#0f172a';
         ctx.font = `bold ${size*0.06}px monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const lockerNum = Math.floor(seededRandom(x, y, 999) * 99);
-        ctx.fillText('A-' + lockerNum, cx, y + size*0.39);
+        ctx.fillText('A-' + Math.floor(Math.random()*99), cx, y + size*0.39);
 
         // Handle with Latch Mechanism
         ctx.strokeStyle = '#94a3b8';
@@ -2809,25 +2892,19 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Dents and Battle Damage (FIXED - seeded)
+        // Dents and Battle Damage
         ctx.fillStyle = 'rgba(30, 41, 59, 0.5)';
         for(let i = 0; i < 4; i++) {
             ctx.beginPath();
-            const dx = x + size*0.3 + seededRandom(x, y, i*20)*size*0.4;
-            const dy = y + size*0.15 + seededRandom(x, y, i*20+1)*size*0.7;
-            const dr = 3 + seededRandom(x, y, i*20+2)*2;
-            ctx.arc(dx, dy, dr, 0, Math.PI*2);
+            ctx.arc(x + size*0.3 + Math.random()*size*0.4, y + size*0.15 + Math.random()*size*0.7, 3 + Math.random()*2, 0, Math.PI*2);
             ctx.fill();
         }
 
-        // Rust Accumulation (FIXED - seeded)
+        // Rust Accumulation
         ctx.fillStyle = 'rgba(139, 69, 19, 0.4)';
         for(let i = 0; i < 3; i++) {
             ctx.beginPath();
-            const rx = x + size*0.26 + seededRandom(x, y, i*30)*size*0.48;
-            const ry = y + size*0.1 + seededRandom(x, y, i*30+1)*size*0.8;
-            const rr = 2 + seededRandom(x, y, i*30+2)*3;
-            ctx.arc(rx, ry, rr, 0, Math.PI*2);
+            ctx.arc(x + size*0.26 + Math.random()*size*0.48, y + size*0.1 + Math.random()*size*0.8, 2 + Math.random()*3, 0, Math.PI*2);
             ctx.fill();
         }
     }
@@ -2848,16 +2925,14 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = isAmmo ? '#a16207' : '#166534';
         ctx.fillRect(x + 4, y + size*0.1, size - 8, size*0.3);
 
-        // Realistic Wood Grain Detail (FIXED - seeded)
+        // Realistic Wood Grain Detail
         ctx.strokeStyle = isAmmo ? 'rgba(69, 26, 3, 0.4)' : 'rgba(5, 46, 22, 0.4)';
         ctx.lineWidth = 1;
         for(let i = 0; i < 5; i++) {
             const yPos = y + size*0.45 + i*((size*0.4)/5);
-            const offset1 = seededRandom(x, y, i*40)*2 - 1;
-            const offset2 = seededRandom(x, y, i*40+1)*2 - 1;
             ctx.beginPath();
             ctx.moveTo(x + 4, yPos);
-            ctx.bezierCurveTo(x + size*0.3, yPos + offset1, x + size*0.7, yPos + offset2, x + size - 4, yPos);
+            ctx.bezierCurveTo(x + size*0.3, yPos + Math.random()*2 - 1, x + size*0.7, yPos + Math.random()*2 - 1, x + size - 4, yPos);
             ctx.stroke();
         }
 
@@ -2865,8 +2940,10 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#374151';
         [[x + 4, y + size*0.4], [x + size - 10, y + size*0.4],
          [x + 4, y + size*0.85], [x + size - 10, y + size*0.85]].forEach(([cx, cy]) => {
+            // L-bracket shape
             ctx.fillRect(cx, cy, 6, 12);
             ctx.fillRect(cx, cy, 12, 6);
+            // Rivet detail
             ctx.fillStyle = '#1f2937';
             ctx.beginPath();
             ctx.arc(cx + 3, cy + 3, 1.5, 0, Math.PI*2);
@@ -2880,6 +2957,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillRect(x + 4, y + size*0.65, size - 8, 3);
         ctx.fillRect(x + 4, y + size*0.87, size - 8, 3);
 
+        // Band Highlights for Depth
         ctx.fillStyle = '#6b7280';
         ctx.fillRect(x + 4, y + size*0.4, size - 8, 1);
         ctx.fillRect(x + 4, y + size*0.65, size - 8, 1);
@@ -2902,17 +2980,13 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.fillText('⚠ EXPLOSIVE ⚠', cx, y + size*0.61);
         }
 
-        // Battle Damage and Weathering (FIXED - seeded)
+        // Battle Damage and Weathering
         ctx.strokeStyle = 'rgba(0,0,0,0.3)';
         ctx.lineWidth = 1.5;
         for(let i = 0; i < 3; i++) {
             ctx.beginPath();
-            const d1x = x + 6 + seededRandom(x, y, i*50)*(size-12);
-            const d1y = y + size*0.5 + seededRandom(x, y, i*50+1)*size*0.3;
-            const d2x = x + 10 + seededRandom(x, y, i*50+2)*(size-20);
-            const d2y = y + size*0.55 + seededRandom(x, y, i*50+3)*size*0.25;
-            ctx.moveTo(d1x, d1y);
-            ctx.lineTo(d2x, d2y);
+            ctx.moveTo(x + 6 + Math.random()*(size-12), y + size*0.5 + Math.random()*size*0.3);
+            ctx.lineTo(x + 10 + Math.random()*(size-20), y + size*0.55 + Math.random()*size*0.25);
             ctx.stroke();
         }
     }
@@ -2926,6 +3000,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = bodyGrad;
         ctx.fillRect(x + size*0.2, y + size*0.4, size*0.6, size*0.45);
 
+        // Lid/Top Tray
         const lidGrad = ctx.createLinearGradient(x + size*0.2, y + size*0.25, x + size*0.8, y + size*0.4);
         lidGrad.addColorStop(0, '#ef4444');
         lidGrad.addColorStop(0.5, '#dc2626');
@@ -2933,6 +3008,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = lidGrad;
         ctx.fillRect(x + size*0.2, y + size*0.25, size*0.6, size*0.15);
 
+        // Edge Highlights
         ctx.strokeStyle = '#fca5a5';
         ctx.lineWidth = 1;
         ctx.strokeRect(x + size*0.2, y + size*0.25, size*0.6, size*0.15);
@@ -2973,34 +3049,33 @@ function drawSprite(ctx, type, x, y, size, time) {
         // Tool Silhouettes in Top Tray
         ctx.strokeStyle = '#7f1d1d';
         ctx.lineWidth = 2;
+        // Wrench
         ctx.beginPath();
         ctx.moveTo(x + size*0.28, y + size*0.3);
         ctx.lineTo(x + size*0.35, y + size*0.35);
         ctx.stroke();
+        // Screwdriver
         ctx.beginPath();
         ctx.moveTo(x + size*0.4, y + size*0.3);
         ctx.lineTo(x + size*0.42, y + size*0.36);
         ctx.stroke();
+        // Pliers
         ctx.beginPath();
         ctx.moveTo(x + size*0.6, y + size*0.3);
         ctx.lineTo(x + size*0.65, y + size*0.35);
         ctx.stroke();
 
-        // Scuffs and Scratches from Use (FIXED - seeded)
+        // Scuffs and Scratches from Use
         ctx.strokeStyle = 'rgba(252, 165, 165, 0.3)';
         ctx.lineWidth = 1;
         for(let i = 0; i < 8; i++) {
             ctx.beginPath();
-            const s1x = x + size*0.22 + seededRandom(x, y, i*60)*size*0.56;
-            const s1y = y + size*0.45 + seededRandom(x, y, i*60+1)*size*0.35;
-            const s2x = x + size*0.24 + seededRandom(x, y, i*60+2)*size*0.5;
-            const s2y = y + size*0.48 + seededRandom(x, y, i*60+3)*size*0.3;
-            ctx.moveTo(s1x, s1y);
-            ctx.lineTo(s2x, s2y);
+            ctx.moveTo(x + size*0.22 + Math.random()*size*0.56, y + size*0.45 + Math.random()*size*0.35);
+            ctx.lineTo(x + size*0.24 + Math.random()*size*0.5, y + size*0.48 + Math.random()*size*0.3);
             ctx.stroke();
         }
 
-        // Brand Decal
+        // Brand Decal (worn)
         ctx.fillStyle = 'rgba(254, 252, 232, 0.6)';
         ctx.font = `bold ${size*0.06}px sans-serif`;
         ctx.textAlign = 'center';
@@ -3016,15 +3091,19 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = caseGrad;
         ctx.fillRect(x + size*0.2, y + size*0.3, size*0.6, size*0.5);
 
+        // Case Border
         ctx.strokeStyle = '#cbd5e1';
         ctx.lineWidth = 2;
         ctx.strokeRect(x + size*0.2, y + size*0.3, size*0.6, size*0.5);
 
-        // Red Cross
+        // Red Cross - Bold and Prominent
         ctx.fillStyle = '#dc2626';
+        // Horizontal bar
         ctx.fillRect(cx - size*0.2, cy - size*0.05, size*0.4, size*0.1);
+        // Vertical bar
         ctx.fillRect(cx - size*0.05, cy - size*0.2, size*0.1, size*0.4);
 
+        // Cross Depth/Shadow Effect
         ctx.fillStyle = '#991b1b';
         ctx.fillRect(cx - size*0.19, cy - size*0.04, size*0.38, size*0.04);
         ctx.fillRect(cx - size*0.04, cy - size*0.19, size*0.04, size*0.38);
@@ -3037,11 +3116,12 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.arc(cx, y + size*0.3, size*0.12, Math.PI + 0.4, Math.PI*2 - 0.4);
         ctx.stroke();
 
-        // Latch Clips
+        // Latch Clips (both sides)
         ctx.fillStyle = '#94a3b8';
         ctx.fillRect(x + size*0.18, cy - size*0.08, size*0.08, size*0.16);
         ctx.fillRect(x + size*0.74, cy - size*0.08, size*0.08, size*0.16);
 
+        // Clip Details
         ctx.fillStyle = '#475569';
         ctx.fillRect(x + size*0.2, cy - size*0.05, size*0.04, size*0.1);
         ctx.fillRect(x + size*0.76, cy - size*0.05, size*0.04, size*0.1);
@@ -3054,7 +3134,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.font = `${size*0.04}px monospace`;
         ctx.fillText('FIRST AID', cx, y + size*0.93);
 
-        // Biohazard Warning Sticker
+        // Biohazard Warning Sticker (small, corner)
         ctx.fillStyle = '#fbbf24';
         ctx.beginPath();
         ctx.arc(x + size*0.75, y + size*0.75, size*0.06, 0, Math.PI*2);
@@ -3063,14 +3143,11 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.font = `bold ${size*0.05}px sans-serif`;
         ctx.fillText('☣', x + size*0.75, y + size*0.76);
 
-        // Scuffs from Field Use (FIXED - seeded)
+        // Scuffs from Field Use
         ctx.fillStyle = 'rgba(203, 213, 225, 0.7)';
         for(let i = 0; i < 5; i++) {
             ctx.beginPath();
-            const scx = x + size*0.25 + seededRandom(x, y, i*70)*size*0.5;
-            const scy = y + size*0.35 + seededRandom(x, y, i*70+1)*size*0.4;
-            const scr = 1 + seededRandom(x, y, i*70+2)*2;
-            ctx.arc(scx, scy, scr, 0, Math.PI*2);
+            ctx.arc(x + size*0.25 + Math.random()*size*0.5, y + size*0.35 + Math.random()*size*0.4, 1 + Math.random()*2, 0, Math.PI*2);
             ctx.fill();
         }
     }
@@ -3079,6 +3156,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         // Canvas Duffel Bag / Burlap Sack
         const isSack = type === 'sack';
 
+        // Main Bag Body with Fabric Texture
         const fabricGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size*0.4);
         fabricGrad.addColorStop(0, isSack ? '#a16207' : '#57534e');
         fabricGrad.addColorStop(0.6, isSack ? '#78350f' : '#44403c');
@@ -3088,9 +3166,11 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.ellipse(cx, cy + size*0.1, size*0.35, size*0.3, 0, 0, Math.PI*2);
         ctx.fill();
 
+        // Bag Bottom Section
         ctx.fillStyle = isSack ? '#78350f' : '#44403c';
         ctx.fillRect(x + size*0.25, cy, size*0.5, size*0.4);
 
+        // Rounded Bottom
         ctx.beginPath();
         ctx.ellipse(cx, cy + size*0.4, size*0.25, size*0.1, 0, 0, Math.PI*2);
         ctx.fill();
@@ -3113,6 +3193,7 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.arc(cx, cy - size*0.05, size*0.15, Math.PI, 0);
             ctx.stroke();
 
+            // String Knot
             ctx.fillStyle = '#78350f';
             ctx.beginPath();
             ctx.arc(cx, cy - size*0.05, 4, 0, Math.PI*2);
@@ -3148,34 +3229,30 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.arc(cx, cy - size*0.1, size*0.2, 0.2, Math.PI - 0.2);
             ctx.stroke();
 
+            // Strap Buckle
             ctx.fillStyle = '#71717a';
             ctx.fillRect(cx - size*0.18, cy - size*0.18, size*0.08, size*0.06);
         }
 
-        // Fabric Wrinkles and Folds (FIXED - seeded)
+        // Fabric Wrinkles and Folds
         ctx.strokeStyle = isSack ? 'rgba(69, 26, 3, 0.5)' : 'rgba(28, 25, 23, 0.5)';
         ctx.lineWidth = 1;
         for(let i = 0; i < 4; i++) {
             ctx.beginPath();
-            const w1x = x + size*0.3 + seededRandom(x, y, i*80)*size*0.4;
-            const w2x = x + size*0.35 + seededRandom(x, y, i*80+1)*size*0.3;
-            ctx.moveTo(w1x, cy + i*8);
+            ctx.moveTo(x + size*0.3 + Math.random()*size*0.4, cy + i*8);
             ctx.bezierCurveTo(
                 cx - size*0.1, cy + i*8 + 3,
                 cx + size*0.1, cy + i*8 + 3,
-                w2x, cy + i*8 + 6
+                x + size*0.35 + Math.random()*size*0.3, cy + i*8 + 6
             );
             ctx.stroke();
         }
 
-        // Dirt and Grime Stains (FIXED - seeded)
+        // Dirt and Grime Stains
         ctx.fillStyle = isSack ? 'rgba(69, 26, 3, 0.3)' : 'rgba(0,0,0,0.2)';
         for(let i = 0; i < 3; i++) {
             ctx.beginPath();
-            const gx = x + size*0.3 + seededRandom(x, y, i*90)*size*0.4;
-            const gy = cy + size*0.1 + seededRandom(x, y, i*90+1)*size*0.3;
-            const gr = 3 + seededRandom(x, y, i*90+2)*4;
-            ctx.arc(gx, gy, gr, 0, Math.PI*2);
+            ctx.arc(x + size*0.3 + Math.random()*size*0.4, cy + size*0.1 + Math.random()*size*0.3, 3 + Math.random()*4, 0, Math.PI*2);
             ctx.fill();
         }
     }
@@ -3185,11 +3262,13 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#14532d';
         ctx.fillRect(x + size*0.15, y + size*0.35, size*0.7, size*0.5);
 
+        // Metal Reinforcement Bands
         ctx.fillStyle = '#374151';
         ctx.fillRect(x + size*0.15, y + size*0.35, size*0.7, 3);
         ctx.fillRect(x + size*0.15, y + size*0.6, size*0.7, 3);
         ctx.fillRect(x + size*0.15, y + size*0.82, size*0.7, 3);
 
+        // Padlock
         ctx.fillStyle = '#fbbf24';
         ctx.fillRect(cx - 4, cy, 8, 6);
         ctx.fillStyle = '#92400e';
@@ -3201,11 +3280,13 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#64748b';
         ctx.fillRect(x + size*0.25, y + size*0.1, size*0.5, size*0.8);
 
+        // Three Drawer System
         for(let i = 0; i < 3; i++) {
             const dy = y + size*0.15 + i*size*0.25;
             ctx.fillStyle = '#475569';
             ctx.fillRect(x + size*0.25, dy, size*0.5, 2);
 
+            // Drawer Handles
             ctx.fillStyle = '#94a3b8';
             ctx.fillRect(cx - 6, dy + 4, 12, 3);
         }
@@ -3227,6 +3308,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#14532d';
         ctx.fillRect(x + size*0.1, y + size*0.3, size*0.8, size*0.55);
 
+        // Lid (slightly open)
         ctx.fillStyle = '#166534';
         ctx.beginPath();
         ctx.moveTo(x + size*0.1, y + size*0.3);
@@ -3235,6 +3317,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineTo(x + size*0.9, y + size*0.3);
         ctx.fill();
 
+        // Wheels
         ctx.fillStyle = '#000';
         ctx.beginPath();
         ctx.arc(x + size*0.25, y + size*0.88, size*0.08, 0, Math.PI*2);
@@ -3249,12 +3332,15 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#1e293b';
         ctx.fillRect(x + size*0.2, y + size*0.4, size*0.6, size*0.4);
 
+        // Display Screen Housing
         ctx.fillStyle = '#14532d';
         ctx.fillRect(x + size*0.25, y + size*0.25, size*0.5, size*0.2);
 
+        // Green LED Display (active)
         ctx.fillStyle = '#22c55e';
         ctx.fillRect(x + size*0.28, y + size*0.28, size*0.44, size*0.14);
 
+        // Keypad Buttons
         ctx.fillStyle = '#e2e8f0';
         for(let row = 0; row < 2; row++) {
             for(let col = 0; col < 3; col++) {
@@ -3262,24 +3348,28 @@ function drawSprite(ctx, type, x, y, size, time) {
             }
         }
 
+        // Cash Drawer
         ctx.fillStyle = '#475569';
         ctx.fillRect(x + size*0.2, y + size*0.75, size*0.6, size*0.1);
     }
 
     else if (type === 'cooler') {
-        // Portable Cooler
+        // Portable Cooler / Ice Chest
         ctx.fillStyle = '#dc2626';
         ctx.fillRect(x + size*0.15, y + size*0.35, size*0.7, size*0.5);
 
+        // White Lid
         ctx.fillStyle = '#f8fafc';
         ctx.fillRect(x + size*0.15, y + size*0.25, size*0.7, size*0.12);
 
+        // Carrying Handle
         ctx.strokeStyle = '#94a3b8';
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.arc(cx, y + size*0.25, size*0.15, Math.PI, 0);
         ctx.stroke();
 
+        // Front Latch
         ctx.fillStyle = '#fbbf24';
         ctx.fillRect(cx - 4, y + size*0.35, 8, 4);
     }
@@ -3291,9 +3381,11 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.ellipse(cx, cy + size*0.1, size*0.35, size*0.3, 0, 0, Math.PI*2);
         ctx.fill();
 
+        // Brass Clasp
         ctx.fillStyle = '#fbbf24';
         ctx.fillRect(cx - size*0.15, cy - size*0.1, size*0.3, size*0.08);
 
+        // Leather Handle
         ctx.strokeStyle = '#92400e';
         ctx.lineWidth = 3;
         ctx.beginPath();
@@ -3308,10 +3400,12 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.arc(cx, cy - 2, size*0.12, 0, Math.PI*2);
         ctx.fill();
 
+        // Eye sockets
         ctx.fillStyle = '#000';
         ctx.fillRect(cx - 2, cy - 3, 1, 1);
         ctx.fillRect(cx + 1, cy - 3, 1, 1);
 
+        // Ribcage
         ctx.strokeStyle = '#e5e5e5';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -3323,6 +3417,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineTo(cx + 3, cy + 5);
         ctx.stroke();
 
+        // Scattered Bones
         ctx.fillStyle = '#d4d4d4';
         ctx.fillRect(cx + 4, cy + 3, 6, 2);
         ctx.fillRect(cx - 8, cy + 6, 5, 2);
@@ -3335,11 +3430,13 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.ellipse(cx, cy, size*0.4, size*0.3, 0, 0, Math.PI*2);
         ctx.fill();
 
+        // Dark Opening/Shadow
         ctx.fillStyle = '#1c1917';
         ctx.beginPath();
         ctx.ellipse(cx, cy, size*0.2, size*0.15, 0, 0, Math.PI*2);
         ctx.fill();
 
+        // Rock Highlight
         ctx.fillStyle = '#a8a29e';
         ctx.beginPath();
         ctx.ellipse(cx - size*0.15, cy - size*0.1, size*0.1, size*0.08, 0, 0, Math.PI*2);
@@ -3359,11 +3456,12 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = radioGrad;
         ctx.fillRect(x + size*0.2, y + size*0.35, size*0.6, size*0.5);
 
+        // Rounded Bakelite Top
         ctx.beginPath();
         ctx.arc(cx, y + size*0.35, size*0.3, Math.PI, 0);
         ctx.fill();
 
-        // Speaker Grill
+        // Speaker Grill - Fabric Mesh
         ctx.fillStyle = '#1c1917';
         ctx.beginPath();
         ctx.arc(cx - size*0.05, cy + size*0.05, size*0.15, 0, Math.PI*2);
@@ -3421,6 +3519,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineTo(x + size*0.95, y - size*0.15);
         ctx.stroke();
 
+        // Antenna Segments (dashed)
         ctx.strokeStyle = '#64748b';
         ctx.lineWidth = 1;
         ctx.setLineDash([2, 2]);
@@ -3436,6 +3535,7 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.strokeStyle = '#475569';
             ctx.lineWidth = 1;
             ctx.stroke();
+            // Knob position indicator
             ctx.strokeStyle = '#cbd5e1';
             ctx.lineWidth = 1.5;
             ctx.beginPath();
@@ -3463,17 +3563,13 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.textAlign = 'center';
         ctx.fillText('RADIATION KING', cx, y + size*0.25);
 
-        // Age and Wear Scratches (FIXED - seeded)
+        // Age and Wear Scratches
         ctx.strokeStyle = 'rgba(254, 243, 199, 0.2)';
         ctx.lineWidth = 0.5;
         for(let i = 0; i < 10; i++) {
             ctx.beginPath();
-            const r1x = x + size*0.25 + seededRandom(x, y, i*100)*size*0.5;
-            const r1y = y + size*0.4 + seededRandom(x, y, i*100+1)*size*0.4;
-            const r2x = x + size*0.27 + seededRandom(x, y, i*100+2)*size*0.46;
-            const r2y = y + size*0.42 + seededRandom(x, y, i*100+3)*size*0.36;
-            ctx.moveTo(r1x, r1y);
-            ctx.lineTo(r2x, r2y);
+            ctx.moveTo(x + size*0.25 + Math.random()*size*0.5, y + size*0.4 + Math.random()*size*0.4);
+            ctx.lineTo(x + size*0.27 + Math.random()*size*0.46, y + size*0.42 + Math.random()*size*0.36);
             ctx.stroke();
         }
     }
@@ -3488,6 +3584,7 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.fillStyle = barrelGrad;
             ctx.fillRect(x + size*0.25, y + size*0.25, size*0.5, size*0.75);
 
+            // Barrel Rim
             ctx.strokeStyle = '#1e293b';
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -3505,25 +3602,19 @@ function drawSprite(ctx, type, x, y, size, time) {
                 ctx.stroke();
             });
 
-            // Heavy Rust Texture (FIXED - seeded)
+            // Heavy Rust Texture
             ctx.fillStyle = 'rgba(139, 69, 19, 0.6)';
             for(let i = 0; i < 15; i++) {
                 ctx.beginPath();
-                const rustX = x + size*0.3 + seededRandom(x, y, i*110)*size*0.4;
-                const rustY = y + size*0.35 + seededRandom(x, y, i*110+1)*size*0.55;
-                const rustR = 1 + seededRandom(x, y, i*110+2)*3;
-                ctx.arc(rustX, rustY, rustR, 0, Math.PI*2);
+                ctx.arc(x + size*0.3 + Math.random()*size*0.4, y + size*0.35 + Math.random()*size*0.55, 1 + Math.random()*3, 0, Math.PI*2);
                 ctx.fill();
             }
 
-            // Dents and Impact Damage (FIXED - seeded)
+            // Dents and Impact Damage
             ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
             for(let i = 0; i < 5; i++) {
                 ctx.beginPath();
-                const dentX = x + size*0.3 + seededRandom(x, y, i*120)*size*0.4;
-                const dentY = y + size*0.4 + seededRandom(x, y, i*120+1)*size*0.5;
-                const dentR = 2 + seededRandom(x, y, i*120+2)*4;
-                ctx.arc(dentX, dentY, dentR, 0, Math.PI*2);
+                ctx.arc(x + size*0.3 + Math.random()*size*0.4, y + size*0.4 + Math.random()*size*0.5, 2 + Math.random()*4, 0, Math.PI*2);
                 ctx.fill();
             }
 
@@ -3531,16 +3622,16 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.fillStyle = 'rgba(0,0,0,0.8)';
             ctx.fillRect(x + size*0.25, y + size*0.25, size*0.5, size*0.08);
         } else {
-            // Stone Circle Campfire (FIXED - seeded)
+            // Stone Circle Campfire
             ctx.fillStyle = '#78716c';
             for(let i = 0; i < 8; i++) {
                 const angle = (i / 8) * Math.PI * 2;
                 const rx = cx + Math.cos(angle) * size*0.35;
                 const ry = cy + size*0.25 + Math.sin(angle) * size*0.35;
-                const rockSize = size*0.08 + seededRandom(x, y, i*130)*size*0.04;
                 ctx.beginPath();
-                ctx.arc(rx, ry, rockSize, 0, Math.PI*2);
+                ctx.arc(rx, ry, size*0.08 + Math.random()*size*0.04, 0, Math.PI*2);
                 ctx.fill();
+                // Rock highlight
                 ctx.fillStyle = '#a8a29e';
                 ctx.beginPath();
                 ctx.arc(rx - 2, ry - 2, size*0.03, 0, Math.PI*2);
@@ -3553,6 +3644,7 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.fillRect(cx - size*0.2, cy + size*0.15, size*0.4, size*0.08);
             ctx.fillRect(cx - size*0.15, cy + size*0.08, size*0.08, size*0.3);
 
+            // Wood Bark Texture
             ctx.strokeStyle = '#0a0a0a';
             ctx.lineWidth = 1;
             for(let i = 0; i < 3; i++) {
@@ -3563,14 +3655,16 @@ function drawSprite(ctx, type, x, y, size, time) {
             }
         }
 
-        // FIRE ANIMATION
+        // ========================================
+        // DYNAMIC FIRE ANIMATION - ULTRA REALISTIC
+        // ========================================
         const flicker1 = Math.sin(time / 80) * 5;
         const flicker2 = Math.cos(time / 120) * 4;
         const flicker3 = Math.sin(time / 150) * 6;
 
         ctx.globalCompositeOperation = 'lighter';
 
-        // Inner Core - White Hot
+        // Inner Core - White Hot Center
         const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size*0.12 + flicker1);
         coreGrad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
         coreGrad.addColorStop(0.3, 'rgba(255, 240, 180, 0.7)');
@@ -3578,7 +3672,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = coreGrad;
         ctx.fillRect(cx - size*0.2, cy - size*0.2, size*0.4, size*0.4);
 
-        // Mid-Range Flame
+        // Mid-Range Flame - Orange/Yellow
         const midGrad = ctx.createRadialGradient(cx, cy - size*0.1, 0, cx, cy - size*0.1, size*0.25 + flicker2);
         midGrad.addColorStop(0, 'rgba(255, 200, 100, 0.8)');
         midGrad.addColorStop(0.5, 'rgba(234, 88, 12, 0.6)');
@@ -3586,7 +3680,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = midGrad;
         ctx.fillRect(cx - size*0.3, cy - size*0.4, size*0.6, size*0.5);
 
-        // Outer Flame
+        // Outer Flame - Deep Red
         const outerGrad = ctx.createRadialGradient(cx, cy - size*0.15, 0, cx, cy - size*0.15, size*0.35 + flicker3);
         outerGrad.addColorStop(0, 'rgba(234, 88, 12, 0.5)');
         outerGrad.addColorStop(0.6, 'rgba(153, 27, 27, 0.3)');
@@ -3635,6 +3729,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         const trunkW = size*0.12;
         const trunkH = size*0.5;
 
+        // Trunk with bark texture
         ctx.fillStyle = '#3e2723';
         ctx.fillRect(cx - trunkW/2, y + size*0.4, trunkW, trunkH);
 
@@ -3656,6 +3751,7 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.beginPath();
             ctx.arc(bx, by, s, 0, Math.PI*2);
             ctx.fill();
+            // Highlight for depth
             ctx.fillStyle = '#22c55e';
             ctx.fillRect(bx - 2, by - 4, 4, 4);
         };
@@ -3667,13 +3763,16 @@ function drawSprite(ctx, type, x, y, size, time) {
 
     else if (type === 'car') {
         // Rusted Post-War Vehicle Wreck
+        // Car body - rusted red
         ctx.fillStyle = '#7f1d1d';
         ctx.fillRect(x + 4, cy + 2, size - 8, size*0.25);
 
+        // Wheels (burnt rubber)
         ctx.fillStyle = '#0a0a0a';
         ctx.fillRect(x + 8, cy + size*0.2, 8, 6);
         ctx.fillRect(x + size - 16, cy + size*0.2, 8, 6);
 
+        // Hood/roof section
         ctx.fillStyle = '#b91c1c';
         ctx.beginPath();
         ctx.moveTo(x + 8, cy + 2);
@@ -3682,6 +3781,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineTo(x + size - 8, cy + 2);
         ctx.fill();
 
+        // Windshield (shattered/dark)
         ctx.fillStyle = '#1e293b';
         ctx.beginPath();
         ctx.moveTo(x + 10, cy);
@@ -3690,6 +3790,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineTo(x + size - 10, cy);
         ctx.fill();
 
+        // Glass reflection/crack
         ctx.fillStyle = '#fff';
         ctx.globalAlpha = 0.3;
         ctx.beginPath();
@@ -3700,30 +3801,27 @@ function drawSprite(ctx, type, x, y, size, time) {
     }
 
     else if (type === 'rubble') {
-        // Debris Pile (FIXED - seeded positions)
-        const r1Size = 5 + seededRandom(x, y, 140);
-        const r2Size = 6 + seededRandom(x, y, 141);
-
+        // Debris Pile - Concrete and Rocks
         ctx.fillStyle = '#57534e';
         ctx.beginPath();
-        ctx.arc(cx - 4, cy + 4, r1Size, 0, Math.PI*2);
+        ctx.arc(cx - 4, cy + 4, 5, 0, Math.PI*2);
         ctx.fill();
         ctx.fillStyle = '#78716c';
         ctx.beginPath();
-        ctx.arc(cx + 4, cy + 2, r2Size, 0, Math.PI*2);
+        ctx.arc(cx + 4, cy + 2, 6, 0, Math.PI*2);
         ctx.fill();
         ctx.fillStyle = '#44403c';
         ctx.fillRect(cx - 2, cy - 6, 6, 6);
     }
 
     else if (type === 'tumbleweed') {
-        // Desert Tumbleweed (FIXED - seeded branches)
+        // Desert Tumbleweed
         ctx.strokeStyle = '#a8a29e';
         ctx.lineWidth = 1;
         ctx.beginPath();
         for(let i = 0; i < 12; i++) {
-            const angle = seededRandom(x, y, i*150) * Math.PI * 2;
-            const rad = seededRandom(x, y, i*150+1) * size * 0.4;
+            const angle = Math.random() * Math.PI * 2;
+            const rad = Math.random() * size * 0.4;
             ctx.moveTo(cx + Math.cos(angle)*rad, cy + Math.sin(angle)*rad);
             ctx.lineTo(cx + Math.cos(angle + 2)*rad, cy + Math.sin(angle + 2)*rad);
         }
@@ -3734,8 +3832,10 @@ function drawSprite(ctx, type, x, y, size, time) {
         // Metal Bed Frame
         ctx.fillStyle = '#737373';
         ctx.fillRect(x + 4, y + 4, size - 8, size - 8);
+        // Mattress/bedding
         ctx.fillStyle = '#1d4ed8';
         ctx.fillRect(x + 4, y + size*0.4, size - 8, size*0.6 - 4);
+        // Pillow
         ctx.fillStyle = '#fafafa';
         ctx.fillRect(x + 6, y + 6, size - 12, size*0.15);
     }
@@ -3745,6 +3845,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#991b1b';
         ctx.fillRect(x + 4, y - 8, size - 8, size + 4);
 
+        // Side panel highlight
         ctx.fillStyle = '#ef4444';
         ctx.fillRect(x + 4, y - 8, 4, size + 4);
 
@@ -3772,26 +3873,21 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillRect(x + size*0.25, y, size*0.5, size*0.1);
 
         if (!isServer) {
+            // Medical/VR equipment white stripe
             ctx.fillStyle = '#fff';
             ctx.fillRect(x + size*0.25, y + size*0.5, size*0.5, size*0.1);
         } else {
+            // Server screen/panel
             ctx.fillStyle = '#000';
             ctx.fillRect(x + size*0.3, y + size*0.2, size*0.4, size*0.2);
 
-            // Blinking Status LEDs (seeded timing)
-            const ledSeed = Math.floor(x + y);
-            if((time + ledSeed*10) % 200 < 100) {
-                ctx.fillStyle = '#22c55e';
-                ctx.fillRect(x + size*0.35, y + size*0.6, 2, 2);
-            } else {
-                ctx.fillStyle = '#064e3b';
+            // Blinking Status LEDs
+            if(Math.random() > 0.1) {
+                ctx.fillStyle = (Math.sin(time/100 + x) > 0) ? '#22c55e' : '#064e3b';
                 ctx.fillRect(x + size*0.35, y + size*0.6, 2, 2);
             }
-            if((time + ledSeed*15) % 300 < 150) {
-                ctx.fillStyle = '#ef4444';
-                ctx.fillRect(x + size*0.45, y + size*0.6, 2, 2);
-            } else {
-                ctx.fillStyle = '#7f1d1d';
+            if(Math.random() > 0.1) {
+                ctx.fillStyle = (Math.cos(time/150 + y) > 0) ? '#ef4444' : '#7f1d1d';
                 ctx.fillRect(x + size*0.45, y + size*0.6, 2, 2);
             }
         }
@@ -3799,9 +3895,11 @@ function drawSprite(ctx, type, x, y, size, time) {
 
     else if (type === 'wall_terminal' || type === 'wallterminal' || type === 'terminal') {
         // RobCo Industries Computer Terminal
+        // Desk/mount
         ctx.fillStyle = '#4b5563';
         ctx.fillRect(x + 2, y + size/2, size - 4, size/2);
 
+        // Monitor housing
         ctx.fillStyle = '#374151';
         ctx.beginPath();
         ctx.arc(cx, y + size/2, size/3, Math.PI, 0);
@@ -3809,17 +3907,16 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineTo(cx - size/3, y + size/2 + 4);
         ctx.fill();
 
-        // CRT Screen (flickering green code) - seeded flicker
-        const screenSeed = Math.floor(x + y);
-        if ((time + screenSeed*20) % 1000 > 50) {
+        // CRT Screen (flickering green code)
+        if (Math.random() > 0.05) {
             ctx.fillStyle = '#14532d';
             ctx.fill();
 
             ctx.fillStyle = '#4ade80';
             const screenW = size/2;
+            // Simulated text lines
             for(let i = 0; i < 3; i++) {
-                const lineLen = seededRandom(x, y, i*160) * screenW/1.5;
-                ctx.fillRect(cx - screenW/3, (y + size/3) + (i*4), lineLen, 2);
+                ctx.fillRect(cx - screenW/3, (y + size/3) + (i*4), Math.random() * screenW/1.5, 2);
             }
         }
     }
@@ -3831,6 +3928,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.ellipse(cx, y + size*0.5, size*0.4, size*0.2, 0, 0, Math.PI*2);
         ctx.fill();
 
+        // Table leg
         ctx.fillStyle = '#451a03';
         ctx.fillRect(cx - 2, y + size*0.5, 4, size*0.4);
     }
@@ -3875,6 +3973,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.ellipse(cx, cy + size*0.15, size*0.35, size*0.25, 0, 0, Math.PI*2);
         ctx.fill();
 
+        // Zipper line
         ctx.strokeStyle = '#78716c';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -3882,6 +3981,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineTo(cx, cy + size*0.35);
         ctx.stroke();
 
+        // Dark stain
         ctx.fillStyle = 'rgba(127, 29, 29, 0.6)';
         ctx.beginPath();
         ctx.arc(cx + size*0.1, cy + size*0.1, size*0.12, 0, Math.PI*2);
@@ -3891,8 +3991,11 @@ function drawSprite(ctx, type, x, y, size, time) {
     else if (type === 'chair') {
         // Office Chair
         ctx.fillStyle = '#374151';
+        // Seat
         ctx.fillRect(x + size*0.2, y + size*0.4, size*0.6, size*0.15);
+        // Backrest
         ctx.fillRect(x + size*0.25, y + size*0.15, size*0.5, size*0.3);
+        // Leg
         ctx.fillRect(cx - 2, y + size*0.55, 4, size*0.35);
     }
 
@@ -3901,9 +4004,11 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#1e293b';
         ctx.fillRect(x + size*0.2, y + size*0.1, size*0.6, size*0.8);
 
+        // Faded image area
         ctx.fillStyle = '#ef4444';
         ctx.fillRect(x + size*0.25, y + size*0.2, size*0.5, size*0.3);
 
+        // Text block
         ctx.fillStyle = '#fef3c7';
         ctx.fillRect(x + size*0.25, y + size*0.55, size*0.5, size*0.15);
     }
@@ -3913,6 +4018,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#0ea5e9';
         ctx.fillRect(x + size*0.25, y + size*0.2, size*0.5, size*0.7);
 
+        // Rim
         ctx.strokeStyle = '#0c4a6e';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -3920,6 +4026,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineTo(x + size*0.75, y + size*0.2);
         ctx.stroke();
 
+        // Bands
         [0.5, 0.7].forEach(band => {
             ctx.beginPath();
             ctx.moveTo(x + size*0.25, y + size*band);
@@ -3932,11 +4039,14 @@ function drawSprite(ctx, type, x, y, size, time) {
         // Desert Plant/Cactus
         ctx.fillStyle = '#15803d';
 
+        // Main body
         ctx.fillRect(cx - size*0.1, cy, size*0.2, size*0.4);
 
+        // Arms
         ctx.fillRect(cx - size*0.25, cy + size*0.1, size*0.15, size*0.15);
         ctx.fillRect(cx + size*0.1, cy + size*0.15, size*0.15, size*0.15);
 
+        // Spines
         ctx.strokeStyle = '#fef3c7';
         ctx.lineWidth = 1;
         for(let i = 0; i < 8; i++) {
@@ -3954,12 +4064,14 @@ function drawSprite(ctx, type, x, y, size, time) {
 
     else if (type === 'lamp' || type === 'lantern') {
         // Wasteland Lantern
+        // Handle
         ctx.strokeStyle = '#78716c';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(cx, y + size*0.2, size*0.15, Math.PI, 0);
         ctx.stroke();
 
+        // Body
         ctx.fillStyle = '#451a03';
         ctx.fillRect(x + size*0.3, y + size*0.25, size*0.4, size*0.5);
 
@@ -3974,10 +4086,12 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#78350f';
         ctx.fillRect(x + 4, y + size*0.3, size - 8, size*0.25);
 
+        // Legs
         ctx.fillStyle = '#451a03';
         ctx.fillRect(x + 6, y + size*0.55, 4, size*0.35);
         ctx.fillRect(x + size - 10, y + size*0.55, 4, size*0.35);
 
+        // Tools on bench
         ctx.strokeStyle = '#94a3b8';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -3989,10 +4103,13 @@ function drawSprite(ctx, type, x, y, size, time) {
     else if (type === 'pipes' || type === 'vent') {
         // Industrial Pipes/Vent
         ctx.fillStyle = '#64748b';
+        // Horizontal pipe
         ctx.fillRect(x + 4, cy - 3, size - 8, 6);
 
+        // Vertical section
         ctx.fillRect(cx - 3, y + size*0.2, 6, size*0.6);
 
+        // Rivets
         ctx.fillStyle = '#1e293b';
         [0.3, 0.5, 0.7].forEach(pos => {
             ctx.beginPath();
@@ -4006,11 +4123,13 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#78350f';
         ctx.fillRect(x + size*0.2, y + size*0.1, size*0.6, size*0.8);
 
+        // Shelves
         ctx.fillStyle = '#451a03';
         [0.3, 0.5, 0.7].forEach(shelf => {
             ctx.fillRect(x + size*0.2, y + size*shelf, size*0.6, 3);
         });
 
+        // Books
         ctx.fillStyle = '#dc2626';
         ctx.fillRect(x + size*0.25, y + size*0.32, size*0.1, size*0.15);
         ctx.fillStyle = '#1d4ed8';
