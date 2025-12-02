@@ -1163,10 +1163,9 @@ function handleMouseDown(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-
     const logicalMouseX = (e.clientX - rect.left) * scaleX / (RENDER_SCALE * zoomLevel);
     const logicalMouseY = (e.clientY - rect.top) * scaleY / (RENDER_SCALE * zoomLevel);
-
+    
     // Correct the mouse position based on the current pan offset
     const pannedLogicalX = logicalMouseX - mapOffsetX;
     const pannedLogicalY = logicalMouseY - mapOffsetY;
@@ -1176,21 +1175,17 @@ function handleMouseDown(e) {
         const isDeleteAttempt = e.altKey || e.ctrlKey || e.metaKey;
 
         for (let t of tokens) {
-            // Hit test using the corrected mouse position against token's stored map position (t.x, t.y)
+            // Hit test using the *corrected* mouse position against token's stored map position (t.x, t.y)
             const dx = pannedLogicalX - t.x;
             const dy = pannedLogicalY - t.y;
 
             if (dx*dx + dy*dy < 400) { // 20px radius hit check
                 if (isDeleteAttempt) {
                     // Deletion is a single click action, not drag.
-                    tokens = tokens.filter(tok => tok !== t);
-                    log(`UNIT REMOVED: ${t.label}`, "#ef4444");
-                    syncData();
-                    return;
                 } else {
                     draggedToken = t;
-                    screenContainer.classList.remove("crosshair");
-                    screenContainer.classList.add("grabbing");
+                    screenContainer.classList.remove('crosshair');
+                    screenContainer.classList.add('grabbing');
                     // Record start position for click/drag detection later
                     lastPanX = e.clientX;
                     lastPanY = e.clientY;
@@ -1200,11 +1195,11 @@ function handleMouseDown(e) {
         }
     }
 
-    // 2. START PANNING (if no token was hit OR if a delete-click was attempted)
+    // 2. START PANNING if no token was hit OR if a delete-click was attempted
     isPanning = true;
     lastPanX = e.clientX;
     lastPanY = e.clientY;
-    screenContainer.classList.add("grabbing");
+    screenContainer.classList.add('grabbing');
 }
 
 function handleMouseUp(e) {
@@ -1213,73 +1208,77 @@ function handleMouseUp(e) {
     if (draggedToken) {
         // If we were dragging a token, stop and sync.
         draggedToken = null;
-        syncData();
+        syncData();	
         isPanning = false; // Just in case, reset
         return;
     }
     
     // If dragging movement was minimal, execute a click action
-    if (isPanning && Math.abs(e.clientX - lastPanX) < MINIMAL_MOVEMENT_THRESHOLD && 
-        Math.abs(e.clientY - lastPanY) < MINIMAL_MOVEMENT_THRESHOLD) {
-        handleCanvasAction(e);
+    if (isPanning && Math.abs(e.clientX - lastPanX) < MINIMAL_MOVEMENT_THRESHOLD && Math.abs(e.clientY - lastPanY) < MINIMAL_MOVEMENT_THRESHOLD) {
+        handleCanvasAction(e);	
     }
     
     isPanning = false;
 }
 
+
 function handleMouseMove(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-
+    
     // Raw canvas coords (scaled, not offset)
     const rawX = (e.clientX - rect.left) * scaleX;
     const rawY = (e.clientY - rect.top) * scaleY;
 
-    // Logical coords for flashlight (unscaled, un-offset) - **NEW FIXED**
-    const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
-    const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
+    // Logical coords for flashlight (unscaled, un-offset)
+   // NEW (FIXED):
+const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
+const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
 
-    // Panned Logical Coordinates for Map Interaction
+    
+    // *** Panned Logical Coordinates for Map Interaction ***
     const pannedLogicalX = logicalMouseX - mapOffsetX;
     const pannedLogicalY = logicalMouseY - mapOffsetY;
 
     mousePos = { x: logicalMouseX, y: logicalMouseY };
 
-    // 1. HANDLE DRAGGING & PANNING
+    // 1. HANDLE DRAGGING / PANNING
     if (draggedToken) {
-        // Token is dragged; position is calculated from current mouse, then corrected by pan offset
+        // Token is dragged: position is calculated from current mouse, then corrected by pan offset
         draggedToken.x = pannedLogicalX;
         draggedToken.y = pannedLogicalY;
-        screenContainer.classList.add("grabbing");
-        return;
+        screenContainer.classList.add('grabbing');
+        return;	
     }
 
     if (isPanning) {
         const dx = e.clientX - lastPanX;
         const dy = e.clientY - lastPanY;
-
+        
         mapOffsetX += dx / RENDER_SCALE; // Pan must be applied in logical canvas space
         mapOffsetY += dy / RENDER_SCALE;
+        
+     // --- Panning Constraint (Prevent map from disappearing entirely) ---
+// Account for zoom: when zoomed out, allow more panning
+const viewportWidth = config.width / zoomLevel;
+const viewportHeight = config.height / zoomLevel;
 
-        // --- Panning Constraint: Prevent map from disappearing entirely ---
-        // Account for zoom: when zoomed out, allow more panning
-        const viewportWidth = config.width / zoomLevel;
-        const viewportHeight = config.height / zoomLevel;
+// Allow panning 1/2 viewport beyond edges
+const maxOverhang = Math.max(viewportWidth, viewportHeight) / 2;
 
-        // Allow panning 1/2 viewport beyond edges
-        const maxOverhang = Math.max(viewportWidth, viewportHeight) / 2;
-        const maxPanX = maxOverhang;
-        const minPanX = -config.width + viewportWidth - maxOverhang;
-        const maxPanY = maxOverhang;
-        const minPanY = -config.height + viewportHeight - maxOverhang;
+const maxPanX = maxOverhang;
+const minPanX = -config.width + viewportWidth - maxOverhang;
+const maxPanY = maxOverhang;
+const minPanY = -config.height + viewportHeight - maxOverhang;
 
-        mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
-        mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
+mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
+mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
+
 
         lastPanX = e.clientX;
         lastPanY = e.clientY;
-
+        
         drawCurrentLevel();
         return;
     }
@@ -1290,7 +1289,7 @@ function handleMouseMove(e) {
 
     const gridX = Math.floor(pannedLogicalX / config.gridSize);
     const gridY = Math.floor(pannedLogicalY / config.gridSize);
-
+    
     document.getElementById('coordDisplay').innerText = `${gridX},${gridY}`;
     let hovering = false;
 
@@ -1298,56 +1297,48 @@ function handleMouseMove(e) {
     if (!hovering && data.loot) {
         for(let item of data.loot) {
             if (config.fogEnabled && !isLocationRevealed(data, gridX, gridY)) continue;
-
             if(item.x === gridX && item.y === gridY) {
-                tooltip.style.display = "block";
-                tooltip.style.left = e.clientX + 15 + "px";
-                tooltip.style.top = e.clientY + 15 + "px";
-
+                tooltip.style.display = 'block';
+                tooltip.style.left = (e.clientX + 15) + 'px';
+                tooltip.style.top = (e.clientY + 15) + 'px';
+                
                 let status;
-                if (item.looted) {
-                    status = `[EMPTY] ${item.containerName}`;
-                } else if (item.isLocked) {
-                    status = `[LOCKED] ${item.containerName} | ${item.lockDetail.replace(/_/g, ' ')}`;
-                } else {
-                    status = item.containerName;
-                }
+                if (item.looted) { status = `[ EMPTY ]`; }	
+                else if (item.isLocked) { status = `[ LOCKED: ${item.lockDetail.replace(/\[|\]/g, '')}${item.containerName} ]`; }	
+                else { status = `[ ${item.containerName} ]`; }
 
                 tooltip.innerText = status;
-                screenContainer.classList.add("crosshair");
+                screenContainer.classList.add('crosshair');
                 hovering = true;
-                break;
             }
         }
     }
-
+    
     // --- DECORATION/LABEL TOOLTIP (Checks near coordinates) ---
     if (!hovering && data.labels) {
         for (let lbl of data.labels) {
             if (config.fogEnabled && !isLocationRevealed(data, Math.floor(lbl.x/config.gridSize), Math.floor(lbl.y/config.gridSize))) continue;
-
             // Check panned logical mouse against un-panned label position (lbl.x, lbl.y)
             if (Math.abs(pannedLogicalX - lbl.x) < 40 && Math.abs(pannedLogicalY - lbl.y) < 15) {
                 if (isEnterable(lbl.text)) {
-                    tooltip.style.display = "block";
-                    tooltip.style.left = e.clientX + 15 + "px";
-                    tooltip.style.top = e.clientY + 15 + "px";
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (e.clientX + 15) + 'px';
+                    tooltip.style.top = (e.clientY + 15) + 'px';
                     tooltip.innerText = `[ ENTER ${lbl.text} ]`;
-                    screenContainer.classList.add("crosshair");
+                    screenContainer.classList.add('crosshair');
                     hovering = true;
                 } else if (lbl.text.includes("STAIRS")) {
-                    tooltip.style.display = "block";
-                    tooltip.style.left = e.clientX + 15 + "px";
-                    tooltip.style.top = e.clientY + 15 + "px";
-                    tooltip.innerText = lbl.text;
-                    screenContainer.classList.add("crosshair");
-                    hovering = true;
+                     tooltip.style.display = 'block';
+                     tooltip.style.left = (e.clientX + 15) + 'px';
+                     tooltip.style.top = (e.clientY + 15) + 'px';
+                     tooltip.innerText = `[ ${lbl.text} ]`;
+                     screenContainer.classList.add('crosshair');
+                     hovering = true;
                 }
-                break;
             }
         }
     }
-
+    
     if (!hovering && viewMode === 'interior' && data.exit && data.exit.x === gridX && data.exit.y === gridY) {
         tooltip.style.display = 'block';
         tooltip.style.left = (e.clientX + 15) + 'px';
@@ -1360,26 +1351,23 @@ function handleMouseMove(e) {
     // 3. TOKEN DELETE HOVER HINT (GM ONLY)
     if (!hovering && !isClient && (e.altKey || e.ctrlKey || e.metaKey)) {
         for (let t of tokens) {
-            // Hit test using the corrected mouse position against token's stored map position (t.x, t.y)
-            const dx = pannedLogicalX - t.x;
-            const dy = pannedLogicalY - t.y;
-
-            if (dx*dx + dy*dy < 400) { // 20px radius hit check
-                tooltip.style.display = 'block';
-                tooltip.style.left = (e.clientX + 15) + 'px';
-                tooltip.style.top = (e.clientY + 15) + 'px';
-                tooltip.innerText = `[ DELETE ${t.label} ]`;
-                screenContainer.classList.add('crosshair');
-                hovering = true;
-                break;
+             // Hit test using the *corrected* mouse position against token's stored map position (t.x, t.y)
+             const dx = pannedLogicalX - t.x;
+             const dy = pannedLogicalY - t.y;
+             if (dx*dx + dy*dy < 400) { // 20px radius hit check
+                 tooltip.style.display = 'block';
+                 tooltip.style.left = (e.clientX + 15) + 'px';
+                 tooltip.style.top = (e.clientY + 15) + 'px';
+                 tooltip.innerText = `[ DELETE ${t.label} ]`;
+                 screenContainer.classList.add('crosshair');
+                 hovering = true;
+                 break;
             }
         }
     }
 
-    if (!hovering) {
-        tooltip.style.display = 'none';
-        screenContainer.classList.remove('crosshair');
-    }
+
+    if (!hovering) { tooltip.style.display = 'none'; screenContainer.classList.remove('crosshair'); }
 }
 
 
