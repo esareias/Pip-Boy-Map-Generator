@@ -3683,7 +3683,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.textAlign = 'center';
         ctx.fillText('RADIATION KING', cx, y + size*0.25);
 
-        // Age and Wear Scratches
+               // Age and Wear Scratches
         ctx.strokeStyle = 'rgba(254, 243, 199, 0.2)';
         ctx.lineWidth = 0.5;
         for(let i = 0; i < 10; i++) {
@@ -3694,7 +3694,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         }
     }
 
-   else if (
+    else if (
         type === "campfire" ||
         type === "fire_barrel" ||
         type === "firebarrel"
