@@ -1157,37 +1157,8 @@ function animate(time) {
     drawCurrentLevel(time);
 }
 
-// --- NEW MOUSE HANDLER IMPLEMENTATION ---
-
-
-
-function handleMouseUp(e) {
-    screenContainer.classList.remove('grabbing');
-    
-    if (draggedToken) {
-        draggedToken = null;
-        syncData();	
-        return; // Exit early, don't check for clicks when token dragging
-    }
-    
-    // If panning happened, check if it was minimal (= a click, not a drag)
-    if (isPanning) {
-        const wasDragging = Math.abs(e.clientX - lastPanX) >= MINIMAL_MOVEMENT_THRESHOLD || 
-                           Math.abs(e.clientY - lastPanY) >= MINIMAL_MOVEMENT_THRESHOLD;
-        
-        if (!wasDragging) {
-            // Movement was minimal = this was a click, not a pan
-            handleCanvasAction(e);
-        }
-    }
-    
-    isPanning = false;
-    draggedToken = null;
-}
-
-
 function handleMouseDown(e) {
-     e.preventDefault(); // ← ADD THIS LINE
+    e.preventDefault();
     
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
@@ -1199,6 +1170,11 @@ function handleMouseDown(e) {
     const pannedLogicalX = logicalMouseX - mapOffsetX;
     const pannedLogicalY = logicalMouseY - mapOffsetY;
 
+    // Record starting position
+    lastPanX = e.clientX;
+    lastPanY = e.clientY;
+
+    // Check for token interaction (GM only)
     if (!isClient) {
         const isDeleteAttempt = e.altKey || e.ctrlKey || e.metaKey;
 
@@ -1213,23 +1189,14 @@ function handleMouseDown(e) {
                     syncData();
                 } else {
                     draggedToken = t;
-                    screenContainer.classList.remove("crosshair");
                     screenContainer.classList.add("grabbing");
-                    lastPanX = e.clientX;
-                    lastPanY = e.clientY;
-                    isPanning = false;
                 }
                 return;
             }
         }
     }
-
-    if (!draggedToken) {
-        isPanning = true;
-        lastPanX = e.clientX;
-        lastPanY = e.clientY;
-        screenContainer.classList.add("grabbing");
-    }
+    
+    // DON'T set isPanning here - wait for actual movement in handleMouseMove
 }
 
 function handleMouseMove(e) {
@@ -1248,6 +1215,7 @@ function handleMouseMove(e) {
 
     mousePos = { x: logicalMouseX, y: logicalMouseY };
 
+    // Handle token dragging
     if (draggedToken) {
         draggedToken.x = pannedLogicalX;
         draggedToken.y = pannedLogicalY;
@@ -1255,10 +1223,18 @@ function handleMouseMove(e) {
         return;
     }
 
-    if (isPanning) {
-        const dx = e.clientX - lastPanX;
-        const dy = e.clientY - lastPanY;
+    // Detect if mouse has moved enough to start panning
+    const dx = e.clientX - lastPanX;
+    const dy = e.clientY - lastPanY;
+    
+    // Only start panning if mouse moved AND a button is pressed
+    if (!isPanning && (Math.abs(dx) > 2 || Math.abs(dy) > 2) && e.buttons === 1) {
+        isPanning = true;
+        screenContainer.classList.add("grabbing");
+    }
 
+    // Handle panning
+    if (isPanning) {
         mapOffsetX += dx / RENDER_SCALE;
         mapOffsetY += dy / RENDER_SCALE;
 
@@ -1276,11 +1252,11 @@ function handleMouseMove(e) {
         lastPanX = e.clientX;
         lastPanY = e.clientY;
 
-        screenContainer.classList.add("grabbing");
         drawCurrentLevel();
         return;
     }
 
+    // Tooltip logic (only when NOT panning)
     const data = (viewMode === 'interior') ? interiorData[currentInteriorKey] : floorData[currentLevelIndex];
     if (!data) return;
 
@@ -1383,6 +1359,25 @@ function handleMouseMove(e) {
         screenContainer.classList.remove('crosshair');
     }
 }
+
+function handleMouseUp(e) {
+    screenContainer.classList.remove('grabbing');
+    
+    if (draggedToken) {
+        draggedToken = null;
+        syncData();
+        isPanning = false;
+        return;
+    }
+    
+    // If minimal movement occurred, treat as a click
+    if (!isPanning || (Math.abs(e.clientX - lastPanX) < MINIMAL_MOVEMENT_THRESHOLD && Math.abs(e.clientY - lastPanY) < MINIMAL_MOVEMENT_THRESHOLD)) {
+        handleCanvasAction(e);
+    }
+    
+    isPanning = false;
+}
+
 
 
 function isLocationRevealed(data, x, y) {
