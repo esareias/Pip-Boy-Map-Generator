@@ -2725,6 +2725,16 @@ function drawSprite(ctx, type, x, y, size, time) {
     const cy = y + size/2;
 
     // ============================================
+    // SEEDED RANDOM HELPER (PREVENTS WIGGLING)
+    // ============================================
+    // Creates deterministic "random" values based on position
+    const seededRandom = (seedX, seedY, salt = 0) => {
+        const seed = seedX * 73856093 + seedY * 19349663 + salt * 83492791;
+        const x_val = Math.sin(seed) * 10000;
+        return x_val - Math.floor(x_val);
+    };
+
+    // ============================================
     // UNIVERSAL VOLUMETRIC SHADOW SYSTEM
     // ============================================
     const shadowG = ctx.createRadialGradient(cx + 3, cy + size*0.45, 0, cx + 3, cy + size*0.45, size*0.4);
@@ -2756,7 +2766,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#171f2a';
         ctx.fillRect(x + size*0.25, y + size*0.25, size*0.5, size*0.6);
 
-        // Corner Rivets with Highlights
+        // Corner Rivets with Highlights (FIXED - seeded)
         ctx.fillStyle = '#718096';
         [[0.22, 0.22], [0.76, 0.22], [0.22, 0.88], [0.76, 0.88]].forEach(([rx, ry]) => {
             ctx.beginPath();
@@ -2821,13 +2831,17 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = gripGrad;
         ctx.fillRect(x + size*0.88, cy - size*0.15, size*0.08, size*0.1);
 
-        // Wear and Scratches
+        // Wear and Scratches (FIXED - seeded)
         ctx.strokeStyle = 'rgba(160, 174, 192, 0.3)';
         ctx.lineWidth = 0.5;
         for(let i = 0; i < 6; i++) {
             ctx.beginPath();
-            ctx.moveTo(x + size*0.25 + Math.random()*size*0.4, y + size*0.3 + Math.random()*size*0.5);
-            ctx.lineTo(x + size*0.3 + Math.random()*size*0.35, y + size*0.35 + Math.random()*size*0.45);
+            const sx1 = x + size*0.25 + seededRandom(x, y, i*10)*size*0.4;
+            const sy1 = y + size*0.3 + seededRandom(x, y, i*10+1)*size*0.5;
+            const sx2 = x + size*0.3 + seededRandom(x, y, i*10+2)*size*0.35;
+            const sy2 = y + size*0.35 + seededRandom(x, y, i*10+3)*size*0.45;
+            ctx.moveTo(sx1, sy1);
+            ctx.lineTo(sx2, sy2);
             ctx.stroke();
         }
     }
@@ -2855,20 +2869,20 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#0f172a';
         for(let i = 0; i < 8; i++) {
             ctx.fillRect(x + size*0.3, y + size*0.08 + i*3.5, size*0.4, 2);
-            // Highlight underneath
             ctx.fillStyle = '#64748b';
             ctx.fillRect(x + size*0.3, y + size*0.08 + i*3.5 + 2, size*0.4, 0.5);
             ctx.fillStyle = '#0f172a';
         }
 
-        // ID Number Plate
+        // ID Number Plate (FIXED - seeded)
         ctx.fillStyle = '#fbbf24';
         ctx.fillRect(cx - size*0.12, y + size*0.35, size*0.24, size*0.08);
         ctx.fillStyle = '#0f172a';
         ctx.font = `bold ${size*0.06}px monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('A-' + Math.floor(Math.random()*99), cx, y + size*0.39);
+        const lockerNum = Math.floor(seededRandom(x, y, 999) * 99);
+        ctx.fillText('A-' + lockerNum, cx, y + size*0.39);
 
         // Handle with Latch Mechanism
         ctx.strokeStyle = '#94a3b8';
@@ -2892,19 +2906,25 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Dents and Battle Damage
+        // Dents and Battle Damage (FIXED - seeded)
         ctx.fillStyle = 'rgba(30, 41, 59, 0.5)';
         for(let i = 0; i < 4; i++) {
             ctx.beginPath();
-            ctx.arc(x + size*0.3 + Math.random()*size*0.4, y + size*0.15 + Math.random()*size*0.7, 3 + Math.random()*2, 0, Math.PI*2);
+            const dx = x + size*0.3 + seededRandom(x, y, i*20)*size*0.4;
+            const dy = y + size*0.15 + seededRandom(x, y, i*20+1)*size*0.7;
+            const dr = 3 + seededRandom(x, y, i*20+2)*2;
+            ctx.arc(dx, dy, dr, 0, Math.PI*2);
             ctx.fill();
         }
 
-        // Rust Accumulation
+        // Rust Accumulation (FIXED - seeded)
         ctx.fillStyle = 'rgba(139, 69, 19, 0.4)';
         for(let i = 0; i < 3; i++) {
             ctx.beginPath();
-            ctx.arc(x + size*0.26 + Math.random()*size*0.48, y + size*0.1 + Math.random()*size*0.8, 2 + Math.random()*3, 0, Math.PI*2);
+            const rx = x + size*0.26 + seededRandom(x, y, i*30)*size*0.48;
+            const ry = y + size*0.1 + seededRandom(x, y, i*30+1)*size*0.8;
+            const rr = 2 + seededRandom(x, y, i*30+2)*3;
+            ctx.arc(rx, ry, rr, 0, Math.PI*2);
             ctx.fill();
         }
     }
@@ -2925,14 +2945,16 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = isAmmo ? '#a16207' : '#166534';
         ctx.fillRect(x + 4, y + size*0.1, size - 8, size*0.3);
 
-        // Realistic Wood Grain Detail
+        // Realistic Wood Grain Detail (FIXED - seeded)
         ctx.strokeStyle = isAmmo ? 'rgba(69, 26, 3, 0.4)' : 'rgba(5, 46, 22, 0.4)';
         ctx.lineWidth = 1;
         for(let i = 0; i < 5; i++) {
             const yPos = y + size*0.45 + i*((size*0.4)/5);
+            const offset1 = seededRandom(x, y, i*40)*2 - 1;
+            const offset2 = seededRandom(x, y, i*40+1)*2 - 1;
             ctx.beginPath();
             ctx.moveTo(x + 4, yPos);
-            ctx.bezierCurveTo(x + size*0.3, yPos + Math.random()*2 - 1, x + size*0.7, yPos + Math.random()*2 - 1, x + size - 4, yPos);
+            ctx.bezierCurveTo(x + size*0.3, yPos + offset1, x + size*0.7, yPos + offset2, x + size - 4, yPos);
             ctx.stroke();
         }
 
@@ -2940,10 +2962,8 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#374151';
         [[x + 4, y + size*0.4], [x + size - 10, y + size*0.4],
          [x + 4, y + size*0.85], [x + size - 10, y + size*0.85]].forEach(([cx, cy]) => {
-            // L-bracket shape
             ctx.fillRect(cx, cy, 6, 12);
             ctx.fillRect(cx, cy, 12, 6);
-            // Rivet detail
             ctx.fillStyle = '#1f2937';
             ctx.beginPath();
             ctx.arc(cx + 3, cy + 3, 1.5, 0, Math.PI*2);
@@ -2957,7 +2977,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillRect(x + 4, y + size*0.65, size - 8, 3);
         ctx.fillRect(x + 4, y + size*0.87, size - 8, 3);
 
-        // Band Highlights for Depth
         ctx.fillStyle = '#6b7280';
         ctx.fillRect(x + 4, y + size*0.4, size - 8, 1);
         ctx.fillRect(x + 4, y + size*0.65, size - 8, 1);
@@ -2980,13 +2999,17 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.fillText('⚠ EXPLOSIVE ⚠', cx, y + size*0.61);
         }
 
-        // Battle Damage and Weathering
+        // Battle Damage and Weathering (FIXED - seeded)
         ctx.strokeStyle = 'rgba(0,0,0,0.3)';
         ctx.lineWidth = 1.5;
         for(let i = 0; i < 3; i++) {
             ctx.beginPath();
-            ctx.moveTo(x + 6 + Math.random()*(size-12), y + size*0.5 + Math.random()*size*0.3);
-            ctx.lineTo(x + 10 + Math.random()*(size-20), y + size*0.55 + Math.random()*size*0.25);
+            const d1x = x + 6 + seededRandom(x, y, i*50)*(size-12);
+            const d1y = y + size*0.5 + seededRandom(x, y, i*50+1)*size*0.3;
+            const d2x = x + 10 + seededRandom(x, y, i*50+2)*(size-20);
+            const d2y = y + size*0.55 + seededRandom(x, y, i*50+3)*size*0.25;
+            ctx.moveTo(d1x, d1y);
+            ctx.lineTo(d2x, d2y);
             ctx.stroke();
         }
     }
@@ -3000,7 +3023,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = bodyGrad;
         ctx.fillRect(x + size*0.2, y + size*0.4, size*0.6, size*0.45);
 
-        // Lid/Top Tray
         const lidGrad = ctx.createLinearGradient(x + size*0.2, y + size*0.25, x + size*0.8, y + size*0.4);
         lidGrad.addColorStop(0, '#ef4444');
         lidGrad.addColorStop(0.5, '#dc2626');
@@ -3008,7 +3030,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = lidGrad;
         ctx.fillRect(x + size*0.2, y + size*0.25, size*0.6, size*0.15);
 
-        // Edge Highlights
         ctx.strokeStyle = '#fca5a5';
         ctx.lineWidth = 1;
         ctx.strokeRect(x + size*0.2, y + size*0.25, size*0.6, size*0.15);
@@ -3049,33 +3070,34 @@ function drawSprite(ctx, type, x, y, size, time) {
         // Tool Silhouettes in Top Tray
         ctx.strokeStyle = '#7f1d1d';
         ctx.lineWidth = 2;
-        // Wrench
         ctx.beginPath();
         ctx.moveTo(x + size*0.28, y + size*0.3);
         ctx.lineTo(x + size*0.35, y + size*0.35);
         ctx.stroke();
-        // Screwdriver
         ctx.beginPath();
         ctx.moveTo(x + size*0.4, y + size*0.3);
         ctx.lineTo(x + size*0.42, y + size*0.36);
         ctx.stroke();
-        // Pliers
         ctx.beginPath();
         ctx.moveTo(x + size*0.6, y + size*0.3);
         ctx.lineTo(x + size*0.65, y + size*0.35);
         ctx.stroke();
 
-        // Scuffs and Scratches from Use
+        // Scuffs and Scratches from Use (FIXED - seeded)
         ctx.strokeStyle = 'rgba(252, 165, 165, 0.3)';
         ctx.lineWidth = 1;
         for(let i = 0; i < 8; i++) {
             ctx.beginPath();
-            ctx.moveTo(x + size*0.22 + Math.random()*size*0.56, y + size*0.45 + Math.random()*size*0.35);
-            ctx.lineTo(x + size*0.24 + Math.random()*size*0.5, y + size*0.48 + Math.random()*size*0.3);
+            const s1x = x + size*0.22 + seededRandom(x, y, i*60)*size*0.56;
+            const s1y = y + size*0.45 + seededRandom(x, y, i*60+1)*size*0.35;
+            const s2x = x + size*0.24 + seededRandom(x, y, i*60+2)*size*0.5;
+            const s2y = y + size*0.48 + seededRandom(x, y, i*60+3)*size*0.3;
+            ctx.moveTo(s1x, s1y);
+            ctx.lineTo(s2x, s2y);
             ctx.stroke();
         }
 
-        // Brand Decal (worn)
+        // Brand Decal
         ctx.fillStyle = 'rgba(254, 252, 232, 0.6)';
         ctx.font = `bold ${size*0.06}px sans-serif`;
         ctx.textAlign = 'center';
@@ -3091,19 +3113,15 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = caseGrad;
         ctx.fillRect(x + size*0.2, y + size*0.3, size*0.6, size*0.5);
 
-        // Case Border
         ctx.strokeStyle = '#cbd5e1';
         ctx.lineWidth = 2;
         ctx.strokeRect(x + size*0.2, y + size*0.3, size*0.6, size*0.5);
 
-        // Red Cross - Bold and Prominent
+        // Red Cross
         ctx.fillStyle = '#dc2626';
-        // Horizontal bar
         ctx.fillRect(cx - size*0.2, cy - size*0.05, size*0.4, size*0.1);
-        // Vertical bar
         ctx.fillRect(cx - size*0.05, cy - size*0.2, size*0.1, size*0.4);
 
-        // Cross Depth/Shadow Effect
         ctx.fillStyle = '#991b1b';
         ctx.fillRect(cx - size*0.19, cy - size*0.04, size*0.38, size*0.04);
         ctx.fillRect(cx - size*0.04, cy - size*0.19, size*0.04, size*0.38);
@@ -3116,12 +3134,11 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.arc(cx, y + size*0.3, size*0.12, Math.PI + 0.4, Math.PI*2 - 0.4);
         ctx.stroke();
 
-        // Latch Clips (both sides)
+        // Latch Clips
         ctx.fillStyle = '#94a3b8';
         ctx.fillRect(x + size*0.18, cy - size*0.08, size*0.08, size*0.16);
         ctx.fillRect(x + size*0.74, cy - size*0.08, size*0.08, size*0.16);
 
-        // Clip Details
         ctx.fillStyle = '#475569';
         ctx.fillRect(x + size*0.2, cy - size*0.05, size*0.04, size*0.1);
         ctx.fillRect(x + size*0.76, cy - size*0.05, size*0.04, size*0.1);
@@ -3134,7 +3151,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.font = `${size*0.04}px monospace`;
         ctx.fillText('FIRST AID', cx, y + size*0.93);
 
-        // Biohazard Warning Sticker (small, corner)
+        // Biohazard Warning Sticker
         ctx.fillStyle = '#fbbf24';
         ctx.beginPath();
         ctx.arc(x + size*0.75, y + size*0.75, size*0.06, 0, Math.PI*2);
@@ -3143,11 +3160,14 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.font = `bold ${size*0.05}px sans-serif`;
         ctx.fillText('☣', x + size*0.75, y + size*0.76);
 
-        // Scuffs from Field Use
+        // Scuffs from Field Use (FIXED - seeded)
         ctx.fillStyle = 'rgba(203, 213, 225, 0.7)';
         for(let i = 0; i < 5; i++) {
             ctx.beginPath();
-            ctx.arc(x + size*0.25 + Math.random()*size*0.5, y + size*0.35 + Math.random()*size*0.4, 1 + Math.random()*2, 0, Math.PI*2);
+            const scx = x + size*0.25 + seededRandom(x, y, i*70)*size*0.5;
+            const scy = y + size*0.35 + seededRandom(x, y, i*70+1)*size*0.4;
+            const scr = 1 + seededRandom(x, y, i*70+2)*2;
+            ctx.arc(scx, scy, scr, 0, Math.PI*2);
             ctx.fill();
         }
     }
@@ -3156,7 +3176,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         // Canvas Duffel Bag / Burlap Sack
         const isSack = type === 'sack';
 
-        // Main Bag Body with Fabric Texture
         const fabricGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size*0.4);
         fabricGrad.addColorStop(0, isSack ? '#a16207' : '#57534e');
         fabricGrad.addColorStop(0.6, isSack ? '#78350f' : '#44403c');
@@ -3166,11 +3185,9 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.ellipse(cx, cy + size*0.1, size*0.35, size*0.3, 0, 0, Math.PI*2);
         ctx.fill();
 
-        // Bag Bottom Section
         ctx.fillStyle = isSack ? '#78350f' : '#44403c';
         ctx.fillRect(x + size*0.25, cy, size*0.5, size*0.4);
 
-        // Rounded Bottom
         ctx.beginPath();
         ctx.ellipse(cx, cy + size*0.4, size*0.25, size*0.1, 0, 0, Math.PI*2);
         ctx.fill();
@@ -3193,7 +3210,6 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.arc(cx, cy - size*0.05, size*0.15, Math.PI, 0);
             ctx.stroke();
 
-            // String Knot
             ctx.fillStyle = '#78350f';
             ctx.beginPath();
             ctx.arc(cx, cy - size*0.05, 4, 0, Math.PI*2);
@@ -3229,30 +3245,34 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.arc(cx, cy - size*0.1, size*0.2, 0.2, Math.PI - 0.2);
             ctx.stroke();
 
-            // Strap Buckle
             ctx.fillStyle = '#71717a';
             ctx.fillRect(cx - size*0.18, cy - size*0.18, size*0.08, size*0.06);
         }
 
-        // Fabric Wrinkles and Folds
+        // Fabric Wrinkles and Folds (FIXED - seeded)
         ctx.strokeStyle = isSack ? 'rgba(69, 26, 3, 0.5)' : 'rgba(28, 25, 23, 0.5)';
         ctx.lineWidth = 1;
         for(let i = 0; i < 4; i++) {
             ctx.beginPath();
-            ctx.moveTo(x + size*0.3 + Math.random()*size*0.4, cy + i*8);
+            const w1x = x + size*0.3 + seededRandom(x, y, i*80)*size*0.4;
+            const w2x = x + size*0.35 + seededRandom(x, y, i*80+1)*size*0.3;
+            ctx.moveTo(w1x, cy + i*8);
             ctx.bezierCurveTo(
                 cx - size*0.1, cy + i*8 + 3,
                 cx + size*0.1, cy + i*8 + 3,
-                x + size*0.35 + Math.random()*size*0.3, cy + i*8 + 6
+                w2x, cy + i*8 + 6
             );
             ctx.stroke();
         }
 
-        // Dirt and Grime Stains
+        // Dirt and Grime Stains (FIXED - seeded)
         ctx.fillStyle = isSack ? 'rgba(69, 26, 3, 0.3)' : 'rgba(0,0,0,0.2)';
         for(let i = 0; i < 3; i++) {
             ctx.beginPath();
-            ctx.arc(x + size*0.3 + Math.random()*size*0.4, cy + size*0.1 + Math.random()*size*0.3, 3 + Math.random()*4, 0, Math.PI*2);
+            const gx = x + size*0.3 + seededRandom(x, y, i*90)*size*0.4;
+            const gy = cy + size*0.1 + seededRandom(x, y, i*90+1)*size*0.3;
+            const gr = 3 + seededRandom(x, y, i*90+2)*4;
+            ctx.arc(gx, gy, gr, 0, Math.PI*2);
             ctx.fill();
         }
     }
@@ -3262,13 +3282,11 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#14532d';
         ctx.fillRect(x + size*0.15, y + size*0.35, size*0.7, size*0.5);
 
-        // Metal Reinforcement Bands
         ctx.fillStyle = '#374151';
         ctx.fillRect(x + size*0.15, y + size*0.35, size*0.7, 3);
         ctx.fillRect(x + size*0.15, y + size*0.6, size*0.7, 3);
         ctx.fillRect(x + size*0.15, y + size*0.82, size*0.7, 3);
 
-        // Padlock
         ctx.fillStyle = '#fbbf24';
         ctx.fillRect(cx - 4, cy, 8, 6);
         ctx.fillStyle = '#92400e';
@@ -3280,13 +3298,11 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#64748b';
         ctx.fillRect(x + size*0.25, y + size*0.1, size*0.5, size*0.8);
 
-        // Three Drawer System
         for(let i = 0; i < 3; i++) {
             const dy = y + size*0.15 + i*size*0.25;
             ctx.fillStyle = '#475569';
             ctx.fillRect(x + size*0.25, dy, size*0.5, 2);
 
-            // Drawer Handles
             ctx.fillStyle = '#94a3b8';
             ctx.fillRect(cx - 6, dy + 4, 12, 3);
         }
@@ -3308,7 +3324,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#14532d';
         ctx.fillRect(x + size*0.1, y + size*0.3, size*0.8, size*0.55);
 
-        // Lid (slightly open)
         ctx.fillStyle = '#166534';
         ctx.beginPath();
         ctx.moveTo(x + size*0.1, y + size*0.3);
@@ -3317,7 +3332,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineTo(x + size*0.9, y + size*0.3);
         ctx.fill();
 
-        // Wheels
         ctx.fillStyle = '#000';
         ctx.beginPath();
         ctx.arc(x + size*0.25, y + size*0.88, size*0.08, 0, Math.PI*2);
@@ -3332,15 +3346,12 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#1e293b';
         ctx.fillRect(x + size*0.2, y + size*0.4, size*0.6, size*0.4);
 
-        // Display Screen Housing
         ctx.fillStyle = '#14532d';
         ctx.fillRect(x + size*0.25, y + size*0.25, size*0.5, size*0.2);
 
-        // Green LED Display (active)
         ctx.fillStyle = '#22c55e';
         ctx.fillRect(x + size*0.28, y + size*0.28, size*0.44, size*0.14);
 
-        // Keypad Buttons
         ctx.fillStyle = '#e2e8f0';
         for(let row = 0; row < 2; row++) {
             for(let col = 0; col < 3; col++) {
@@ -3348,28 +3359,24 @@ function drawSprite(ctx, type, x, y, size, time) {
             }
         }
 
-        // Cash Drawer
         ctx.fillStyle = '#475569';
         ctx.fillRect(x + size*0.2, y + size*0.75, size*0.6, size*0.1);
     }
 
     else if (type === 'cooler') {
-        // Portable Cooler / Ice Chest
+        // Portable Cooler
         ctx.fillStyle = '#dc2626';
         ctx.fillRect(x + size*0.15, y + size*0.35, size*0.7, size*0.5);
 
-        // White Lid
         ctx.fillStyle = '#f8fafc';
         ctx.fillRect(x + size*0.15, y + size*0.25, size*0.7, size*0.12);
 
-        // Carrying Handle
         ctx.strokeStyle = '#94a3b8';
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.arc(cx, y + size*0.25, size*0.15, Math.PI, 0);
         ctx.stroke();
 
-        // Front Latch
         ctx.fillStyle = '#fbbf24';
         ctx.fillRect(cx - 4, y + size*0.35, 8, 4);
     }
@@ -3381,11 +3388,9 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.ellipse(cx, cy + size*0.1, size*0.35, size*0.3, 0, 0, Math.PI*2);
         ctx.fill();
 
-        // Brass Clasp
         ctx.fillStyle = '#fbbf24';
         ctx.fillRect(cx - size*0.15, cy - size*0.1, size*0.3, size*0.08);
 
-        // Leather Handle
         ctx.strokeStyle = '#92400e';
         ctx.lineWidth = 3;
         ctx.beginPath();
@@ -3400,12 +3405,10 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.arc(cx, cy - 2, size*0.12, 0, Math.PI*2);
         ctx.fill();
 
-        // Eye sockets
         ctx.fillStyle = '#000';
         ctx.fillRect(cx - 2, cy - 3, 1, 1);
         ctx.fillRect(cx + 1, cy - 3, 1, 1);
 
-        // Ribcage
         ctx.strokeStyle = '#e5e5e5';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -3417,7 +3420,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineTo(cx + 3, cy + 5);
         ctx.stroke();
 
-        // Scattered Bones
         ctx.fillStyle = '#d4d4d4';
         ctx.fillRect(cx + 4, cy + 3, 6, 2);
         ctx.fillRect(cx - 8, cy + 6, 5, 2);
@@ -3430,13 +3432,11 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.ellipse(cx, cy, size*0.4, size*0.3, 0, 0, Math.PI*2);
         ctx.fill();
 
-        // Dark Opening/Shadow
         ctx.fillStyle = '#1c1917';
         ctx.beginPath();
         ctx.ellipse(cx, cy, size*0.2, size*0.15, 0, 0, Math.PI*2);
         ctx.fill();
 
-        // Rock Highlight
         ctx.fillStyle = '#a8a29e';
         ctx.beginPath();
         ctx.ellipse(cx - size*0.15, cy - size*0.1, size*0.1, size*0.08, 0, 0, Math.PI*2);
@@ -3456,12 +3456,11 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = radioGrad;
         ctx.fillRect(x + size*0.2, y + size*0.35, size*0.6, size*0.5);
 
-        // Rounded Bakelite Top
         ctx.beginPath();
         ctx.arc(cx, y + size*0.35, size*0.3, Math.PI, 0);
         ctx.fill();
 
-        // Speaker Grill - Fabric Mesh
+        // Speaker Grill
         ctx.fillStyle = '#1c1917';
         ctx.beginPath();
         ctx.arc(cx - size*0.05, cy + size*0.05, size*0.15, 0, Math.PI*2);
@@ -3519,7 +3518,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineTo(x + size*0.95, y - size*0.15);
         ctx.stroke();
 
-        // Antenna Segments (dashed)
         ctx.strokeStyle = '#64748b';
         ctx.lineWidth = 1;
         ctx.setLineDash([2, 2]);
@@ -3535,7 +3533,6 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.strokeStyle = '#475569';
             ctx.lineWidth = 1;
             ctx.stroke();
-            // Knob position indicator
             ctx.strokeStyle = '#cbd5e1';
             ctx.lineWidth = 1.5;
             ctx.beginPath();
@@ -3563,13 +3560,17 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.textAlign = 'center';
         ctx.fillText('RADIATION KING', cx, y + size*0.25);
 
-        // Age and Wear Scratches
+        // Age and Wear Scratches (FIXED - seeded)
         ctx.strokeStyle = 'rgba(254, 243, 199, 0.2)';
         ctx.lineWidth = 0.5;
         for(let i = 0; i < 10; i++) {
             ctx.beginPath();
-            ctx.moveTo(x + size*0.25 + Math.random()*size*0.5, y + size*0.4 + Math.random()*size*0.4);
-            ctx.lineTo(x + size*0.27 + Math.random()*size*0.46, y + size*0.42 + Math.random()*size*0.36);
+            const r1x = x + size*0.25 + seededRandom(x, y, i*100)*size*0.5;
+            const r1y = y + size*0.4 + seededRandom(x, y, i*100+1)*size*0.4;
+            const r2x = x + size*0.27 + seededRandom(x, y, i*100+2)*size*0.46;
+            const r2y = y + size*0.42 + seededRandom(x, y, i*100+3)*size*0.36;
+            ctx.moveTo(r1x, r1y);
+            ctx.lineTo(r2x, r2y);
             ctx.stroke();
         }
     }
@@ -3584,7 +3585,6 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.fillStyle = barrelGrad;
             ctx.fillRect(x + size*0.25, y + size*0.25, size*0.5, size*0.75);
 
-            // Barrel Rim
             ctx.strokeStyle = '#1e293b';
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -3602,19 +3602,25 @@ function drawSprite(ctx, type, x, y, size, time) {
                 ctx.stroke();
             });
 
-            // Heavy Rust Texture
+            // Heavy Rust Texture (FIXED - seeded)
             ctx.fillStyle = 'rgba(139, 69, 19, 0.6)';
             for(let i = 0; i < 15; i++) {
                 ctx.beginPath();
-                ctx.arc(x + size*0.3 + Math.random()*size*0.4, y + size*0.35 + Math.random()*size*0.55, 1 + Math.random()*3, 0, Math.PI*2);
+                const rustX = x + size*0.3 + seededRandom(x, y, i*110)*size*0.4;
+                const rustY = y + size*0.35 + seededRandom(x, y, i*110+1)*size*0.55;
+                const rustR = 1 + seededRandom(x, y, i*110+2)*3;
+                ctx.arc(rustX, rustY, rustR, 0, Math.PI*2);
                 ctx.fill();
             }
 
-            // Dents and Impact Damage
+            // Dents and Impact Damage (FIXED - seeded)
             ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
             for(let i = 0; i < 5; i++) {
                 ctx.beginPath();
-                ctx.arc(x + size*0.3 + Math.random()*size*0.4, y + size*0.4 + Math.random()*size*0.5, 2 + Math.random()*4, 0, Math.PI*2);
+                const dentX = x + size*0.3 + seededRandom(x, y, i*120)*size*0.4;
+                const dentY = y + size*0.4 + seededRandom(x, y, i*120+1)*size*0.5;
+                const dentR = 2 + seededRandom(x, y, i*120+2)*4;
+                ctx.arc(dentX, dentY, dentR, 0, Math.PI*2);
                 ctx.fill();
             }
 
@@ -3622,16 +3628,16 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.fillStyle = 'rgba(0,0,0,0.8)';
             ctx.fillRect(x + size*0.25, y + size*0.25, size*0.5, size*0.08);
         } else {
-            // Stone Circle Campfire
+            // Stone Circle Campfire (FIXED - seeded)
             ctx.fillStyle = '#78716c';
             for(let i = 0; i < 8; i++) {
                 const angle = (i / 8) * Math.PI * 2;
                 const rx = cx + Math.cos(angle) * size*0.35;
                 const ry = cy + size*0.25 + Math.sin(angle) * size*0.35;
+                const rockSize = size*0.08 + seededRandom(x, y, i*130)*size*0.04;
                 ctx.beginPath();
-                ctx.arc(rx, ry, size*0.08 + Math.random()*size*0.04, 0, Math.PI*2);
+                ctx.arc(rx, ry, rockSize, 0, Math.PI*2);
                 ctx.fill();
-                // Rock highlight
                 ctx.fillStyle = '#a8a29e';
                 ctx.beginPath();
                 ctx.arc(rx - 2, ry - 2, size*0.03, 0, Math.PI*2);
@@ -3644,7 +3650,6 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.fillRect(cx - size*0.2, cy + size*0.15, size*0.4, size*0.08);
             ctx.fillRect(cx - size*0.15, cy + size*0.08, size*0.08, size*0.3);
 
-            // Wood Bark Texture
             ctx.strokeStyle = '#0a0a0a';
             ctx.lineWidth = 1;
             for(let i = 0; i < 3; i++) {
@@ -3655,16 +3660,14 @@ function drawSprite(ctx, type, x, y, size, time) {
             }
         }
 
-        // ========================================
-        // DYNAMIC FIRE ANIMATION - ULTRA REALISTIC
-        // ========================================
+        // FIRE ANIMATION
         const flicker1 = Math.sin(time / 80) * 5;
         const flicker2 = Math.cos(time / 120) * 4;
         const flicker3 = Math.sin(time / 150) * 6;
 
         ctx.globalCompositeOperation = 'lighter';
 
-        // Inner Core - White Hot Center
+        // Inner Core - White Hot
         const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size*0.12 + flicker1);
         coreGrad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
         coreGrad.addColorStop(0.3, 'rgba(255, 240, 180, 0.7)');
@@ -3672,7 +3675,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = coreGrad;
         ctx.fillRect(cx - size*0.2, cy - size*0.2, size*0.4, size*0.4);
 
-        // Mid-Range Flame - Orange/Yellow
+        // Mid-Range Flame
         const midGrad = ctx.createRadialGradient(cx, cy - size*0.1, 0, cx, cy - size*0.1, size*0.25 + flicker2);
         midGrad.addColorStop(0, 'rgba(255, 200, 100, 0.8)');
         midGrad.addColorStop(0.5, 'rgba(234, 88, 12, 0.6)');
@@ -3680,7 +3683,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = midGrad;
         ctx.fillRect(cx - size*0.3, cy - size*0.4, size*0.6, size*0.5);
 
-        // Outer Flame - Deep Red
+        // Outer Flame
         const outerGrad = ctx.createRadialGradient(cx, cy - size*0.15, 0, cx, cy - size*0.15, size*0.35 + flicker3);
         outerGrad.addColorStop(0, 'rgba(234, 88, 12, 0.5)');
         outerGrad.addColorStop(0.6, 'rgba(153, 27, 27, 0.3)');
@@ -3729,7 +3732,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         const trunkW = size*0.12;
         const trunkH = size*0.5;
 
-        // Trunk with bark texture
         ctx.fillStyle = '#3e2723';
         ctx.fillRect(cx - trunkW/2, y + size*0.4, trunkW, trunkH);
 
@@ -3751,7 +3753,6 @@ function drawSprite(ctx, type, x, y, size, time) {
             ctx.beginPath();
             ctx.arc(bx, by, s, 0, Math.PI*2);
             ctx.fill();
-            // Highlight for depth
             ctx.fillStyle = '#22c55e';
             ctx.fillRect(bx - 2, by - 4, 4, 4);
         };
@@ -3763,16 +3764,13 @@ function drawSprite(ctx, type, x, y, size, time) {
 
     else if (type === 'car') {
         // Rusted Post-War Vehicle Wreck
-        // Car body - rusted red
         ctx.fillStyle = '#7f1d1d';
         ctx.fillRect(x + 4, cy + 2, size - 8, size*0.25);
 
-        // Wheels (burnt rubber)
         ctx.fillStyle = '#0a0a0a';
         ctx.fillRect(x + 8, cy + size*0.2, 8, 6);
         ctx.fillRect(x + size - 16, cy + size*0.2, 8, 6);
 
-        // Hood/roof section
         ctx.fillStyle = '#b91c1c';
         ctx.beginPath();
         ctx.moveTo(x + 8, cy + 2);
@@ -3781,7 +3779,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineTo(x + size - 8, cy + 2);
         ctx.fill();
 
-        // Windshield (shattered/dark)
         ctx.fillStyle = '#1e293b';
         ctx.beginPath();
         ctx.moveTo(x + 10, cy);
@@ -3790,7 +3787,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineTo(x + size - 10, cy);
         ctx.fill();
 
-        // Glass reflection/crack
         ctx.fillStyle = '#fff';
         ctx.globalAlpha = 0.3;
         ctx.beginPath();
@@ -3801,27 +3797,30 @@ function drawSprite(ctx, type, x, y, size, time) {
     }
 
     else if (type === 'rubble') {
-        // Debris Pile - Concrete and Rocks
+        // Debris Pile (FIXED - seeded positions)
+        const r1Size = 5 + seededRandom(x, y, 140);
+        const r2Size = 6 + seededRandom(x, y, 141);
+
         ctx.fillStyle = '#57534e';
         ctx.beginPath();
-        ctx.arc(cx - 4, cy + 4, 5, 0, Math.PI*2);
+        ctx.arc(cx - 4, cy + 4, r1Size, 0, Math.PI*2);
         ctx.fill();
         ctx.fillStyle = '#78716c';
         ctx.beginPath();
-        ctx.arc(cx + 4, cy + 2, 6, 0, Math.PI*2);
+        ctx.arc(cx + 4, cy + 2, r2Size, 0, Math.PI*2);
         ctx.fill();
         ctx.fillStyle = '#44403c';
         ctx.fillRect(cx - 2, cy - 6, 6, 6);
     }
 
     else if (type === 'tumbleweed') {
-        // Desert Tumbleweed
+        // Desert Tumbleweed (FIXED - seeded branches)
         ctx.strokeStyle = '#a8a29e';
         ctx.lineWidth = 1;
         ctx.beginPath();
         for(let i = 0; i < 12; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const rad = Math.random() * size * 0.4;
+            const angle = seededRandom(x, y, i*150) * Math.PI * 2;
+            const rad = seededRandom(x, y, i*150+1) * size * 0.4;
             ctx.moveTo(cx + Math.cos(angle)*rad, cy + Math.sin(angle)*rad);
             ctx.lineTo(cx + Math.cos(angle + 2)*rad, cy + Math.sin(angle + 2)*rad);
         }
@@ -3832,10 +3831,8 @@ function drawSprite(ctx, type, x, y, size, time) {
         // Metal Bed Frame
         ctx.fillStyle = '#737373';
         ctx.fillRect(x + 4, y + 4, size - 8, size - 8);
-        // Mattress/bedding
         ctx.fillStyle = '#1d4ed8';
         ctx.fillRect(x + 4, y + size*0.4, size - 8, size*0.6 - 4);
-        // Pillow
         ctx.fillStyle = '#fafafa';
         ctx.fillRect(x + 6, y + 6, size - 12, size*0.15);
     }
@@ -3845,7 +3842,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#991b1b';
         ctx.fillRect(x + 4, y - 8, size - 8, size + 4);
 
-        // Side panel highlight
         ctx.fillStyle = '#ef4444';
         ctx.fillRect(x + 4, y - 8, 4, size + 4);
 
@@ -3873,21 +3869,26 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillRect(x + size*0.25, y, size*0.5, size*0.1);
 
         if (!isServer) {
-            // Medical/VR equipment white stripe
             ctx.fillStyle = '#fff';
             ctx.fillRect(x + size*0.25, y + size*0.5, size*0.5, size*0.1);
         } else {
-            // Server screen/panel
             ctx.fillStyle = '#000';
             ctx.fillRect(x + size*0.3, y + size*0.2, size*0.4, size*0.2);
 
-            // Blinking Status LEDs
-            if(Math.random() > 0.1) {
-                ctx.fillStyle = (Math.sin(time/100 + x) > 0) ? '#22c55e' : '#064e3b';
+            // Blinking Status LEDs (seeded timing)
+            const ledSeed = Math.floor(x + y);
+            if((time + ledSeed*10) % 200 < 100) {
+                ctx.fillStyle = '#22c55e';
+                ctx.fillRect(x + size*0.35, y + size*0.6, 2, 2);
+            } else {
+                ctx.fillStyle = '#064e3b';
                 ctx.fillRect(x + size*0.35, y + size*0.6, 2, 2);
             }
-            if(Math.random() > 0.1) {
-                ctx.fillStyle = (Math.cos(time/150 + y) > 0) ? '#ef4444' : '#7f1d1d';
+            if((time + ledSeed*15) % 300 < 150) {
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(x + size*0.45, y + size*0.6, 2, 2);
+            } else {
+                ctx.fillStyle = '#7f1d1d';
                 ctx.fillRect(x + size*0.45, y + size*0.6, 2, 2);
             }
         }
@@ -3895,11 +3896,9 @@ function drawSprite(ctx, type, x, y, size, time) {
 
     else if (type === 'wall_terminal' || type === 'wallterminal' || type === 'terminal') {
         // RobCo Industries Computer Terminal
-        // Desk/mount
         ctx.fillStyle = '#4b5563';
         ctx.fillRect(x + 2, y + size/2, size - 4, size/2);
 
-        // Monitor housing
         ctx.fillStyle = '#374151';
         ctx.beginPath();
         ctx.arc(cx, y + size/2, size/3, Math.PI, 0);
@@ -3907,16 +3906,17 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineTo(cx - size/3, y + size/2 + 4);
         ctx.fill();
 
-        // CRT Screen (flickering green code)
-        if (Math.random() > 0.05) {
+        // CRT Screen (flickering green code) - seeded flicker
+        const screenSeed = Math.floor(x + y);
+        if ((time + screenSeed*20) % 1000 > 50) {
             ctx.fillStyle = '#14532d';
             ctx.fill();
 
             ctx.fillStyle = '#4ade80';
             const screenW = size/2;
-            // Simulated text lines
             for(let i = 0; i < 3; i++) {
-                ctx.fillRect(cx - screenW/3, (y + size/3) + (i*4), Math.random() * screenW/1.5, 2);
+                const lineLen = seededRandom(x, y, i*160) * screenW/1.5;
+                ctx.fillRect(cx - screenW/3, (y + size/3) + (i*4), lineLen, 2);
             }
         }
     }
@@ -3928,7 +3928,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.ellipse(cx, y + size*0.5, size*0.4, size*0.2, 0, 0, Math.PI*2);
         ctx.fill();
 
-        // Table leg
         ctx.fillStyle = '#451a03';
         ctx.fillRect(cx - 2, y + size*0.5, 4, size*0.4);
     }
@@ -3973,7 +3972,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.ellipse(cx, cy + size*0.15, size*0.35, size*0.25, 0, 0, Math.PI*2);
         ctx.fill();
 
-        // Zipper line
         ctx.strokeStyle = '#78716c';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -3981,7 +3979,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineTo(cx, cy + size*0.35);
         ctx.stroke();
 
-        // Dark stain
         ctx.fillStyle = 'rgba(127, 29, 29, 0.6)';
         ctx.beginPath();
         ctx.arc(cx + size*0.1, cy + size*0.1, size*0.12, 0, Math.PI*2);
@@ -3991,11 +3988,8 @@ function drawSprite(ctx, type, x, y, size, time) {
     else if (type === 'chair') {
         // Office Chair
         ctx.fillStyle = '#374151';
-        // Seat
         ctx.fillRect(x + size*0.2, y + size*0.4, size*0.6, size*0.15);
-        // Backrest
         ctx.fillRect(x + size*0.25, y + size*0.15, size*0.5, size*0.3);
-        // Leg
         ctx.fillRect(cx - 2, y + size*0.55, 4, size*0.35);
     }
 
@@ -4004,11 +3998,9 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#1e293b';
         ctx.fillRect(x + size*0.2, y + size*0.1, size*0.6, size*0.8);
 
-        // Faded image area
         ctx.fillStyle = '#ef4444';
         ctx.fillRect(x + size*0.25, y + size*0.2, size*0.5, size*0.3);
 
-        // Text block
         ctx.fillStyle = '#fef3c7';
         ctx.fillRect(x + size*0.25, y + size*0.55, size*0.5, size*0.15);
     }
@@ -4018,7 +4010,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#0ea5e9';
         ctx.fillRect(x + size*0.25, y + size*0.2, size*0.5, size*0.7);
 
-        // Rim
         ctx.strokeStyle = '#0c4a6e';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -4026,7 +4017,6 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.lineTo(x + size*0.75, y + size*0.2);
         ctx.stroke();
 
-        // Bands
         [0.5, 0.7].forEach(band => {
             ctx.beginPath();
             ctx.moveTo(x + size*0.25, y + size*band);
@@ -4039,14 +4029,11 @@ function drawSprite(ctx, type, x, y, size, time) {
         // Desert Plant/Cactus
         ctx.fillStyle = '#15803d';
 
-        // Main body
         ctx.fillRect(cx - size*0.1, cy, size*0.2, size*0.4);
 
-        // Arms
         ctx.fillRect(cx - size*0.25, cy + size*0.1, size*0.15, size*0.15);
         ctx.fillRect(cx + size*0.1, cy + size*0.15, size*0.15, size*0.15);
 
-        // Spines
         ctx.strokeStyle = '#fef3c7';
         ctx.lineWidth = 1;
         for(let i = 0; i < 8; i++) {
@@ -4064,14 +4051,12 @@ function drawSprite(ctx, type, x, y, size, time) {
 
     else if (type === 'lamp' || type === 'lantern') {
         // Wasteland Lantern
-        // Handle
         ctx.strokeStyle = '#78716c';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(cx, y + size*0.2, size*0.15, Math.PI, 0);
         ctx.stroke();
 
-        // Body
         ctx.fillStyle = '#451a03';
         ctx.fillRect(x + size*0.3, y + size*0.25, size*0.4, size*0.5);
 
@@ -4086,12 +4071,10 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#78350f';
         ctx.fillRect(x + 4, y + size*0.3, size - 8, size*0.25);
 
-        // Legs
         ctx.fillStyle = '#451a03';
         ctx.fillRect(x + 6, y + size*0.55, 4, size*0.35);
         ctx.fillRect(x + size - 10, y + size*0.55, 4, size*0.35);
 
-        // Tools on bench
         ctx.strokeStyle = '#94a3b8';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -4103,13 +4086,10 @@ function drawSprite(ctx, type, x, y, size, time) {
     else if (type === 'pipes' || type === 'vent') {
         // Industrial Pipes/Vent
         ctx.fillStyle = '#64748b';
-        // Horizontal pipe
         ctx.fillRect(x + 4, cy - 3, size - 8, 6);
 
-        // Vertical section
         ctx.fillRect(cx - 3, y + size*0.2, 6, size*0.6);
 
-        // Rivets
         ctx.fillStyle = '#1e293b';
         [0.3, 0.5, 0.7].forEach(pos => {
             ctx.beginPath();
@@ -4123,13 +4103,11 @@ function drawSprite(ctx, type, x, y, size, time) {
         ctx.fillStyle = '#78350f';
         ctx.fillRect(x + size*0.2, y + size*0.1, size*0.6, size*0.8);
 
-        // Shelves
         ctx.fillStyle = '#451a03';
         [0.3, 0.5, 0.7].forEach(shelf => {
             ctx.fillRect(x + size*0.2, y + size*shelf, size*0.6, 3);
         });
 
-        // Books
         ctx.fillStyle = '#dc2626';
         ctx.fillRect(x + size*0.25, y + size*0.32, size*0.1, size*0.15);
         ctx.fillStyle = '#1d4ed8';
