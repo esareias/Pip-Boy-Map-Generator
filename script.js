@@ -1159,48 +1159,7 @@ function animate(time) {
 
 // --- NEW MOUSE HANDLER IMPLEMENTATION ---
 
-function handleMouseDown(e) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const logicalMouseX = (e.clientX - rect.left) * scaleX / (RENDER_SCALE * zoomLevel);
-    const logicalMouseY = (e.clientY - rect.top) * scaleY / (RENDER_SCALE * zoomLevel);
-    
-    // Correct the mouse position based on the current pan offset
-    const pannedLogicalX = logicalMouseX - mapOffsetX;
-    const pannedLogicalY = logicalMouseY - mapOffsetY;
 
-    // 1. CHECK TOKEN DRAG START (GM ONLY)
-    if (!isClient) {
-        const isDeleteAttempt = e.altKey || e.ctrlKey || e.metaKey;
-
-        for (let t of tokens) {
-            // Hit test using the *corrected* mouse position against token's stored map position (t.x, t.y)
-            const dx = pannedLogicalX - t.x;
-            const dy = pannedLogicalY - t.y;
-
-            if (dx*dx + dy*dy < 400) { // 20px radius hit check
-                if (isDeleteAttempt) {
-                    // Deletion is a single click action, not drag.
-                } else {
-                    draggedToken = t;
-                    screenContainer.classList.remove('crosshair');
-                    screenContainer.classList.add('grabbing');
-                    // Record start position for click/drag detection later
-                    lastPanX = e.clientX;
-                    lastPanY = e.clientY;
-                    return; // Stop here, token drag started
-                }
-            }
-        }
-    }
-
-    // 2. START PANNING if no token was hit OR if a delete-click was attempted
-    isPanning = true;
-    lastPanX = e.clientX;
-    lastPanY = e.clientY;
-    screenContainer.classList.add('grabbing');
-}
 
 function handleMouseUp(e) {
     screenContainer.classList.remove('grabbing');
