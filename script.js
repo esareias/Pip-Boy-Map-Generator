@@ -3694,7 +3694,7 @@ function drawSprite(ctx, type, x, y, size, time) {
         }
     }
 
-    else if (
+     else if (
         type === "campfire" ||
         type === "fire_barrel" ||
         type === "firebarrel"
