@@ -2781,11 +2781,8 @@ function createPixelPattern(colors, type) {
 }
 
 function drawSprite(ctx, type, x, y, size, time) {
- // Critical: Block negative/invalid sizes
-    if (!size || size <= 0 || !isFinite(size) || isNaN(size)) {
-        return;
-    }
-    if (size < 12) return;
+    size = Math.abs(size); // FORCE POSITIVE
+    if (size < 12) return; // Too small
     
     const cx = x + size/2;
     const cy = y + size/2;
