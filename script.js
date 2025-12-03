@@ -166,48 +166,40 @@ function activateAppUI() {
 
 function openGMTokenDeploy() {
     if (isClient) return; // Only host can deploy arbitrary tokens
-
+    
     const modal = document.getElementById('gmTokenDeployModal');
     const grid = document.getElementById('tokenGrid');
     grid.innerHTML = ''; // Clear existing list for GM spawn
-
-    // Create tabs for different categories
-    const tabContainer = document.createElement('div');
-    tabContainer.className = "flex gap-2 mb-4 border-b border-[var(--dim-color)]";
-
-    // Player tab
-    const playerTab = document.createElement('button');
-    playerTab.className = "pip-btn active-tab";
-    playerTab.innerText = "PLAYERS";
-    playerTab.onclick = () => showTokenCategory('players', grid, tabContainer);
-
-    // Enemy tabs
-    const enemyTabs = Object.keys(ENEMY_PRESETS).map(category => {
-        const tab = document.createElement('button');
-        tab.className = "pip-btn";
-        tab.innerText = category.toUpperCase();
-        tab.onclick = () => showTokenCategory(category, grid, tabContainer);
-        return tab;
+    
+    // Create category selector dropdown
+    const categorySelect = document.createElement('select');
+    categorySelect.className = "pip-input w-full mb-4";
+    categorySelect.id = "enemyCategorySelect";
+    
+    const options = [
+        { value: "players", text: "PLAYERS" },
+        { value: "ghouls", text: "GHOULS" },
+        { value: "custom", text: "CUSTOM" }
+    ];
+    
+    options.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.text;
+        categorySelect.appendChild(option);
     });
-
-    // Custom tab
-    const customTab = document.createElement('button');
-    customTab.className = "pip-btn";
-    customTab.innerText = "CUSTOM";
-    customTab.onclick = () => showTokenCategory('custom', grid, tabContainer);
-
-    tabContainer.appendChild(playerTab);
-    enemyTabs.forEach(tab => tabContainer.appendChild(tab));
-    tabContainer.appendChild(customTab);
-
-    // Insert tab container before the grid
-    modal.querySelector('.flex.flex-col').insertBefore(tabContainer, grid);
-
+    
+    grid.appendChild(categorySelect);
+    
+    // Event listener for category changes
+    categorySelect.onchange = () => showTokenCategory(categorySelect.value, grid);
+    
     // Show players by default
-    showTokenCategory('players', grid, tabContainer);
-
+    showTokenCategory('players', grid);
+    
     modal.style.display = 'flex';
 }
+
 
 
 
