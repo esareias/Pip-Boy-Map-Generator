@@ -211,12 +211,6 @@ function openGMTokenDeploy() {
 
 
 
-function spawnCustomToken() {
-    const name = document.getElementById('customName').value || "CUSTOM UNIT";
-    const url = document.getElementById('customUrl').value || "";
-    spawnToken(name, "#ffffff", url);
-}
-
 function showTokenCategory(category, grid, tabContainer) {
     // Update active tab styling
     Array.from(tabContainer.children).forEach(tab => {
@@ -349,7 +343,9 @@ function spawnCustomToken() {
     const name = document.getElementById('customName').value || "CUSTOM UNIT";
     const url = document.getElementById('customUrl').value || "";
     spawnToken(name, "#ffffff", url);
+    closeGMTokenDeploy();
 }
+
 // --- END TOKEN LOGIC ---
 
 
