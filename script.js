@@ -1082,6 +1082,7 @@ async function init() {
     }
 
     // --- UPDATED EVENT LISTENERS FOR PANNING ---
+        // --- UPDATED EVENT LISTENERS FOR PANNING ---
     screenContainer.addEventListener('mousedown', handleMouseDown);
     screenContainer.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
@@ -1093,12 +1094,20 @@ async function init() {
             sendChatMessage();
         }
     });
+    
+    // --- Zoom Slider Event Listener ---
+    const zoomSlider = document.getElementById('zoomSlider');
+    if (zoomSlider) {
+        zoomSlider.addEventListener('input', (e) => setZoomLevel(e.target.value));
+    }
     // ------------------------------------------
     
     updateHelperText();
     changeLevel(0);	
     generateCurrentLevel();	
     requestAnimationFrame(animate);
+
+
 
     // --- CHARACTER SELECTION GATE (Start flow) ---
     showLoginScreen();
