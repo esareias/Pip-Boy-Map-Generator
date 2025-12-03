@@ -209,12 +209,7 @@ function openGMTokenDeploy() {
     modal.style.display = 'flex';
 }
 
-function closeGMTokenDeploy() {
-    document.getElementById('gmTokenDeployModal').style.display = 'none';
-    // Clear inputs when closing
-    document.getElementById('customName').value = "";
-    document.getElementById('customUrl').value = "";
-}
+
 
 function spawnCustomToken() {
     const name = document.getElementById('customName').value || "CUSTOM UNIT";
