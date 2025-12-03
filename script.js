@@ -3387,7 +3387,8 @@ function drawCurrentLevel(time = 0) {
     
     // BEGIN SCALED RENDER
     ctx.save();
-    ctx.scale(RENDER_SCALE, RENDER_SCALE);
+    // Multiply the render scale by the current zoom level
+    ctx.scale(RENDER_SCALE * zoomLevel, RENDER_SCALE * zoomLevel); 
     
     // *** NEW: Apply Pan Offset to the map drawing coordinate system ***
     ctx.translate(mapOffsetX, mapOffsetY);
