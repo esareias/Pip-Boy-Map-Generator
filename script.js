@@ -1259,10 +1259,8 @@ function handleMouseMove(e) {
     const rawY = (e.clientY - rect.top) * scaleY;
 
     // Logical coords for flashlight (unscaled, un-offset)
-   // NEW (FIXED):
-const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
-const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
-
+    const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
+    const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
     
     // *** Panned Logical Coordinates for Map Interaction ***
     const pannedLogicalX = logicalMouseX - mapOffsetX;
@@ -1272,7 +1270,6 @@ const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
 
     // 1. HANDLE DRAGGING / PANNING
     if (draggedToken) {
-        // Token is dragged: position is calculated from current mouse, then corrected by pan offset
         draggedToken.x = pannedLogicalX;
         draggedToken.y = pannedLogicalY;
         screenContainer.classList.add('grabbing');
@@ -1283,25 +1280,20 @@ const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
         const dx = e.clientX - lastPanX;
         const dy = e.clientY - lastPanY;
         
-        mapOffsetX += dx / RENDER_SCALE; // Pan must be applied in logical canvas space
+        mapOffsetX += dx / RENDER_SCALE; 
         mapOffsetY += dy / RENDER_SCALE;
         
-     // --- Panning Constraint (Prevent map from disappearing entirely) ---
-// Account for zoom: when zoomed out, allow more panning
-const viewportWidth = config.width / zoomLevel;
-const viewportHeight = config.height / zoomLevel;
-
-// Allow panning 1/2 viewport beyond edges
-const maxOverhang = Math.max(viewportWidth, viewportHeight) / 2;
-
-const maxPanX = maxOverhang;
-const minPanX = -config.width + viewportWidth - maxOverhang;
-const maxPanY = maxOverhang;
-const minPanY = -config.height + viewportHeight - maxOverhang;
-
-mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
-mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
-
+        // Panning Constraint
+        const viewportWidth = config.width / zoomLevel;
+        const viewportHeight = config.height / zoomLevel;
+        const maxOverhang = Math.max(viewportWidth, viewportHeight) / 2;
+        const maxPanX = maxOverhang;
+        const minPanX = -config.width + viewportWidth - maxOverhang;
+        const maxPanY = maxOverhang;
+        const minPanY = -config.height + viewportHeight - maxOverhang;
+        
+        mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
+        mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
 
         lastPanX = e.clientX;
         lastPanY = e.clientY;
@@ -1310,7 +1302,7 @@ mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
         return;
     }
 
-    // 2. TOOLTIP CHECK (Uses pannedLogicalX/Y for hit testing)
+    // 2. TOOLTIP CHECK
     const data = (viewMode === 'interior') ? interiorData[currentInteriorKey] : floorData[currentLevelIndex];
     if (!data) return;
 
@@ -1341,13 +1333,14 @@ mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
         }
     }
     
-    // --- DECORATION/LABEL TOOLTIP (Checks near coordinates) ---
+    // --- DECORATION/LABEL TOOLTIP ---
     if (!hovering && data.labels) {
         for (let lbl of data.labels) {
             if (config.fogEnabled && !isLocationRevealed(data, Math.floor(lbl.x/config.gridSize), Math.floor(lbl.y/config.gridSize))) continue;
-            // Check panned logical mouse against un-panned label position (lbl.x, lbl.y)
+            
             if (Math.abs(pannedLogicalX - lbl.x) < 40 && Math.abs(pannedLogicalY - lbl.y) < 15) {
-                if (isEnterable(lbl.text)) {
+                // *** FIX: Only show ENTER tooltip if we are in Sector mode ***
+                if (viewMode === 'sector' && isEnterable(lbl.text)) {
                     tooltip.style.display = 'block';
                     tooltip.style.left = (e.clientX + 15) + 'px';
                     tooltip.style.top = (e.clientY + 15) + 'px';
@@ -1375,13 +1368,12 @@ mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
         hovering = true;
     }
 
-    // 3. TOKEN DELETE HOVER HINT (GM ONLY)
+    // 3. TOKEN DELETE HINT
     if (!hovering && !isClient && (e.altKey || e.ctrlKey || e.metaKey)) {
         for (let t of tokens) {
-             // Hit test using the *corrected* mouse position against token's stored map position (t.x, t.y)
              const dx = pannedLogicalX - t.x;
              const dy = pannedLogicalY - t.y;
-             if (dx*dx + dy*dy < 400) { // 20px radius hit check
+             if (dx*dx + dy*dy < 400) {
                  tooltip.style.display = 'block';
                  tooltip.style.left = (e.clientX + 15) + 'px';
                  tooltip.style.top = (e.clientY + 15) + 'px';
@@ -1392,7 +1384,6 @@ mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
             }
         }
     }
-
 
     if (!hovering) { tooltip.style.display = 'none'; screenContainer.classList.remove('crosshair'); }
 }
@@ -3755,7 +3746,6 @@ function drawCurrentLevel(time = 0) {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         
-        // Use the exact same font scaling as tokens
         const fontSize = 14 * RENDER_SCALE * zoomLevel;
         ctx.font = `bold ${fontSize}px monospace`;
         ctx.lineWidth = 4 * zoomLevel;
@@ -3768,17 +3758,30 @@ function drawCurrentLevel(time = 0) {
             if (config.fogEnabled && !isLocationRevealed(data, gx, gy)) continue;
             if (!lbl.visible) continue;
 
-            // 2. Calculate Position (Same math as Tokens)
+            // 2. Calculate Position
             const lx = (lbl.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
             const ly = (lbl.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
 
-            // 3. Draw Black Outline (Stroke)
-            ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-            ctx.strokeText(lbl.text, lx, ly);
-
-            // 4. Draw White Text (Fill)
+            // 3. Determine Style (Pulse if Enterable in Sector Mode)
             const isInteractive = viewMode === 'sector' && isEnterable(lbl.text);
-            ctx.fillStyle = isInteractive ? '#e0f2fe' : '#ffffff'; 
+
+            if (isInteractive) {
+                // GREEN PULSE EFFECT
+                const pulse = (Math.sin(time / 200) + 1) / 2; // Oscillates 0.0 to 1.0
+                const alpha = 0.5 + (pulse * 0.5); // Oscillates 0.5 to 1.0
+                
+                // Pulsing Green Outline
+                ctx.strokeStyle = `rgba(34, 197, 94, ${alpha})`; 
+                // Bright Green-White Text
+                ctx.fillStyle = '#f0fdf4'; 
+            } else {
+                // STANDARD STYLE (Black Outline, White Text)
+                ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+                ctx.fillStyle = '#ffffff';
+            }
+
+            // Draw
+            ctx.strokeText(lbl.text, lx, ly);
             ctx.fillText(lbl.text, lx, ly);
         }
     }
