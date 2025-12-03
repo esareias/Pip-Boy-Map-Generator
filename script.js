@@ -3745,35 +3745,43 @@ function drawCurrentLevel(time = 0) {
     ctx.globalCompositeOperation = 'source-over';
     drawCRTEffects(ctx, config.width, config.height);
 
-    if (config.showLabels) {
-        ctx.font = "bold 18px 'VT323', monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";	
-        for (let lbl of data.labels) {
-            if (config.fogEnabled && !isLocationRevealed(data, Math.floor(lbl.x/config.gridSize), Math.floor(lbl.y/config.gridSize))) continue;
-            if (!lbl.visible) continue;
-            const txtW = ctx.measureText(lbl.text).width + 12; const txtH = 24;	
-            // Label coordinates (lbl.x, lbl.y) are now relative to the translated context
-            const lx = lbl.x; const ly = lbl.y;	
-            
-            ctx.fillStyle = 'rgba(0,0,0,0.95)';	
-            ctx.fillRect(lx - txtW/2, ly - txtH/2, txtW, txtH);
-            
-            const isInteractive = viewMode === 'sector' && isEnterable(lbl.text);
-            ctx.strokeStyle = isInteractive ? '#3b82f6' : '#64748b';	
-            ctx.lineWidth = 1;	
-            
-            // Chromatic Aberration
-            const offsets = [{x:-1, c:'rgba(255,0,0,0.7)'}, {x:1, c:'rgba(0,255,255,0.7)'}, {x:0, c: isInteractive ? '#93c5fd' : '#e2e8f0'}];
-            for(let o of offsets) {
-                ctx.fillStyle = o.c;
-                ctx.fillText(lbl.text, lx + o.x, ly);
-            }
-            ctx.strokeRect(lx - txtW/2, ly - txtH/2, txtW, txtH);
-        }
-    }
+   
     
     ctx.restore(); // Restore from scaled/translated map context
     ctx.save(); // Save again for UI overlay
-    
+
+    // --- DRAW LABELS (MOVED TO UI LAYER) ---
+    if (config.showLabels) {
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        
+        // Use the exact same font scaling as tokens
+        const fontSize = 14 * RENDER_SCALE * zoomLevel;
+        ctx.font = `bold ${fontSize}px monospace`;
+        ctx.lineWidth = 4 * zoomLevel;
+        ctx.lineJoin = 'round';
+
+        for (let lbl of data.labels) {
+            // 1. Fog of War Check
+            const gx = Math.floor(lbl.x / config.gridSize);
+            const gy = Math.floor(lbl.y / config.gridSize);
+            if (config.fogEnabled && !isLocationRevealed(data, gx, gy)) continue;
+            if (!lbl.visible) continue;
+
+            // 2. Calculate Position (Same math as Tokens)
+            const lx = (lbl.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
+            const ly = (lbl.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
+
+            // 3. Draw Black Outline (Stroke)
+            ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+            ctx.strokeText(lbl.text, lx, ly);
+
+            // 4. Draw White Text (Fill)
+            const isInteractive = viewMode === 'sector' && isEnterable(lbl.text);
+            ctx.fillStyle = isInteractive ? '#e0f2fe' : '#ffffff'; 
+            ctx.fillText(lbl.text, lx, ly);
+        }
+    }
     // --- DRAW TOKENS --- (Tokens are drawn in a new, un-translated context)
     
     // --- DRAW TOKENS ---
