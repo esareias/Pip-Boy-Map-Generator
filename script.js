@@ -61,6 +61,19 @@ let isClient = false; // If true, disable generation controls
 // --- TOKEN LOGIC & PRESETS (Used for Selection and GM Deploy) ---
 const OVERSEER_TOKEN_ID = "OVERSEER";
 
+// --- ENEMY/NPC PRESETS (NEW) ---
+const ENEMY_PRESETS = {
+    "Ghouls": [
+        { name: "Feral Ghoul", color: "#9ca3af", src: "https://upload.wikimedia.org/wikipedia/en/8/86/FeralGhoul.png" },
+        { name: "Feral Ghoul Roamer", color: "#6b7280", src: "https://images.fallout.wiki/6/6c/Ghoul_Roamer.png" },
+        { name: "Glowing One", color: "#84cc16", src: "https://images.fallout.wiki/d/d8/Glowing_One_Render.png" }
+    ]
+};
+
+// Track spawn counts for automatic numbering
+let enemySpawnCounts = {};
+
+
 const TOKEN_PRESETS = [
     // SPECIAL: OVERSEER Token (Uses user provided image)
     { name: OVERSEER_TOKEN_ID, color: "#16ff60", src: "https://i.redd.it/oaoxjcgfbnwc1.jpeg", isHostTrigger: true },
@@ -158,19 +171,41 @@ function openGMTokenDeploy() {
     const grid = document.getElementById('tokenGrid');
     grid.innerHTML = ''; // Clear existing list for GM spawn
 
-    // Filter out the OVERSEER token from the deployment list
-    TOKEN_PRESETS.filter(p => !p.isHostTrigger).forEach(p => {
-        const div = document.createElement('div');
-        div.className = "border border-[var(--dim-color)] p-2 flex flex-col items-center cursor-pointer hover:bg-[var(--dim-color)] transition-colors";
-        div.innerHTML = `
-            <img src="${p.src}" onerror="this.onerror=null; this.src='https://placehold.co/48x48/1e293b/a8a29e?text=?'" class="w-12 h-12 rounded-full border-2 border-[${p.color}] mb-2 bg-black/50 object-cover">
-            <span class="text-xs tracking-widest">${p.name}</span>
-        `;
-        // GM button spawns a new token object to the map (using the existing logic)
-        div.onclick = () => spawnToken(p.name, p.color, p.src); 
-        grid.appendChild(div);
+    // Create tabs for different categories
+    const tabContainer = document.createElement('div');
+    tabContainer.className = "flex gap-2 mb-4 border-b border-[var(--dim-color)]";
+
+    // Player tab
+    const playerTab = document.createElement('button');
+    playerTab.className = "pip-btn active-tab";
+    playerTab.innerText = "PLAYERS";
+    playerTab.onclick = () => showTokenCategory('players', grid, tabContainer);
+
+    // Enemy tabs
+    const enemyTabs = Object.keys(ENEMY_PRESETS).map(category => {
+        const tab = document.createElement('button');
+        tab.className = "pip-btn";
+        tab.innerText = category.toUpperCase();
+        tab.onclick = () => showTokenCategory(category, grid, tabContainer);
+        return tab;
     });
-    
+
+    // Custom tab
+    const customTab = document.createElement('button');
+    customTab.className = "pip-btn";
+    customTab.innerText = "CUSTOM";
+    customTab.onclick = () => showTokenCategory('custom', grid, tabContainer);
+
+    tabContainer.appendChild(playerTab);
+    enemyTabs.forEach(tab => tabContainer.appendChild(tab));
+    tabContainer.appendChild(customTab);
+
+    // Insert tab container before the grid
+    modal.querySelector('.flex.flex-col').insertBefore(tabContainer, grid);
+
+    // Show players by default
+    showTokenCategory('players', grid, tabContainer);
+
     modal.style.display = 'flex';
 }
 
@@ -187,15 +222,95 @@ function spawnCustomToken() {
     spawnToken(name, "#ffffff", url);
 }
 
-function spawnToken(name, color, src) {
+function showTokenCategory(category, grid, tabContainer) {
+    // Update active tab styling
+    Array.from(tabContainer.children).forEach(tab => {
+        tab.classList.remove('active-tab');
+        if (tab.innerText.toLowerCase() === category.toLowerCase() || 
+            (category === 'players' && tab.innerText === 'PLAYERS')) {
+            tab.classList.add('active-tab');
+        }
+    });
+
+    grid.innerHTML = ''; // Clear grid
+
+    if (category === 'players') {
+        // Show player tokens (filter out OVERSEER)
+        TOKEN_PRESETS.filter(p => !p.isHostTrigger).forEach(p => {
+            const div = document.createElement('div');
+            div.className = "border border-[var(--dim-color)] p-2 flex flex-col items-center cursor-pointer hover:bg-[var(--dim-color)] transition-colors";
+            div.innerHTML = `
+                <img src="${p.src}" onerror="this.onerror=null; this.src='https://placehold.co/48x48/1e293b/a8a29e?text=?'" class="w-12 h-12 rounded-full border-2 border-[var(--dim-color)] mb-2">
+                <span class="text-xs text-center">${p.name}</span>
+            `;
+            div.onclick = () => spawnToken(p.name, p.color, p.src);
+            grid.appendChild(div);
+        });
+    } else if (category === 'custom') {
+        // Show custom token input
+        const customDiv = document.createElement('div');
+        customDiv.className = "col-span-full p-4 border border-[var(--dim-color)]";
+        customDiv.innerHTML = `
+            <label class="block mb-2 text-sm">UNIT NAME:</label>
+            <input type="text" id="customName" class="pip-input mb-3" placeholder="CUSTOM UNIT">
+            <label class="block mb-2 text-sm">IMAGE URL:</label>
+            <input type="text" id="customUrl" class="pip-input mb-3" placeholder="https://...">
+            <button onclick="spawnCustomToken()" class="pip-btn w-full">[ DEPLOY CUSTOM ]</button>
+        `;
+        grid.appendChild(customDiv);
+    } else if (ENEMY_PRESETS[category]) {
+        // Show enemies with spawn quantity input
+        ENEMY_PRESETS[category].forEach(enemy => {
+            const div = document.createElement('div');
+            div.className = "border border-[var(--dim-color)] p-2 flex flex-col items-center";
+            div.innerHTML = `
+                <img src="${enemy.src}" onerror="this.onerror=null; this.src='https://placehold.co/48x48/1e293b/a8a29e?text=?'" class="w-12 h-12 rounded-full border-2 border-[var(--dim-color)] mb-2">
+                <span class="text-xs text-center mb-2">${enemy.name}</span>
+                <div class="flex items-center gap-2 w-full">
+                    <input type="number" id="spawn-count-${enemy.name.replace(/\s+/g, '-')}" class="pip-input text-center w-16" value="1" min="1" max="20">
+                    <button onclick="spawnMultipleEnemies('${enemy.name}', '${enemy.color}', '${enemy.src}')" class="pip-btn flex-1 text-xs">SPAWN</button>
+                </div>
+            `;
+            grid.appendChild(div);
+        });
+    }
+}
+
+function spawnMultipleEnemies(baseName, color, src) {
+    const inputId = `spawn-count-${baseName.replace(/\s+/g, '-')}`;
+    const count = parseInt(document.getElementById(inputId)?.value || 1);
+
+    // Initialize spawn counter for this enemy type if it doesn't exist
+    if (!enemySpawnCounts[baseName]) {
+        enemySpawnCounts[baseName] = 0;
+    }
+
+    for (let i = 0; i < count; i++) {
+        enemySpawnCounts[baseName]++;
+        const numberedName = `${baseName} ${enemySpawnCounts[baseName]}`;
+
+        // Spawn with slight offset so they don't all stack on top of each other
+        const offsetX = (i % 5) * 30 - 60; // Arrange in a grid pattern
+        const offsetY = Math.floor(i / 5) * 30 - 30;
+
+        spawnTokenAtPosition(numberedName, color, src, 
+            config.width / 2 + offsetX, 
+            config.height / 2 + offsetY
+        );
+    }
+
+    log(`SPAWNED ${count}x ${baseName}`, color);
+}
+
+function spawnTokenAtPosition(name, color, src, x, y) {
     const t = {
-        id: Date.now(),
-        x: config.width / 2,
-        y: config.height / 2,
+        id: Date.now() + Math.random(), // Ensure unique ID when spawning multiple at once
+        x: x,
+        y: y,
         label: name,
         color: color,
-        src: src || "", // Save URL string for networking
-        img: null // Actual Image object (created below)
+        src: src || "",
+        img: null
     };
 
     // Pre-load image if URL exists
@@ -203,27 +318,42 @@ function spawnToken(name, color, src) {
         const img = new Image();
         img.onload = () => {
             t.img = img;
-            // Force a redraw once image is loaded
             drawCurrentLevel();
             if (typeof syncData === "function") syncData();
         };
-        // Fallback image if URL is broken
         img.onerror = () => {
             t.img = null;
             t.color = "#ef4444";
             if (typeof log === "function") log(`WARN: FAILED TO LOAD IMAGE for ${name}. Reverting to default marker.`, "#ef4444");
         };
         img.src = src;
-        t.img = img; // Assign immediately, it will be null until loaded/error
+        t.img = img;
     }
 
     tokens.push(t);
     if (typeof syncData === "function") syncData();
-    
-    // Use the correct closing function name
-    closeGMTokenDeploy(); 
-    
     if (typeof log === "function") log(`UNIT DEPLOYED: ${name}`, color);
+}
+
+// Modified original spawnToken to use the new function
+function spawnToken(name, color, src) {
+    spawnTokenAtPosition(name, color, src, config.width / 2, config.height / 2);
+    closeGMTokenDeploy();
+}
+
+function closeGMTokenDeploy() {
+    document.getElementById('gmTokenDeployModal').style.display = 'none';
+    // Clear inputs when closing
+    const customName = document.getElementById('customName');
+    const customUrl = document.getElementById('customUrl');
+    if (customName) customName.value = "";
+    if (customUrl) customUrl.value = "";
+}
+
+function spawnCustomToken() {
+    const name = document.getElementById('customName').value || "CUSTOM UNIT";
+    const url = document.getElementById('customUrl').value || "";
+    spawnToken(name, "#ffffff", url);
 }
 // --- END TOKEN LOGIC ---
 
