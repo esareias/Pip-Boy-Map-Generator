@@ -212,20 +212,26 @@ function showTokenCategory(category, grid) {
             grid.appendChild(div);
         });
     } else if (category === 'ghouls') {
-        ENEMY_PRESETS["Ghouls"].forEach(enemy => {
-            const div = document.createElement('div');
-            div.className = "border border-[var(--dim-color)] p-3 flex flex-col items-center";
-            div.innerHTML = `
-                <img src="${enemy.src}" onerror="this.onerror=null; this.src='https://placehold.co/48x48/1e293b/a8a29e?text=?'" class="w-12 h-12 rounded-full border-2 border-[var(--dim-color)] mb-2">
-                <span class="text-xs text-center mb-2">${enemy.name}</span>
-                <div class="flex items-center gap-2 w-full">
-                    <input type="number" id="count-${enemy.name.replace(/\\s+/g, '-')}" class="pip-input text-center w-16" value="1" min="1" max="20">
-                    <button onclick="spawnMultipleEnemies('${enemy.name}', '${enemy.color}', '${enemy.src}')" class="pip-btn flex-1 text-xs">[SPAWN]</button>
-                </div>
-            `;
-            grid.appendChild(div);
-        });
-    } else if (category === 'custom') {
+    ENEMY_PRESETS["Ghouls"].forEach(enemy => {
+        const div = document.createElement('div');
+        div.className = "border border-[var(--dim-color)] p-3 flex flex-col items-center";
+        div.innerHTML = `
+            <img src="${enemy.src}" onerror="this.onerror=null; this.src='https://placehold.co/48x48/1e293b/a8a29e?text=?'" class="w-12 h-12 rounded-full border-2 border-[var(--dim-color)] mb-2">
+            <span class="text-xs text-center mb-2">${enemy.name}</span>
+            <div class="flex items-center gap-2 w-full">
+                <input type="number" id="count-${enemy.name.replace(/\s+/g, '-')}" class="pip-input text-center w-16" value="1" min="1" max="20">
+                <button class="pip-btn flex-1 text-xs">[SPAWN]</button>
+            </div>
+        `;
+        
+        // FIX: Proper event binding
+        const spawnBtn = div.querySelector('button');
+        spawnBtn.onclick = () => spawnMultipleEnemies(enemy.name, enemy.color, enemy.src);
+        
+        grid.appendChild(div);
+    });
+}
+ else if (category === 'custom') {
         const div = document.createElement('div');
         div.className = "col-span-full p-4 border border-[var(--dim-color)]";
         div.innerHTML = `
