@@ -1116,7 +1116,7 @@ async function init() {
 
 
 function zoomIn() {
-    if (zoomLevel < MAX_ZOOM) {
+    if (zoomLevel < MAXZOOM) {
         zoomLevel += 0.25;
         updateZoomDisplay();
         drawCurrentLevel();
@@ -1124,12 +1124,13 @@ function zoomIn() {
 }
 
 function zoomOut() {
-    if (zoomLevel > MIN_ZOOM) {
+    if (zoomLevel > MINZOOM) {
         zoomLevel -= 0.25;
         updateZoomDisplay();
         drawCurrentLevel();
     }
 }
+
 
 function setZoomLevel(value) {
     zoomLevel = parseFloat(value);
