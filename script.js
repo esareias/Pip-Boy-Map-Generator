@@ -3776,27 +3776,35 @@ function drawCurrentLevel(time = 0) {
     
     // --- DRAW TOKENS --- (Tokens are drawn in a new, un-translated context)
     
+    // --- DRAW TOKENS ---
     for (let t of tokens) {
-        // Token position (t.x, t.y) is in LOGICAL map space.	
-        // We apply the map offset before scaling to position them correctly on the screen.
-        const tx = (t.x + mapOffsetX) * RENDER_SCALE * zoomLevel; // Added * zoomLevel
-        const ty = (t.y + mapOffsetY) * RENDER_SCALE * zoomLevel; // Added * zoomLevel
-        const tokenRadius = 15 * RENDER_SCALE * zoomLevel;         // Added * zoomLevel
+        // 1. Apply Zoom to Position & Radius so they match the map scale
+        const tx = (t.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
+        const ty = (t.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
+        const tokenRadius = 15 * RENDER_SCALE * zoomLevel;
         
         if (t.img && t.img.complete) {
-            // Draw Image Token (if available)
             const imgSize = tokenRadius * 2;
-            ctx.drawImage(t.img, tx - tokenRadius, ty - tokenRadius, imgSize, imgSize);
 
-            // Add color ring/border for visibility
+            // --- A. CIRCULAR CROPPING ---
+            ctx.save(); // Start isolation
+            ctx.beginPath();
+            ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2); // Define the circle
+            ctx.clip(); // <--- THIS IS THE MAGIC: Cut everything outside the circle
+            
+            // Draw the image (corners will be cut off by the clip)
+            ctx.drawImage(t.img, tx - tokenRadius, ty - tokenRadius, imgSize, imgSize);
+            ctx.restore(); // End isolation (stop clipping)
+
+            // --- B. BORDER RING ---
             ctx.strokeStyle = t.color;
-            ctx.lineWidth = 2 * RENDER_SCALE * zoomLevel;
+            ctx.lineWidth = 3 * RENDER_SCALE * zoomLevel; // Thicker border that scales
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2);
             ctx.stroke();
 
         } else {
-            // Draw default dot/disc
+            // Draw default dot/disc (Fallback if no image)
             ctx.fillStyle = t.color;
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius * 0.8, 0, Math.PI*2);
@@ -3810,12 +3818,25 @@ function drawCurrentLevel(time = 0) {
             ctx.stroke();
         }
 
-        // Draw Label
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold ${16 * RENDER_SCALE * zoomLevel}px monospace';
+        // --- C. LEGIBLE LABEL ---
         ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(t.label, tx, ty + tokenRadius + 4 * RENDER_SCALE * zoomLevel); // Label below token
+        ctx.textBaseline = "top"; // Draw from top down so it hangs below token
+        
+        // Scale font size with zoom so it stays readable!
+        const fontSize = 14 * RENDER_SCALE * zoomLevel; 
+        ctx.font = `bold ${fontSize}px monospace`;
+
+        const labelY = ty + tokenRadius + (5 * zoomLevel); // Padding below token
+
+        // 1. Draw black outline (stroke) to make it pop against grid
+        ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+        ctx.lineWidth = 4 * zoomLevel;
+        ctx.lineJoin = 'round'; // Smooth corners on text outline
+        ctx.strokeText(t.label, tx, labelY);
+
+        // 2. Draw white text on top
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(t.label, tx, labelY);
     }
     
     // Restore the UI overlay context
