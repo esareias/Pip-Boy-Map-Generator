@@ -237,31 +237,7 @@ function showTokenCategory(category, grid) {
     }
 }
 
-function spawnMultipleEnemies(baseName, color, src) {
-    const inputId = `count-${baseName.replace(/\s+/g, '-')}`;
-    const count = parseInt(document.getElementById(inputId)?.value || 1);
-    
-    if (!enemySpawnCounts[baseName]) {
-        enemySpawnCounts[baseName] = 0;
-    }
-    
-    for (let i = 0; i < count; i++) {
-        enemySpawnCounts[baseName]++;
-        const numberedName = `${baseName} ${enemySpawnCounts[baseName]}`;
-        
-        // Grid positioning to avoid stacking
-        const offsetX = (i % 5) * 30 - 60;
-        const offsetY = Math.floor(i / 5) * 30 - 30;
-        
-        spawnTokenAtPosition(numberedName, color, src, 
-            config.width / 2 + offsetX, 
-            config.height / 2 + offsetY
-        );
-    }
-    
-    closeGMTokenDeploy();
-    log(`SPAWNED ${count}x ${baseName}`, color);
-}
+
 
 function spawnTokenAtPosition(name, color, src, x, y) {
     const t = {
@@ -297,30 +273,30 @@ function spawnTokenAtPosition(name, color, src, x, y) {
 
 
 function spawnMultipleEnemies(baseName, color, src) {
-    const inputId = `spawn-count-${baseName.replace(/\s+/g, '-')}`;
+    const inputId = `count-${baseName.replace(/\s+/g, '-')}`;
     const count = parseInt(document.getElementById(inputId)?.value || 1);
-
-    // Initialize spawn counter for this enemy type if it doesn't exist
+    
     if (!enemySpawnCounts[baseName]) {
         enemySpawnCounts[baseName] = 0;
     }
-
+    
     for (let i = 0; i < count; i++) {
         enemySpawnCounts[baseName]++;
         const numberedName = `${baseName} ${enemySpawnCounts[baseName]}`;
-
-        // Spawn with slight offset so they don't all stack on top of each other
-        const offsetX = (i % 5) * 30 - 60; // Arrange in a grid pattern
+        
+        const offsetX = (i % 5) * 30 - 60;
         const offsetY = Math.floor(i / 5) * 30 - 30;
-
+        
         spawnTokenAtPosition(numberedName, color, src, 
             config.width / 2 + offsetX, 
             config.height / 2 + offsetY
         );
     }
-
+    
+    closeGMTokenDeploy();
     log(`SPAWNED ${count}x ${baseName}`, color);
 }
+
 
 function spawnTokenAtPosition(name, color, src, x, y) {
     const t = {
