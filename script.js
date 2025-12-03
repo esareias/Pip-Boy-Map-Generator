@@ -239,37 +239,7 @@ function showTokenCategory(category, grid) {
 
 
 
-function spawnTokenAtPosition(name, color, src, x, y) {
-    const t = {
-        id: Date.now() + Math.random(),
-        x: x,
-        y: y,
-        label: name,
-        color: color,
-        src: src || "",
-        img: null
-    };
 
-    if (src) {
-        const img = new Image();
-        img.onload = () => {
-            t.img = img;
-            drawCurrentLevel();
-            if (typeof syncData === "function") syncData();
-        };
-        img.onerror = () => {
-            t.img = null;
-            t.color = "#ef4444";
-            log(`Image failed for ${name}`, "#ef4444");
-        };
-        img.src = src;
-        t.img = img;
-    }
-
-    tokens.push(t);
-    if (typeof syncData === "function") syncData();
-    log(`Spawned: ${name}`, color);
-}
 
 
 function spawnMultipleEnemies(baseName, color, src) {
@@ -300,7 +270,7 @@ function spawnMultipleEnemies(baseName, color, src) {
 
 function spawnTokenAtPosition(name, color, src, x, y) {
     const t = {
-        id: Date.now() + Math.random(), // Ensure unique ID when spawning multiple at once
+        id: Date.now() + Math.random(),
         x: x,
         y: y,
         label: name,
@@ -309,7 +279,6 @@ function spawnTokenAtPosition(name, color, src, x, y) {
         img: null
     };
 
-    // Pre-load image if URL exists
     if (src) {
         const img = new Image();
         img.onload = () => {
@@ -320,7 +289,7 @@ function spawnTokenAtPosition(name, color, src, x, y) {
         img.onerror = () => {
             t.img = null;
             t.color = "#ef4444";
-            if (typeof log === "function") log(`WARN: FAILED TO LOAD IMAGE for ${name}. Reverting to default marker.`, "#ef4444");
+            log(`Image failed for ${name}`, "#ef4444");
         };
         img.src = src;
         t.img = img;
@@ -328,7 +297,7 @@ function spawnTokenAtPosition(name, color, src, x, y) {
 
     tokens.push(t);
     if (typeof syncData === "function") syncData();
-    if (typeof log === "function") log(`UNIT DEPLOYED: ${name}`, color);
+    log(`Spawned: ${name}`, color);
 }
 
 // Modified original spawnToken to use the new function
