@@ -210,7 +210,7 @@ function showTokenCategory(category, grid) {
             grid.appendChild(div);
         });
     } else if (category === 'ghouls') {
-        ENEMY_PRESETS.Ghouls.forEach(enemy => {
+        ENEMY_PRESETS["Ghouls"].forEach(enemy => {
             const div = document.createElement('div');
             div.className = "border border-[var(--dim-color)] p-3 flex flex-col items-center";
             div.innerHTML = `
@@ -235,6 +235,64 @@ function showTokenCategory(category, grid) {
         `;
         grid.appendChild(div);
     }
+}
+
+function spawnMultipleEnemies(baseName, color, src) {
+    const inputId = `count-${baseName.replace(/\s+/g, '-')}`;
+    const count = parseInt(document.getElementById(inputId)?.value || 1);
+    
+    if (!enemySpawnCounts[baseName]) {
+        enemySpawnCounts[baseName] = 0;
+    }
+    
+    for (let i = 0; i < count; i++) {
+        enemySpawnCounts[baseName]++;
+        const numberedName = `${baseName} ${enemySpawnCounts[baseName]}`;
+        
+        // Grid positioning to avoid stacking
+        const offsetX = (i % 5) * 30 - 60;
+        const offsetY = Math.floor(i / 5) * 30 - 30;
+        
+        spawnTokenAtPosition(numberedName, color, src, 
+            config.width / 2 + offsetX, 
+            config.height / 2 + offsetY
+        );
+    }
+    
+    closeGMTokenDeploy();
+    log(`SPAWNED ${count}x ${baseName}`, color);
+}
+
+function spawnTokenAtPosition(name, color, src, x, y) {
+    const t = {
+        id: Date.now() + Math.random(),
+        x: x,
+        y: y,
+        label: name,
+        color: color,
+        src: src || "",
+        img: null
+    };
+
+    if (src) {
+        const img = new Image();
+        img.onload = () => {
+            t.img = img;
+            drawCurrentLevel();
+            if (typeof syncData === "function") syncData();
+        };
+        img.onerror = () => {
+            t.img = null;
+            t.color = "#ef4444";
+            log(`Image failed for ${name}`, "#ef4444");
+        };
+        img.src = src;
+        t.img = img;
+    }
+
+    tokens.push(t);
+    if (typeof syncData === "function") syncData();
+    log(`Spawned: ${name}`, color);
 }
 
 
