@@ -61,17 +61,7 @@ let isClient = false; // If true, disable generation controls
 // --- TOKEN LOGIC & PRESETS (Used for Selection and GM Deploy) ---
 const OVERSEER_TOKEN_ID = "OVERSEER";
 
-// --- ENEMY/NPC PRESETS (NEW) ---
-const ENEMY_PRESETS = {
-    "Ghouls": [
-        { name: "Feral Ghoul", color: "#9ca3af", src: "https://upload.wikimedia.org/wikipedia/en/8/86/FeralGhoul.png" },
-        { name: "Feral Ghoul Roamer", color: "#6b7280", src: "https://images.fallout.wiki/6/6c/Ghoul_Roamer.png" },
-        { name: "Glowing One", color: "#84cc16", src: "https://images.fallout.wiki/d/d8/Glowing_One_Render.png" }
-    ]
-};
 
-// Track spawn counts for automatic numbering
-let enemySpawnCounts = {};
 
 
 const TOKEN_PRESETS = [
@@ -163,6 +153,18 @@ function activateAppUI() {
 
 // --- END: Character Selection/Login Flow ---
 
+
+// --- ENEMY/NPC PRESETS (NEW) ---
+const ENEMY_PRESETS = {
+    "Ghouls": [
+        { name: "Feral Ghoul", color: "#9ca3af", src: "https://upload.wikimedia.org/wikipedia/en/8/86/FeralGhoul.png" },
+        { name: "Feral Ghoul Roamer", color: "#6b7280", src: "https://images.fallout.wiki/6/6c/Ghoul_Roamer.png" },
+        { name: "Glowing One", color: "#84cc16", src: "https://images.fallout.wiki/d/d8/Glowing_One_Render.png" }
+    ]
+};
+
+// Track spawn counts for automatic numbering
+let enemySpawnCounts = {};
 
 function openGMTokenDeploy() {
     if (isClient) return;
@@ -306,6 +308,13 @@ function spawnToken(name, color, src) {
     closeGMTokenDeploy();
 }
 
+function spawnCustomToken() {
+    const name = document.getElementById('customName').value || "CUSTOM UNIT";
+    const url = document.getElementById('customUrl').value || "";
+    spawnToken(name, "#ffffff", url);
+    closeGMTokenDeploy();
+}
+
 function closeGMTokenDeploy() {
     document.getElementById('gmTokenDeployModal').style.display = 'none';
     // Clear inputs when closing
@@ -315,12 +324,7 @@ function closeGMTokenDeploy() {
     if (customUrl) customUrl.value = "";
 }
 
-function spawnCustomToken() {
-    const name = document.getElementById('customName').value || "CUSTOM UNIT";
-    const url = document.getElementById('customUrl').value || "";
-    spawnToken(name, "#ffffff", url);
-    closeGMTokenDeploy();
-}
+
 
 // --- END TOKEN LOGIC ---
 
