@@ -165,97 +165,78 @@ function activateAppUI() {
 
 
 function openGMTokenDeploy() {
-    if (isClient) return; // Only host can deploy arbitrary tokens
+    if (isClient) return;
     
     const modal = document.getElementById('gmTokenDeployModal');
     const grid = document.getElementById('tokenGrid');
-    grid.innerHTML = ''; // Clear existing list for GM spawn
+    grid.innerHTML = '';
     
-    // Create category selector dropdown
-    const categorySelect = document.createElement('select');
-    categorySelect.className = "pip-input w-full mb-4";
-    categorySelect.id = "enemyCategorySelect";
+    // Category dropdown
+    const select = document.createElement('select');
+    select.className = "pip-input w-full mb-4";
+    select.innerHTML = `
+        <option value="players">PLAYERS</option>
+        <option value="ghouls">GHOULS</option>
+        <option value="custom">CUSTOM</option>
+    `;
+    select.onchange = () => showTokenCategory(select.value, grid);
+    grid.appendChild(select);
     
-    const options = [
-        { value: "players", text: "PLAYERS" },
-        { value: "ghouls", text: "GHOULS" },
-        { value: "custom", text: "CUSTOM" }
-    ];
-    
-    options.forEach(opt => {
-        const option = document.createElement('option');
-        option.value = opt.value;
-        option.textContent = opt.text;
-        categorySelect.appendChild(option);
-    });
-    
-    grid.appendChild(categorySelect);
-    
-    // Event listener for category changes
-    categorySelect.onchange = () => showTokenCategory(categorySelect.value, grid);
-    
-    // Show players by default
     showTokenCategory('players', grid);
-    
     modal.style.display = 'flex';
 }
 
-
-
-
-function showTokenCategory(category, grid, tabContainer) {
-    // Update active tab styling
-    Array.from(tabContainer.children).forEach(tab => {
-        tab.classList.remove('active-tab');
-        if (tab.innerText.toLowerCase() === category.toLowerCase() || 
-            (category === 'players' && tab.innerText === 'PLAYERS')) {
-            tab.classList.add('active-tab');
-        }
-    });
-
-    grid.innerHTML = ''; // Clear grid
-
+function showTokenCategory(category, grid) {
+    grid.innerHTML = ''; // Clear everything including the select
+    
+    // Re-add category selector
+    const select = document.createElement('select');
+    select.className = "pip-input w-full mb-4";
+    select.innerHTML = `
+        <option value="players">PLAYERS</option>
+        <option value="ghouls">GHOULS</option>
+        <option value="custom">CUSTOM</option>
+    `;
+    select.value = category;
+    select.onchange = () => showTokenCategory(select.value, grid);
+    grid.appendChild(select);
+    
     if (category === 'players') {
-        // Show player tokens (filter out OVERSEER)
         TOKEN_PRESETS.filter(p => !p.isHostTrigger).forEach(p => {
             const div = document.createElement('div');
             div.className = "border border-[var(--dim-color)] p-2 flex flex-col items-center cursor-pointer hover:bg-[var(--dim-color)] transition-colors";
-            div.innerHTML = `
-                <img src="${p.src}" onerror="this.onerror=null; this.src='https://placehold.co/48x48/1e293b/a8a29e?text=?'" class="w-12 h-12 rounded-full border-2 border-[var(--dim-color)] mb-2">
-                <span class="text-xs text-center">${p.name}</span>
-            `;
+            div.innerHTML = `<img src="${p.src}" onerror="this.onerror=null; this.src='https://placehold.co/48x48/1e293b/a8a29e?text=?'" class="w-12 h-12 rounded-full border-2 border-[var(--dim-color)] mb-2"><span class="text-xs">${p.name}</span>`;
             div.onclick = () => spawnToken(p.name, p.color, p.src);
             grid.appendChild(div);
         });
-    } else if (category === 'custom') {
-        // Show custom token input
-        const customDiv = document.createElement('div');
-        customDiv.className = "col-span-full p-4 border border-[var(--dim-color)]";
-        customDiv.innerHTML = `
-            <label class="block mb-2 text-sm">UNIT NAME:</label>
-            <input type="text" id="customName" class="pip-input mb-3" placeholder="CUSTOM UNIT">
-            <label class="block mb-2 text-sm">IMAGE URL:</label>
-            <input type="text" id="customUrl" class="pip-input mb-3" placeholder="https://...">
-            <button onclick="spawnCustomToken()" class="pip-btn w-full">[ DEPLOY CUSTOM ]</button>
-        `;
-        grid.appendChild(customDiv);
-    } else if (ENEMY_PRESETS[category]) {
-        // Show enemies with spawn quantity input
-        ENEMY_PRESETS[category].forEach(enemy => {
+    } else if (category === 'ghouls') {
+        ENEMY_PRESETS.Ghouls.forEach(enemy => {
             const div = document.createElement('div');
-            div.className = "border border-[var(--dim-color)] p-2 flex flex-col items-center";
+            div.className = "border border-[var(--dim-color)] p-3 flex flex-col items-center";
             div.innerHTML = `
                 <img src="${enemy.src}" onerror="this.onerror=null; this.src='https://placehold.co/48x48/1e293b/a8a29e?text=?'" class="w-12 h-12 rounded-full border-2 border-[var(--dim-color)] mb-2">
                 <span class="text-xs text-center mb-2">${enemy.name}</span>
                 <div class="flex items-center gap-2 w-full">
-                    <input type="number" id="spawn-count-${enemy.name.replace(/\s+/g, '-')}" class="pip-input text-center w-16" value="1" min="1" max="20">
-                    <button onclick="spawnMultipleEnemies('${enemy.name}', '${enemy.color}', '${enemy.src}')" class="pip-btn flex-1 text-xs">SPAWN</button>
+                    <input type="number" id="count-${enemy.name.replace(/\\s+/g, '-')}" class="pip-input text-center w-16" value="1" min="1" max="20">
+                    <button onclick="spawnMultipleEnemies('${enemy.name}', '${enemy.color}', '${enemy.src}')" class="pip-btn flex-1 text-xs">[SPAWN]</button>
                 </div>
             `;
             grid.appendChild(div);
         });
+    } else if (category === 'custom') {
+        const div = document.createElement('div');
+        div.className = "col-span-full p-4 border border-[var(--dim-color)]";
+        div.innerHTML = `
+            <label class="block mb-2 text-sm">NAME:</label>
+            <input type="text" id="customName" class="pip-input mb-3" placeholder="Enemy Name">
+            <label class="block mb-2 text-sm">IMAGE URL:</label>
+            <input type="text" id="customUrl" class="pip-input mb-3" placeholder="https://...">
+            <button onclick="spawnCustomToken()" class="pip-btn w-full">[DEPLOY]</button>
+        `;
+        grid.appendChild(div);
     }
 }
+
 
 function spawnMultipleEnemies(baseName, color, src) {
     const inputId = `spawn-count-${baseName.replace(/\s+/g, '-')}`;
