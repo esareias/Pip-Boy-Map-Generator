@@ -3779,9 +3779,9 @@ function drawCurrentLevel(time = 0) {
     for (let t of tokens) {
         // Token position (t.x, t.y) is in LOGICAL map space.	
         // We apply the map offset before scaling to position them correctly on the screen.
-        const tx = (t.x + mapOffsetX) * RENDER_SCALE;
-        const ty = (t.y + mapOffsetY) * RENDER_SCALE;
-        const tokenRadius = 15 * RENDER_SCALE;
+        const tx = (t.x + mapOffsetX) * RENDER_SCALE * zoomLevel; // Added * zoomLevel
+        const ty = (t.y + mapOffsetY) * RENDER_SCALE * zoomLevel; // Added * zoomLevel
+        const tokenRadius = 15 * RENDER_SCALE * zoomLevel;         // Added * zoomLevel
         
         if (t.img && t.img.complete) {
             // Draw Image Token (if available)
@@ -3790,7 +3790,7 @@ function drawCurrentLevel(time = 0) {
 
             // Add color ring/border for visibility
             ctx.strokeStyle = t.color;
-            ctx.lineWidth = 2 * RENDER_SCALE;
+            ctx.lineWidth = 2 * RENDER_SCALE * zoomLevel;
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2);
             ctx.stroke();
@@ -3804,18 +3804,18 @@ function drawCurrentLevel(time = 0) {
             
             // Draw Pulse/Glow
             ctx.strokeStyle = t.color;
-            ctx.lineWidth = 2 * RENDER_SCALE;
+            ctx.lineWidth = 2 * RENDER_SCALE * zoomLevel;
             ctx.beginPath();
-            ctx.arc(tx, ty, (10 + Math.sin(time/200)*2) * RENDER_SCALE, 0, Math.PI*2);
+            ctx.arc(tx, ty, (10 + Math.sin(time/200)*2) * RENDER_SCALE * zoomLevel, 0, Math.PI*2);
             ctx.stroke();
         }
 
         // Draw Label
         ctx.fillStyle = '#fff';
-        ctx.font = `bold ${16 * RENDER_SCALE}px monospace`;
+        ctx.font = 'bold ${16 * RENDER_SCALE * zoomLevel}px monospace';
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(t.label, tx, ty + tokenRadius + 4 * RENDER_SCALE); // Label below token
+        ctx.fillText(t.label, tx, ty + tokenRadius + 4 * RENDER_SCALE * zoomLevel); // Label below token
     }
     
     // Restore the UI overlay context
