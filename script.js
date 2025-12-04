@@ -1421,19 +1421,18 @@ function handleMouseDown(e) {
         const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
         const pannedLogicalX = logicalMouseX - mapOffsetX;
         const pannedLogicalY = logicalMouseY - mapOffsetY;
-        
+
         for (let i = tokens.length - 1; i >= 0; i--) {
             const t = tokens[i];
             const dist = Math.hypot(pannedLogicalX - t.x, pannedLogicalY - t.y);
             if (dist < 20) {
-                // Toggle label
                 if (tokenLabelsVisible[t.id] === undefined) {
                     tokenLabelsVisible[t.id] = false;
                 } else {
                     tokenLabelsVisible[t.id] = !tokenLabelsVisible[t.id];
                 }
                 drawCurrentLevel();
-                if (typeof syncData === "function") syncData();
+                if (typeof syncData === 'function') syncData();
                 return;
             }
         }
@@ -1447,6 +1446,7 @@ function handleMouseDown(e) {
     const scaleY = canvas.height / rect.height;
     const rawX = (e.clientX - rect.left) * scaleX;
     const rawY = (e.clientY - rect.top) * scaleY;
+
     const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
     const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
     const pannedLogicalX = logicalMouseX - mapOffsetX;
@@ -1455,29 +1455,25 @@ function handleMouseDown(e) {
     // 1. CHECK TOKEN DRAG START (GM ONLY)
     if (!isClient) {
         const isDeleteAttempt = e.altKey || e.ctrlKey || e.metaKey;
-
         for (let t of tokens) {
-            // Hit test using the *corrected* mouse position against token's stored map position (t.x, t.y)
             const dx = pannedLogicalX - t.x;
             const dy = pannedLogicalY - t.y;
-
-            if (dx*dx + dy*dy < 400) { // 20px radius hit check
+            if (dx * dx + dy * dy < 400) { // 20px hit radius
                 if (isDeleteAttempt) {
                     // Deletion is a single click action, not drag.
                 } else {
                     draggedToken = t;
                     screenContainer.classList.remove('crosshair');
                     screenContainer.classList.add('grabbing');
-                    // Record start position for click/drag detection later
                     lastPanX = e.clientX;
                     lastPanY = e.clientY;
-                    return; // Stop here, token drag started
+                    return;
                 }
             }
         }
     }
 
-    // 2. START PANNING if no token was hit OR if a delete-click was attempted
+    // 2. START PANNING
     isPanning = true;
     lastPanX = e.clientX;
     lastPanY = e.clientY;
@@ -1488,38 +1484,33 @@ function handleMouseMove(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    
-    // Raw canvas coords (scaled, not offset)
+
     const rawX = (e.clientX - rect.left) * scaleX;
     const rawY = (e.clientY - rect.top) * scaleY;
 
-    // Logical coords for flashlight (unscaled, un-offset)
     const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
     const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
-    
-    // *** Panned Logical Coordinates for Map Interaction ***
+
     const pannedLogicalX = logicalMouseX - mapOffsetX;
     const pannedLogicalY = logicalMouseY - mapOffsetY;
 
     mousePos = { x: logicalMouseX, y: logicalMouseY };
 
-    // 1. HANDLE DRAGGING / PANNING
     if (draggedToken) {
         draggedToken.x = pannedLogicalX;
         draggedToken.y = pannedLogicalY;
-        drawCurrentLevel(); // ← ADD THIS LINE (was missing)
+        drawCurrentLevel();
         screenContainer.classList.add('grabbing');
-        return;	
+        return;
     }
 
     if (isPanning) {
         const dx = e.clientX - lastPanX;
         const dy = e.clientY - lastPanY;
-        
-        mapOffsetX += dx / RENDER_SCALE; 
+
+        mapOffsetX += dx / RENDER_SCALE;
         mapOffsetY += dy / RENDER_SCALE;
-        
-        // Panning Constraint
+
         const viewportWidth = config.width / zoomLevel;
         const viewportHeight = config.height / zoomLevel;
         const maxOverhang = Math.max(viewportWidth, viewportHeight) / 2;
@@ -1527,13 +1518,13 @@ function handleMouseMove(e) {
         const minPanX = -config.width + viewportWidth - maxOverhang;
         const maxPanY = maxOverhang;
         const minPanY = -config.height + viewportHeight - maxOverhang;
-        
+
         mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
         mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
 
         lastPanX = e.clientX;
         lastPanY = e.clientY;
-        
+
         drawCurrentLevel();
         return;
     }
@@ -1626,23 +1617,24 @@ function handleMouseMove(e) {
 
 function handleMouseUp(e) {
     screenContainer.classList.remove('grabbing');
-    
+
     if (draggedToken) {
-        // If we were dragging a token, stop and sync.
         draggedToken = null;
-        syncData();	
-        isPanning = false; // Just in case, reset
+        syncData();
+        isPanning = false;
         return;
     }
-    
-    // If dragging movement was minimal, execute a click action
-    if (isPanning && Math.abs(e.clientX - lastPanX) < MINIMAL_MOVEMENT_THRESHOLD && Math.abs(e.clientY - lastPanY) < MINIMAL_MOVEMENT_THRESHOLD) {
-        handleCanvasAction(e);	
+
+    if (
+        isPanning &&
+        Math.abs(e.clientX - lastPanX) < MINIMAL_MOVEMENT_THRESHOLD &&
+        Math.abs(e.clientY - lastPanY) < MINIMAL_MOVEMENT_THRESHOLD
+    ) {
+        handleCanvasAction(e);
     }
-    
+
     isPanning = false;
 }
-
 
 // Renamed from handleCanvasClick
 function handleCanvasAction(e) {
