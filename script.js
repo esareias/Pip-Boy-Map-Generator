@@ -1407,7 +1407,7 @@ function animate(time) {
 }
 
 // --- NEW MOUSE HANDLER IMPLEMENTATION ---
-function handleMouseDown(e) {
+}function handleMouseDown(e) {
     // === RIGHT-CLICK TO TOGGLE TOKEN LABELS ===
     if (e.button === 2) {
         e.preventDefault();
@@ -4141,5 +4141,4 @@ window.handleMouseUp = handleMouseUp;
 // --------------------------------------------------
 
 window.onload = init;
-
 
