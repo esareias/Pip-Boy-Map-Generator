@@ -55,6 +55,7 @@ let peer = null;
 let conn = null;
 let isHost = false;
 let tokens = []; // { id, x, y, label, color, src, img }
+let tokenLabelsVisible = {}; // Track label visibility
 let draggedToken = null;
 let isClient = false; // If true, disable generation controls
 
@@ -154,84 +155,162 @@ function activateAppUI() {
 // --- END: Character Selection/Login Flow ---
 
 
-// --- ENEMY/NPC PRESETS (NEW) ---
 const ENEMY_PRESETS = {
     "Ghouls": [
         { name: "Feral Ghoul", color: "#9ca3af", src: "https://upload.wikimedia.org/wikipedia/en/8/86/FeralGhoul.png" },
         { name: "Feral Ghoul Roamer", color: "#6b7280", src: "https://images.fallout.wiki/6/6c/Ghoul_Roamer.png" },
-        { name: "Glowing One", color: "#84cc16", src: "https://images.fallout.wiki/d/d8/Glowing_One_Render.png" }
+        { name: "Glowing One", color: "#84cc16", src: "https://images.fallout.wiki/d/d8/Glowing_One_Render.png" },
+        { name: "Ghoul Reaver", color: "#ef4444", src: "https://static.wikia.nocookie.net/fallout/images/d/d9/Feral_ghoul_reaver.png" },
+        { name: "Chinese Remnant Ghoul", color: "#dc2626", src: "https://static.wikia.nocookie.net/fallout/images/d/d5/Mama_Dolce%27s_Chinese_remnants_captain.png" },
+        { name: "Trog", color: "#78716c", src: "https://static.wikia.nocookie.net/fallout/images/5/5e/Trog.png" },
+        { name: "Alien (Zetan)", color: "#a3e635", src: "https://static.wikia.nocookie.net/aliens/images/e/ee/Alien-Fallout.png" }
+    ],
+    "Super Mutants": [
+        { name: "Super Mutant", color: "#a3e635", src: "https://static.wikia.nocookie.net/fallout/images/4/48/FNV_super_mutant.png" },
+        { name: "Super Mutant Brute", color: "#65a30d", src: "https://static.wikia.nocookie.net/fallout/images/8/8f/FO3_super_mutant_brute.png" },
+        { name: "Super Mutant Master", color: "#4d7c0f", src: "https://static.wikia.nocookie.net/fallout/images/9/92/FNV_Jacobstown_Master.png" },
+        { name: "Super Mutant Behemoth", color: "#365314", src: "https://images.fallout.wiki/8/86/FO3_super_mutant_behemoth.png" },
+        { name: "Nightkin", color: "#7c3aed", src: "https://images.fallout.wiki/b/ba/FNV_Nightkin_Render.png" }
+    ],
+    "Raiders": [
+        { name: "Raider", color: "#dc2626", src: "https://static.wikia.nocookie.net/fallout/images/b/bd/Raider_Throwdown_Armor.png" },
+        { name: "Cannibal", color: "#991b1b", src: "https://i.postimg.cc/V5yp54Bb/unnamed-removebg-preview-(4).png" },
+        { name: "Slaver", color: "#7f1d1d", src: "https://i.postimg.cc/1z12yW5h/Untitled-design-2-removebg-preview.png" },
+        { name: "Heretic", color: "#b91c1c", src: "https://i.postimg.cc/524ffNPn/image-2025-12-03-220137473-removebg-preview.png" },
+        { name: "Blightfire Fuse", color: "#ea580c", src: "https://i.postimg.cc/HL0nBPP6/image-2025-12-03-215705349-removebg-preview.png" },
+        { name: "Blightfire Decanus", color: "#c2410c", src: "https://i.postimg.cc/1zsYNfkL/unnamed-removebg-preview-(3).png" },
+        { name: "Blightfire Pyro", color: "#f97316", src: "https://i.postimg.cc/rFbkWCgz/unnamed-removebg-preview-(2).png" }
+    ],
+    "Military": [
+        { name: "NCR Remnant", color: "#eab308", src: "https://vignette.wikia.nocookie.net/fallout/images/7/75/NCR_trooper.png" },
+        { name: "NCR Ranger Exile", color: "#ca8a04", src: "https://static.wikia.nocookie.net/fallout_gamepedia/images/2/2d/NCRRiotControl.png" },
+        { name: "Headhunter Merc", color: "#737373", src: "https://static.wikia.nocookie.net/fallout/images/e/e9/Merc_cruiser_outfit.png" },
+        { name: "Wolfe Company Merc", color: "#525252", src: "https://static.wikia.nocookie.net/fallout/images/4/46/Fo3_Talon_Merc.png" },
+        { name: "Williamsport Scout", color: "#b91c1c", src: "https://vignette2.wikia.nocookie.net/fallout/images/d/dd/LegionaryScout.png" },
+        { name: "Big Apple Ranger", color: "#dc2626", src: "https://static.wikia.nocookie.net/fallout/images/c/c1/Ranger_red_scarf_outfit.png" },
+        { name: "Hitman", color: "#0f766e", src: "https://static.wikia.nocookie.net/fallout/images/2/2d/General_Olivers_uniform.png" },
+        { name: "Slag", color: "#57534e", src: "https://static.wikia.nocookie.net/fallout/images/8/8c/Scrapper.png" }
+    ],
+    "Power Armor": [
+        { name: "BoS Squad", color: "#0ea5e9", src: "https://www.nicepng.com/png/full/319-3191402_draw-a-brotherhood-of-steel-paladin-in-power.png" },
+        { name: "Enclave Remnant", color: "#1e293b", src: "https://5efallout.wdfiles.com/local--files/5efallout:bestiary:enclave/Enclave.png" }
+    ],
+    "Robots: Security": [
+        { name: "Protectron", color: "#64748b", src: "https://static.wikia.nocookie.net/fallout/images/5/5b/Protectron.png" },
+        { name: "Protect-O-Bot", color: "#475569", src: "https://i.postimg.cc/DfJgYv57/Protect0Bot-removebg-preview.png" },
+        { name: "Securitron Mk I", color: "#94a3b8", src: "https://static.wikia.nocookie.net/fallout/images/7/7e/Securitron.png" },
+        { name: "Oculobot", color: "#cbd5e1", src: "https://images.fallout.wiki/3/3e/Fo3_Enclave_eyebot.png" }
+    ],
+    "Robots: Military": [
+        { name: "Mr. Handy", color: "#71717a", src: "https://static.wikia.nocookie.net/fallout/images/8/8c/Mister_Handy.png" },
+        { name: "Mr. Gutsy", color: "#52525b", src: "https://static.wikia.nocookie.net/fallout/images/6/69/Mister_Gutsy.png" },
+        { name: "Sentry Bot", color: "#3f3f46", src: "https://static.wikia.nocookie.net/fallout/images/8/8d/Military_sentry_bot.png" },
+        { name: "Roboscorpion", color: "#78716c", src: "https://static.wikia.nocookie.net/fallout/images/e/e5/Robo-scorpion.png" },
+        { name: "Automated Turret", color: "#57534e", src: "https://static.wikia.nocookie.net/fallout/images/0/0b/Fo3_automated_turret.png" },
+        { name: "Securitron Mk II", color: "#a8a29e", src: "https://images.fallout.wiki/5/5e/FNV_M235_Missile_Launchers.png" }
+    ],
+    "Insects": [
+        { name: "Radroach", color: "#78716c", src: "https://static.wikia.nocookie.net/fallout/images/8/86/Radroach.png" },
+        { name: "Bloatfly", color: "#84cc16", src: "https://static.wikia.nocookie.net/fallout/images/9/9d/Bloatfly.png" },
+        { name: "Giant Ant", color: "#dc2626", src: "https://static.wikia.nocookie.net/fallout/images/d/d7/Giant_soldier_ant.png" },
+        { name: "Fire Ant", color: "#f97316", src: "https://static.wikia.nocookie.net/fallout/images/0/05/Fire_ant.png" },
+        { name: "Giant Mantid", color: "#22c55e", src: "https://static.wikia.nocookie.net/fallout/images/e/eb/Giant_mantis.png" },
+        { name: "Cazador", color: "#ea580c", src: "https://static.wikia.nocookie.net/fallout/images/e/e4/Cazador.png" },
+        { name: "Scythewing", color: "#f59e0b", src: "https://i.postimg.cc/43j7S9X0/unnamed-removebg-preview-(1).png" }
+    ],
+    "Deathclaws": [
+        { name: "Deathclaw", color: "#57534e", src: "https://static.wikia.nocookie.net/fallout/images/9/9c/Deathclaw.png" }
+    ],
+    "Wildlife": [
+        { name: "Mole Rat", color: "#a8a29e", src: "https://static.wikia.nocookie.net/fallout/images/3/3c/Mole_rat_FO3.png" },
+        { name: "Pig Rat", color: "#f472b6", src: "https://images.fallout.wiki/c/cc/PigRat.webp" },
+        { name: "Vicious Dog", color: "#78716c", src: "https://images.fallout.wiki/6/6b/Vicious_dog.png" },
+        { name: "Radscorpion", color: "#b45309", src: "https://static.wikia.nocookie.net/fallout/images/6/66/Radscorpion.png" },
+        { name: "Mirelurk", color: "#0891b2", src: "https://static.wikia.nocookie.net/fallout/images/0/06/Mirelurk.png" },
+        { name: "Moray Eel", color: "#a855f7", src: "https://static.wikia.nocookie.net/fallout/images/7/7e/Fish_purple_radpole.webp" },
+        { name: "Centaur", color: "#dc2626", src: "https://static.wikia.nocookie.net/fallout/images/9/92/CentaurEvolved.png" },
+        { name: "Yao Guai", color: "#57534e", src: "https://static.wikia.nocookie.net/fallout/images/2/2e/Yao_guai.png" },
+        { name: "Guai Wu", color: "#78716c", src: "https://i.postimg.cc/6pSggjnX/unnamed-removebg-preview.png" },
+        { name: "Nightstalker", color: "#7c3aed", src: "https://static.wikia.nocookie.net/fallout/images/9/91/Nightstalker.png" },
+        { name: "Spore Carrier", color: "#84cc16", src: "https://static.wikia.nocookie.net/fallout/images/a/af/Spore_carrier.png" },
+        { name: "Spore Plant", color: "#22c55e", src: "https://static.wikia.nocookie.net/fallout/images/c/c7/Spore_plant.png" },
+        { name: "Tunneler", color: "#a8a29e", src: "https://static.wikia.nocookie.net/fallout/images/4/4c/Tunneler.png" },
+        { name: "Gecko", color: "#84cc16", src: "https://static.wikia.nocookie.net/fallout/images/c/ce/FNV_LGecko.png" },
+        { name: "Golden Gecko", color: "#eab308", src: "https://static.wikia.nocookie.net/fallout/images/7/74/FNV_GGecko.png" },
+        { name: "Fire Gecko", color: "#22c55e", src: "https://static.wikia.nocookie.net/fallout/images/1/15/GreenGeckoFNV.png" },
+        { name: "Brahmin", color: "#a8a29e", src: "https://static.wikia.nocookie.net/fallout/images/2/2f/Brahmin_FO3.png" }
     ]
 };
 
 // Track spawn counts for automatic numbering
 let enemySpawnCounts = {};
 
+// === PART 1: UPDATE openGMTokenDeploy() ===
 function openGMTokenDeploy() {
     if (isClient) return;
-    
+
     const modal = document.getElementById('gmTokenDeployModal');
     const grid = document.getElementById('tokenGrid');
     grid.innerHTML = '';
-    
-    // Category dropdown
+
+    // Category dropdown with ALL categories
     const select = document.createElement('select');
     select.className = "pip-input w-full mb-4";
     select.innerHTML = `
         <option value="players">PLAYERS</option>
         <option value="ghouls">GHOULS</option>
+        <option value="supermutants">SUPER MUTANTS</option>
+        <option value="raiders">RAIDERS</option>
+        <option value="military">MILITARY</option>
+        <option value="powerarmor">POWER ARMOR</option>
+        <option value="robotssecurity">ROBOTS: SECURITY</option>
+        <option value="robotsmilitary">ROBOTS: MILITARY</option>
+        <option value="insects">INSECTS</option>
+        <option value="deathclaws">DEATHCLAWS</option>
+        <option value="wildlife">WILDLIFE</option>
         <option value="custom">CUSTOM</option>
     `;
     select.onchange = () => showTokenCategory(select.value, grid);
     grid.appendChild(select);
-    
+
     showTokenCategory('players', grid);
     modal.style.display = 'flex';
 }
 
+// === PART 2: UPDATE showTokenCategory() ===
 function showTokenCategory(category, grid) {
-    grid.innerHTML = ''; // Clear everything including the select
-    
+    grid.innerHTML = '';
+
     // Re-add category selector
     const select = document.createElement('select');
     select.className = "pip-input w-full mb-4";
     select.innerHTML = `
         <option value="players">PLAYERS</option>
         <option value="ghouls">GHOULS</option>
+        <option value="supermutants">SUPER MUTANTS</option>
+        <option value="raiders">RAIDERS</option>
+        <option value="military">MILITARY</option>
+        <option value="powerarmor">POWER ARMOR</option>
+        <option value="robotssecurity">ROBOTS: SECURITY</option>
+        <option value="robotsmilitary">ROBOTS: MILITARY</option>
+        <option value="insects">INSECTS</option>
+        <option value="deathclaws">DEATHCLAWS</option>
+        <option value="wildlife">WILDLIFE</option>
         <option value="custom">CUSTOM</option>
     `;
     select.value = category;
     select.onchange = () => showTokenCategory(select.value, grid);
     grid.appendChild(select);
-    
+
     if (category === 'players') {
         TOKEN_PRESETS.filter(p => !p.isHostTrigger).forEach(p => {
             const div = document.createElement('div');
             div.className = "border border-[var(--dim-color)] p-2 flex flex-col items-center cursor-pointer hover:bg-[var(--dim-color)] transition-colors";
-            div.innerHTML = `<img src="${p.src}" onerror="this.onerror=null; this.src='https://placehold.co/48x48/1e293b/a8a29e?text=?'" class="w-12 h-12 rounded-full border-2 border-[var(--dim-color)] mb-2"><span class="text-xs">${p.name}</span>`;
+            div.innerHTML = `<img src="${p.src}" onerror="this.onerror=null; this.src='https://placehold.co/48x48/1e293b/a8a29e?text=?'" class="w-12 h-12 mb-2"><span class="text-xs">${p.name}</span>`;
             div.onclick = () => spawnToken(p.name, p.color, p.src);
             grid.appendChild(div);
         });
-    } else if (category === 'ghouls') {
-    ENEMY_PRESETS["Ghouls"].forEach(enemy => {
-        const div = document.createElement('div');
-        div.className = "border border-[var(--dim-color)] p-3 flex flex-col items-center";
-        div.innerHTML = `
-            <img src="${enemy.src}" onerror="this.onerror=null; this.src='https://placehold.co/48x48/1e293b/a8a29e?text=?'" class="w-12 h-12 rounded-full border-2 border-[var(--dim-color)] mb-2">
-            <span class="text-xs text-center mb-2">${enemy.name}</span>
-            <div class="flex items-center gap-2 w-full">
-                <input type="number" id="count-${enemy.name.replace(/\s+/g, '-')}" class="pip-input text-center w-16" value="1" min="1" max="20">
-                <button class="pip-btn flex-1 text-xs">[SPAWN]</button>
-            </div>
-        `;
-        
-        // FIX: Proper event binding
-        const spawnBtn = div.querySelector('button');
-        spawnBtn.onclick = () => spawnMultipleEnemies(enemy.name, enemy.color, enemy.src);
-        
-        grid.appendChild(div);
-    });
-}
- else if (category === 'custom') {
+    } else if (category === 'custom') {
         const div = document.createElement('div');
         div.className = "col-span-full p-4 border border-[var(--dim-color)]";
         div.innerHTML = `
@@ -242,6 +321,41 @@ function showTokenCategory(category, grid) {
             <button onclick="spawnCustomToken()" class="pip-btn w-full">[DEPLOY]</button>
         `;
         grid.appendChild(div);
+    } else {
+        // Map category value to ENEMY_PRESETS key
+        const categoryMap = {
+            'ghouls': 'Ghouls',
+            'supermutants': 'Super Mutants',
+            'raiders': 'Raiders',
+            'military': 'Military',
+            'powerarmor': 'Power Armor',
+            'robotssecurity': 'Robots: Security',
+            'robotsmilitary': 'Robots: Military',
+            'insects': 'Insects',
+            'deathclaws': 'Deathclaws',
+            'wildlife': 'Wildlife'
+        };
+
+        const categoryKey = categoryMap[category];
+        if (ENEMY_PRESETS[categoryKey]) {
+            ENEMY_PRESETS[categoryKey].forEach(enemy => {
+                const div = document.createElement('div');
+                div.className = "border border-[var(--dim-color)] p-3 flex flex-col items-center";
+                div.innerHTML = `
+                    <img src="${enemy.src}" onerror="this.onerror=null; this.src='https://placehold.co/48x48/1e293b/a8a29e?text=?'" class="w-12 h-12 mb-2" style="image-rendering: auto;">
+                    <span class="text-xs text-center mb-2">${enemy.name}</span>
+                    <div class="flex items-center gap-2 w-full">
+                        <input type="number" id="count-${enemy.name.replace(/\s+/g, '-')}" class="pip-input text-center w-16" value="1" min="1" max="20">
+                        <button class="pip-btn flex-1 text-xs">[SPAWN]</button>
+                    </div>
+                `;
+
+                const spawnBtn = div.querySelector('button');
+                spawnBtn.onclick = () => spawnMultipleEnemies(enemy.name, enemy.color, enemy.src);
+
+                grid.appendChild(div);
+            });
+        }
     }
 }
 
@@ -1194,6 +1308,7 @@ async function init() {
     screenContainer.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     screenContainer.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; isPanning = false; });
+    screenContainer.addEventListener('contextmenu', (e) => e.preventDefault()); // ← ADD THIS
     
     // --- NEW: Chat Input Enter Key Listener ---
     chatInput.addEventListener('keypress', (e) => {
@@ -1294,13 +1409,112 @@ function animate(time) {
 // --- NEW MOUSE HANDLER IMPLEMENTATION ---
 
 function handleMouseDown(e) {
+    // === RIGHT-CLICK TO TOGGLE TOKEN LABELS ===
+    if (e.button === 2) {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const rawX = (e.clientX - rect.left) * scaleX;
+        const rawY = (e.clientY - rect.top) * scaleY;
+
+        const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
+        const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
+        const pannedLogicalX = logicalMouseX - mapOffsetX;
+        const pannedLogicalY = logicalMouseY - mapOffsetY;
+        
+        for (let i = tokens.length - 1; i >= 0; i--) {
+            const t = tokens[i];
+            const dist = Math.hypot(pannedLogicalX - t.x, pannedLogicalY - t.y);
+            if (dist < 20) {
+                // Toggle label
+                if (tokenLabelsVisible[t.id] === undefined) {
+                    tokenLabelsVisible[t.id] = false;
+                } else {
+                    tokenLabelsVisible[t.id] = !tokenLabelsVisible[t.id];
+                }
+                drawCurrentLevel();
+                if (typeof syncData === "function") syncData();
+                return;
+            }
+        }
+    }
+    // Correct the mouse position based on the current pan offset
+    const pannedLogicalX = logicalMouseX - mapOffsetX;
+    const pannedLogicalY = logicalMouseY - mapOffsetY;
+
+    // 1. CHECK TOKEN DRAG START (GM ONLY)
+    if (!isClient) {
+        const isDeleteAttempt = e.altKey || e.ctrlKey || e.metaKey;
+
+        for (let t of tokens) {
+            // Hit test using the *corrected* mouse position against token's stored map position (t.x, t.y)
+            const dx = pannedLogicalX - t.x;
+            const dy = pannedLogicalY - t.y;
+
+            if (dx*dx + dy*dy < 400) { // 20px radius hit check
+                if (isDeleteAttempt) {
+                    // Deletion is a single click action, not drag.
+                } else {
+                    draggedToken = t;
+                    screenContainer.classList.remove('crosshair');
+                    screenContainer.classList.add('grabbing');
+                    // Record start position for click/drag detection later
+                    lastPanX = e.clientX;
+                    lastPanY = e.clientY;
+                    return; // Stop here, token drag started
+                }
+            }
+        }
+    }
+
+    // 2. START PANNING if no token was hit OR if a delete-click was attempted
+    isPanning = true;
+    lastPanX = e.clientX;
+    lastPanY = e.clientY;
+    screenContainer.classList.add('grabbing');
+}function handleMouseDown(e) {
+    // === RIGHT-CLICK TO TOGGLE TOKEN LABELS ===
+    if (e.button === 2) {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const rawX = (e.clientX - rect.left) * scaleX;
+        const rawY = (e.clientY - rect.top) * scaleY;
+
+        const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
+        const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
+        const pannedLogicalX = logicalMouseX - mapOffsetX;
+        const pannedLogicalY = logicalMouseY - mapOffsetY;
+        
+        for (let i = tokens.length - 1; i >= 0; i--) {
+            const t = tokens[i];
+            const dist = Math.hypot(pannedLogicalX - t.x, pannedLogicalY - t.y);
+            if (dist < 20) {
+                // Toggle label
+                if (tokenLabelsVisible[t.id] === undefined) {
+                    tokenLabelsVisible[t.id] = false;
+                } else {
+                    tokenLabelsVisible[t.id] = !tokenLabelsVisible[t.id];
+                }
+                drawCurrentLevel();
+                if (typeof syncData === "function") syncData();
+                return;
+            }
+        }
+        return; // Prevent panning after right-click
+    }
+    // === END RIGHT-CLICK HANDLER ===
+
+    // Calculate mouse position for left-click actions
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const logicalMouseX = (e.clientX - rect.left) * scaleX / (RENDER_SCALE * zoomLevel);
-    const logicalMouseY = (e.clientY - rect.top) * scaleY / (RENDER_SCALE * zoomLevel);
-    
-    // Correct the mouse position based on the current pan offset
+    const rawX = (e.clientX - rect.left) * scaleX;
+    const rawY = (e.clientY - rect.top) * scaleY;
+    const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
+    const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
     const pannedLogicalX = logicalMouseX - mapOffsetX;
     const pannedLogicalY = logicalMouseY - mapOffsetY;
 
@@ -1336,26 +1550,6 @@ function handleMouseDown(e) {
     screenContainer.classList.add('grabbing');
 }
 
-function handleMouseUp(e) {
-    screenContainer.classList.remove('grabbing');
-    
-    if (draggedToken) {
-        // If we were dragging a token, stop and sync.
-        draggedToken = null;
-        syncData();	
-        isPanning = false; // Just in case, reset
-        return;
-    }
-    
-    // If dragging movement was minimal, execute a click action
-    if (isPanning && Math.abs(e.clientX - lastPanX) < MINIMAL_MOVEMENT_THRESHOLD && Math.abs(e.clientY - lastPanY) < MINIMAL_MOVEMENT_THRESHOLD) {
-        handleCanvasAction(e);	
-    }
-    
-    isPanning = false;
-}
-
-
 function handleMouseMove(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
@@ -1379,6 +1573,7 @@ function handleMouseMove(e) {
     if (draggedToken) {
         draggedToken.x = pannedLogicalX;
         draggedToken.y = pannedLogicalY;
+        drawCurrentLevel(); // ← ADD THIS LINE (was missing)
         screenContainer.classList.add('grabbing');
         return;	
     }
@@ -1430,7 +1625,7 @@ function handleMouseMove(e) {
                 
                 let status;
                 if (item.looted) { status = `[ EMPTY ]`; }	
-                else if (item.isLocked) { status = `[ LOCKED: ${item.lockDetail.replace(/\[|\]/g, '')}${item.containerName} ]`; }	
+                else if (item.isLocked) { status = `[ LOCKED: ${item.lockDetail.replace(/\[|\]/g, '')} ${item.containerName} ]`; }	
                 else { status = `[ ${item.containerName} ]`; }
 
                 tooltip.innerText = status;
@@ -1494,6 +1689,26 @@ function handleMouseMove(e) {
 
     if (!hovering) { tooltip.style.display = 'none'; screenContainer.classList.remove('crosshair'); }
 }
+
+function handleMouseUp(e) {
+    screenContainer.classList.remove('grabbing');
+    
+    if (draggedToken) {
+        // If we were dragging a token, stop and sync.
+        draggedToken = null;
+        syncData();	
+        isPanning = false; // Just in case, reset
+        return;
+    }
+    
+    // If dragging movement was minimal, execute a click action
+    if (isPanning && Math.abs(e.clientX - lastPanX) < MINIMAL_MOVEMENT_THRESHOLD && Math.abs(e.clientY - lastPanY) < MINIMAL_MOVEMENT_THRESHOLD) {
+        handleCanvasAction(e);	
+    }
+    
+    isPanning = false;
+}
+
 
 // Renamed from handleCanvasClick
 function handleCanvasAction(e) {
@@ -3937,25 +4152,24 @@ function drawCurrentLevel(time = 0) {
         }
 
         // --- C. LEGIBLE LABEL ---
-        ctx.textAlign = "center";
-        ctx.textBaseline = "top"; // Draw from top down so it hangs below token
-        
-        // Scale font size with zoom so it stays readable!
-        const fontSize = 14 * RENDER_SCALE * zoomLevel; 
-        ctx.font = `bold ${fontSize}px monospace`;
+if (config.showLabels && tokenLabelsVisible[t.id] !== false) {
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    const fontSize = 14 * RENDER_SCALE * zoomLevel;
+    ctx.font = `bold ${fontSize}px monospace`;
+    const labelY = ty + tokenRadius + 5 * zoomLevel;
 
-        const labelY = ty + tokenRadius + (5 * zoomLevel); // Padding below token
+    // 1. Black outline
+    ctx.strokeStyle = "rgba(0,0,0,0.8)";
+    ctx.lineWidth = 4 * zoomLevel;
+    ctx.lineJoin = "round";
+    ctx.strokeText(t.label, tx, labelY);
 
-        // 1. Draw black outline (stroke) to make it pop against grid
-        ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-        ctx.lineWidth = 4 * zoomLevel;
-        ctx.lineJoin = 'round'; // Smooth corners on text outline
-        ctx.strokeText(t.label, tx, labelY);
+    // 2. White text
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(t.label, tx, labelY);
+}
 
-        // 2. Draw white text on top
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(t.label, tx, labelY);
-    }
     
     // Restore the UI overlay context
     ctx.restore();
