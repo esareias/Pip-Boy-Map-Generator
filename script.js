@@ -4092,25 +4092,28 @@ if (config.showLabels && tokenLabelsVisible[t.id] !== false) {
     ctx.strokeText(t.label, tx, labelY);
 
     // 2. White text
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText(t.label, tx, labelY);
-}
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(t.label, tx, labelY);
+    } // Close if(showLabels)
 
-    
+    } // Close for(tokens) <--- THIS WAS MISSING/MISPLACED
+
     // Restore the UI overlay context
+    // This must happen OUTSIDE the loop, or the canvas will glitch
     ctx.restore();
-}
+
+} // Close function drawCurrentLevel <--- THIS WAS MISSING
 
 // --- GLOBAL EXPOSURE FOR INLINE HTML HANDLERS ---
 // Expose functions used in onclick="..." attributes to the global scope
 window.init = init;
 window.hostSession = hostSession;
 window.joinSession = joinSession;
-window.openGMTokenDeploy = openGMTokenDeploy; // Renamed
-window.closeGMTokenDeploy = closeGMTokenDeploy; // Renamed
+window.openGMTokenDeploy = openGMTokenDeploy;
+window.closeGMTokenDeploy = closeGMTokenDeploy;
 window.spawnCustomToken = spawnCustomToken;
 window.spawnToken = spawnToken;
-window.selectCharacter = selectCharacter; // New character selector
+window.selectCharacter = selectCharacter;
 window.updateHelperText = updateHelperText;
 window.generateCurrentLevel = generateCurrentLevel;
 window.changeLevel = changeLevel;
@@ -4125,7 +4128,7 @@ window.exportReport = exportReport;
 window.closeModal = closeModal;
 window.copyReport = copyReport;
 window.copyHostId = copyHostId;
-window.sendChatMessage = sendChatMessage; // EXPOSED CHAT FUNCTION
+window.sendChatMessage = sendChatMessage;
 
 // Expose new pan functions for debugging/testing
 window.handleMouseDown = handleMouseDown;
@@ -4133,4 +4136,3 @@ window.handleMouseUp = handleMouseUp;
 // --------------------------------------------------
 
 window.onload = init;
-
