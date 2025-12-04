@@ -4056,11 +4056,13 @@ function drawCurrentLevel(time = 0) {
             ctx.restore(); // End isolation (stop clipping)
 
             // --- B. BORDER RING ---
-            ctx.strokeStyle = t.color;
-            ctx.lineWidth = 3 * RENDER_SCALE * zoomLevel; // Thicker border that scales
+            // To remove the circle, just comment out these 5 lines:
+            /* ctx.strokeStyle = t.color;
+            ctx.lineWidth = 3 * RENDER_SCALE * zoomLevel; 
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2);
             ctx.stroke();
+            */
 
         } else {
             // Draw default dot/disc (Fallback if no image)
