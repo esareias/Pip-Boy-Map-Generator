@@ -1,14 +1,20 @@
-// --- FIREBASE IMPORTS (MANDATORY BOILERPLATE) ---
+// TOP OF script (41).js
+
+// --- FIREBASE IMPORTS ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// ADD THIS LINE BELOW:
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
 // Global Firebase variables provided by the environment
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-let db, auth, userId;
+let db, auth, userId, rtdb; // Added rtdb
+
 // --------------------------------------------------
 
 const canvas = document.getElementById('mapCanvas');
@@ -1038,22 +1044,23 @@ function hostSession() {
     toggleChatControls(true); // Ensure chat is enabled
     peer = new Peer(); // Create a new ID
     
-    peer.on('open', (id) => {
+       peer.on('open', (id) => {
         document.getElementById('netStatus').innerText = `HOST ID: ${id}`;
         document.getElementById('netStatus').style.color = 'var(--pip-green)';
         log(`UPLINK ESTABLISHED. ID: ${id}`, 'var(--pip-green)');
         
-        // Show copyable ID, hide host/join buttons
         document.getElementById('hostBtn').classList.add('hidden-ui');
         document.getElementById('hostIdDisplay').classList.remove('hidden-ui');
         document.getElementById('joinBtn').classList.add('hidden-ui');
         document.getElementById('joinInput').classList.add('hidden-ui');
         document.getElementById('currentHostId').innerText = id;
 
-        // Activate Main App UI
+        // --- NEW: START THE COMBAT TRACKER BRIDGE ---
+        startCombatSync(); 
+
         activateAppUI();
     });
-
+    
     peer.on('connection', (c) => {
         log("NEW TERMINAL CONNECTED", 'var(--pip-amber)');
         conn = c;
@@ -1222,6 +1229,9 @@ async function init() {
         const app = initializeApp(firebaseConfig);
         db = getFirestore(app);
         auth = getAuth(app);
+
+        // ADD THIS LINE:
+        rtdb = getDatabase(app);
         
         // Sign in with custom token or anonymously
         try {
@@ -4035,106 +4045,178 @@ function drawCurrentLevel(time = 0) {
     }
     // --- DRAW TOKENS --- (Tokens are drawn in a new, un-translated context)
     
-    // --- DRAW TOKENS ---
+    // --- DRAW TOKENS WITH RANK COLORS & DEATH MARKER ---
     for (let t of tokens) {
-        // 1. Apply Zoom to Position & Radius so they match the map scale
         const tx = (t.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
         const ty = (t.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
         const tokenRadius = 15 * RENDER_SCALE * zoomLevel;
         
         if (t.img && t.img.complete) {
             const imgSize = tokenRadius * 2;
-
-            // --- A. CIRCULAR CROPPING ---
-            ctx.save(); // Start isolation
-            ctx.beginPath();
-            ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2); // Define the circle
-            ctx.clip(); // <--- THIS IS THE MAGIC: Cut everything outside the circle
-            
-            // Draw the image (corners will be cut off by the clip)
-            ctx.drawImage(t.img, tx - tokenRadius, ty - tokenRadius, imgSize, imgSize);
-            ctx.restore(); // End isolation (stop clipping)
-
-            // --- B. BORDER RING ---
-            // To remove the circle, just comment out these 5 lines:
-            /* ctx.strokeStyle = t.color;
-            ctx.lineWidth = 3 * RENDER_SCALE * zoomLevel; 
+            ctx.save();
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2);
-            ctx.stroke();
-            */
-
+            ctx.clip();
+            ctx.drawImage(t.img, tx - tokenRadius, ty - tokenRadius, imgSize, imgSize);
+            ctx.restore();
         } else {
-            // Draw default dot/disc (Fallback if no image)
             ctx.fillStyle = t.color;
+            ctx.beginPath(); ctx.arc(tx, ty, tokenRadius * 0.8, 0, Math.PI*2); ctx.fill();
+        }
+
+        // --- RANK RING LOGIC ---
+        ctx.strokeStyle = t.color;
+        let ringWidth = 2;
+        if (t.color === "#a855f7") ringWidth = 5; // Legendary (Purple)
+        if (t.color === "#f97316") ringWidth = 3; // Hard (Orange)
+        
+        ctx.lineWidth = ringWidth * RENDER_SCALE * zoomLevel;
+        ctx.beginPath();
+        ctx.arc(tx, ty, (10 + Math.sin(time/200)*2) * RENDER_SCALE * zoomLevel, 0, Math.PI*2);
+        ctx.stroke();
+
+        // --- DEATH MARKER (RED X) ---
+        if (t.isDead) {
+            ctx.strokeStyle = "#ff0000";
+            ctx.lineWidth = 4 * RENDER_SCALE * zoomLevel;
             ctx.beginPath();
-            ctx.arc(tx, ty, tokenRadius * 0.8, 0, Math.PI*2);
-            ctx.fill();
-            
-            // Draw Pulse/Glow
-            ctx.strokeStyle = t.color;
-            ctx.lineWidth = 2 * RENDER_SCALE * zoomLevel;
-            ctx.beginPath();
-            ctx.arc(tx, ty, (10 + Math.sin(time/200)*2) * RENDER_SCALE * zoomLevel, 0, Math.PI*2);
+            ctx.moveTo(tx - tokenRadius, ty - tokenRadius);
+            ctx.lineTo(tx + tokenRadius, ty + tokenRadius);
+            ctx.moveTo(tx + tokenRadius, ty - tokenRadius);
+            ctx.lineTo(tx - tokenRadius, ty + tokenRadius);
             ctx.stroke();
         }
 
-        // --- C. LEGIBLE LABEL ---
-if (config.showLabels && tokenLabelsVisible[t.id] !== false) {
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    const fontSize = 14 * RENDER_SCALE * zoomLevel;
-    ctx.font = `bold ${fontSize}px monospace`;
-    const labelY = ty + tokenRadius + 5 * zoomLevel;
+        if (config.showLabels && tokenLabelsVisible[t.id] !== false) {
+             ctx.textAlign = "center";
+             ctx.textBaseline = "top";
+             const fontSize = 14 * RENDER_SCALE * zoomLevel;
+             ctx.font = `bold ${fontSize}px monospace`;
+             const labelY = ty + tokenRadius + 5 * zoomLevel;
+             ctx.strokeStyle = "rgba(0,0,0,0.8)";
+             ctx.lineWidth = 4 * zoomLevel;
+             ctx.lineJoin = "round";
+             ctx.strokeText(t.label, tx, labelY);
+             ctx.fillStyle = "#ffffff";
+             ctx.fillText(t.label, tx, labelY);
+        }
+    }
 
-    // 1. Black outline
-    ctx.strokeStyle = "rgba(0,0,0,0.8)";
-    ctx.lineWidth = 4 * zoomLevel;
-    ctx.lineJoin = "round";
-    ctx.strokeText(t.label, tx, labelY);
-
-    // 2. White text
-        ctx.fillStyle = "#ffffff";
-        ctx.fillText(t.label, tx, labelY);
-    } // Close if(showLabels)
-
-    } // Close for(tokens) <--- THIS WAS MISSING/MISPLACED
-
-    // Restore the UI overlay context
-    // This must happen OUTSIDE the loop, or the canvas will glitch
     ctx.restore();
+    ctx.save();
+    
+    // ... (UI Overlay if any) ...
+    // Note: Previous file put labels in separate loop outside translation, but we integrated them above for simplicity with token position
+    if (config.showLabels) {
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        const fontSize = 14 * RENDER_SCALE * zoomLevel;
+        ctx.font = `bold ${fontSize}px monospace`;
+        ctx.lineWidth = 4 * zoomLevel;
+        ctx.lineJoin = 'round';
 
-} // Close function drawCurrentLevel <--- THIS WAS MISSING
+        for (let lbl of data.labels) {
+            const gx = Math.floor(lbl.x / config.gridSize);
+            const gy = Math.floor(lbl.y / config.gridSize);
+            if (config.fogEnabled && !isLocationRevealed(data, gx, gy)) continue;
+            if (!lbl.visible) continue;
+            const lx = (lbl.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
+            const ly = (lbl.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
+            const isInteractive = viewMode === 'sector' && isEnterable(lbl.text);
+            if (isInteractive) {
+                const pulse = (Math.sin(time / 200) + 1) / 2; 
+                const alpha = 0.5 + (pulse * 0.5); 
+                ctx.strokeStyle = `rgba(34, 197, 94, ${alpha})`; 
+                ctx.fillStyle = '#f0fdf4'; 
+            } else {
+                ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+                ctx.fillStyle = '#ffffff';
+            }
+            ctx.strokeText(lbl.text, lx, ly);
+            ctx.fillText(lbl.text, lx, ly);
+        }
+    }
+    
+    ctx.restore();
+}
 
-// --- GLOBAL EXPOSURE FOR INLINE HTML HANDLERS ---
-// Expose functions used in onclick="..." attributes to the global scope
-window.init = init;
-window.hostSession = hostSession;
-window.joinSession = joinSession;
-window.openGMTokenDeploy = openGMTokenDeploy;
-window.closeGMTokenDeploy = closeGMTokenDeploy;
-window.spawnCustomToken = spawnCustomToken;
-window.spawnToken = spawnToken;
-window.selectCharacter = selectCharacter;
-window.updateHelperText = updateHelperText;
-window.generateCurrentLevel = generateCurrentLevel;
-window.changeLevel = changeLevel;
-window.exitInterior = exitInterior;
-window.toggleLabels = toggleLabels;
-window.toggleFog = toggleFog;
-window.downloadMap = downloadMap;
-window.recordClip = recordClip;
-window.clearCurrentLevel = clearCurrentLevel;
-window.purgeAll = purgeAll;
-window.exportReport = exportReport;
-window.closeModal = closeModal;
-window.copyReport = copyReport;
-window.copyHostId = copyHostId;
-window.sendChatMessage = sendChatMessage;
+// --- COMBAT TRACKER BRIDGE ---
+function startCombatSync() {
+    if (!rtdb) return;
+    
+    // Listen to the Combat Tracker's enemy list
+    onValue(ref(rtdb, 'combat/enemies'), (snapshot) => {
+        // Only the Host should spawn tokens to avoid duplicates
+        if (!isHost) return;
 
-// Expose new pan functions for debugging/testing
-window.handleMouseDown = handleMouseDown;
-window.handleMouseUp = handleMouseUp;
-// --------------------------------------------------
+        const combatData = snapshot.val();
+        if (!combatData) return;
+
+        // Convert data to array (Firebase can return objects or arrays)
+        const enemies = Array.isArray(combatData) ? combatData : Object.values(combatData);
+
+        let mapChanged = false;
+
+        enemies.forEach(enemy => {
+            if (!enemy) return;
+
+            // 1. Check if token exists on map
+            const existingToken = tokens.find(t => t.id === enemy.id);
+
+            if (existingToken) {
+                // A. UPDATE EXISTING
+                const wasDead = existingToken.isDead;
+                // Check if HP is 0 or less
+                existingToken.isDead = (enemy.hp !== "N/A" && parseInt(enemy.hp) <= 0);
+                
+                // If death status changed, we need to redraw
+                if (wasDead !== existingToken.isDead) mapChanged = true;
+
+            } else {
+                // B. SPAWN NEW TOKEN
+                // Calculate Center of Screen
+                const spawnX = mapOffsetX + (config.width / 2 / zoomLevel); 
+                const spawnY = mapOffsetY + (config.height / 2 / zoomLevel);
+                const jitter = (Math.random() - 0.5) * 50; 
+
+                // Determine Rank Color based on 'style' from Tracker
+                let rankColor = "#ef4444"; // Default Red
+                if (enemy.style) {
+                    if (enemy.style.includes('legendary')) rankColor = "#a855f7"; // Purple
+                    else if (enemy.style.includes('hard')) rankColor = "#f97316"; // Orange
+                    else if (enemy.style.includes('weak')) rankColor = "#9ca3af"; // Grey
+                    else if (enemy.style.includes('player')) rankColor = "#3b82f6"; // Blue
+                }
+
+                const newToken = {
+                    id: enemy.id, // Links to Tracker ID
+                    x: spawnX + jitter,
+                    y: spawnY + jitter,
+                    label: enemy.name,
+                    color: rankColor,
+                    src: enemy.token_src || "",
+                    isDead: (enemy.hp !== "N/A" && parseInt(enemy.hp) <= 0)
+                };
+
+                // Load Image
+                if (newToken.src) {
+                    const img = new Image();
+                    img.src = newToken.src;
+                    img.onload = () => { newToken.img = img; drawCurrentLevel(); };
+                    newToken.img = img;
+                }
+
+                tokens.push(newToken);
+                log(`COMBATANT DETECTED: ${enemy.name}`, rankColor);
+                mapChanged = true;
+            }
+        });
+
+        if (mapChanged) {
+            drawCurrentLevel();
+            syncData(); // Send updates to players
+        }
+    });
+}
 
 window.onload = init;
