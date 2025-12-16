@@ -963,6 +963,98 @@ function recordClip() {
     setTimeout(() => recorder.stop(), 3000); // 3 Second Clip
 }
 
+function saveMapState() {
+  if (isClient) return; // Only GM can save
+  
+  const mapName = prompt("Enter a name for this save:", `${config.mapType}_level${currentLevelIndex}`);
+  if (!mapName) return;
+  
+  const saveData = {
+    timestamp: Date.now(),
+    mapType: config.mapType,
+    floorData: floorData,
+    interiorData: interiorData,
+    tokens: tokens.map(t => ({
+      id: t.id,
+      x: t.x,
+      y: t.y,
+      label: t.label,
+      color: t.color,
+      src: t.src
+    })),
+    currentLevel: currentLevelIndex,
+    viewMode: viewMode,
+    currentInteriorKey: currentInteriorKey,
+    version: "1.0"
+  };
+  
+  // Save to localStorage
+  localStorage.setItem(`pipboy_map_${mapName}`, JSON.stringify(saveData));
+  log(`MAP SAVED: ${mapName}`, "#16ff60");
+}
+
+function loadMapState() {
+  if (isClient) return; // Only GM can load
+  
+  const mapName = prompt("Enter the name of the save to load:");
+  if (!mapName) return;
+  
+  const saved = localStorage.getItem(`pipboy_map_${mapName}`);
+  if (!saved) {
+    log(`ERROR: No saved map found: ${mapName}`, "#ef4444");
+    return false;
+  }
+  
+  const data = JSON.parse(saved);
+  config.mapType = data.mapType;
+  floorData = data.floorData;
+  interiorData = data.interiorData;
+  currentLevelIndex = data.currentLevel;
+  viewMode = data.viewMode || "sector";
+  currentInteriorKey = data.currentInteriorKey || null;
+  
+  // Rebuild tokens with images
+  tokens = data.tokens;
+  tokens.forEach(t => {
+    if (t.src) {
+      const img = new Image();
+      img.onload = () => {
+        t.img = img;
+        drawCurrentLevel();
+      };
+      img.onerror = () => {
+        t.img = null;
+        log(`Image failed for ${t.label}`, "#ef4444");
+      };
+      img.src = t.src;
+    }
+  });
+  
+  document.getElementById("mapType").value = config.mapType;
+  updateLevelControls();
+  drawCurrentLevel();
+  log(`MAP LOADED: ${mapName}`, "#3b82f6");
+  
+  if (typeof syncData === "function") syncData();
+  return true;
+}
+
+function listSavedMaps() {
+  const saves = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith("pipboy_map_")) {
+      saves.push(key.replace("pipboy_map_", ""));
+    }
+  }
+  
+  if (saves.length === 0) {
+    log("NO SAVED MAPS FOUND", "#ffb300");
+  } else {
+    log(`SAVED MAPS: ${saves.join(", ")}`, "#3b82f6");
+  }
+}
+
 // --- NETWORKING LOGIC (The Magic) ---
 function toggleChatControls(enable) {
     chatInput.disabled = !enable;
