@@ -4224,6 +4224,11 @@ window.copyReport = copyReport;
 window.copyHostId = copyHostId;
 window.sendChatMessage = sendChatMessage;
 
+// ADD THESE THREE LINES HERE:
+window.saveMapState = saveMapState;
+window.loadMapState = loadMapState;
+window.listSavedMaps = listSavedMaps;
+
 // Expose new pan functions for debugging/testing
 window.handleMouseDown = handleMouseDown;
 window.handleMouseUp = handleMouseUp;
