@@ -1012,68 +1012,7 @@ function loadMapState() {
     log(`ERROR: No saved map found: ${mapName}`, "#ef4444");
     return false;
   }
-
-// ADD THE NEW FUNCTION RIGHT HERE:
-function loadMapFromFile(event) {
-  if (isClient) return;
   
-  const file = event.target.files[0];
-  if (!file) return;
-  
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const data = JSON.parse(e.target.result);
-      
-      // Validate it's a valid save file
-      if (!data.floorData || !data.version) {
-        log("ERROR: Invalid save file format", "#ef4444");
-        return;
-      }
-      
-      // Load the data
-      config.mapType = data.mapType;
-      floorData = data.floorData;
-      interiorData = data.interiorData;
-      currentLevelIndex = data.currentLevel;
-      viewMode = data.viewMode || "sector";
-      currentInteriorKey = data.currentInteriorKey || null;
-      
-      // Rebuild tokens with images
-      tokens = data.tokens;
-      tokens.forEach(t => {
-        if (t.src) {
-          const img = new Image();
-          img.onload = () => {
-            t.img = img;
-            drawCurrentLevel();
-          };
-          img.onerror = () => {
-            t.img = null;
-            log(`Image failed for ${t.label}`, "#ef4444");
-          };
-          img.src = t.src;
-        }
-      });
-      
-      document.getElementById("mapType").value = config.mapType;
-      updateLevelControls();
-      drawCurrentLevel();
-      log(`MAP LOADED FROM FILE: ${file.name}`, "#3b82f6");
-      
-      if (typeof syncData === "function") syncData();
-    } catch (error) {
-      log(`ERROR: Failed to parse save file - ${error.message}`, "#ef4444");
-    }
-  };
-  
-  reader.readAsText(file);
-  
-  // Reset input so same file can be loaded again
-  event.target.value = '';
-}
-
-    
   const data = JSON.parse(saved);
   config.mapType = data.mapType;
   floorData = data.floorData;
@@ -1107,6 +1046,61 @@ function loadMapFromFile(event) {
   if (typeof syncData === "function") syncData();
   return true;
 }
+
+function loadMapFromFile(event) {
+  if (isClient) return;
+  
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      
+      if (!data.floorData || !data.version) {
+        log("ERROR: Invalid save file format", "#ef4444");
+        return;
+      }
+      
+      config.mapType = data.mapType;
+      floorData = data.floorData;
+      interiorData = data.interiorData;
+      currentLevelIndex = data.currentLevel;
+      viewMode = data.viewMode || "sector";
+      currentInteriorKey = data.currentInteriorKey || null;
+      
+      tokens = data.tokens;
+      tokens.forEach(t => {
+        if (t.src) {
+          const img = new Image();
+          img.onload = () => {
+            t.img = img;
+            drawCurrentLevel();
+          };
+          img.onerror = () => {
+            t.img = null;
+            log(`Image failed for ${t.label}`, "#ef4444");
+          };
+          img.src = t.src;
+        }
+      });
+      
+      document.getElementById("mapType").value = config.mapType;
+      updateLevelControls();
+      drawCurrentLevel();
+      log(`MAP LOADED FROM FILE: ${file.name}`, "#3b82f6");
+      
+      if (typeof syncData === "function") syncData();
+    } catch (error) {
+      log(`ERROR: Failed to parse save file - ${error.message}`, "#ef4444");
+    }
+  };
+  
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
 
 function listSavedMaps() {
   const saves = [];
