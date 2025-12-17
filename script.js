@@ -964,7 +964,7 @@ function recordClip() {
 }
 
 function saveMapState() {
-  if (isClient) return; // Only GM can save
+  if (isClient) return;
   
   const mapName = prompt("Enter a name for this save:", `${config.mapType}_level${currentLevelIndex}`);
   if (!mapName) return;
@@ -988,9 +988,17 @@ function saveMapState() {
     version: "1.0"
   };
   
-  // Save to localStorage
+  // Save to localStorage (keeps working as before)
   localStorage.setItem(`pipboy_map_${mapName}`, JSON.stringify(saveData));
-  log(`MAP SAVED: ${mapName}`, "#16ff60");
+  
+  // ALSO download as a file
+  const blob = new Blob([JSON.stringify(saveData, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `pipboy_${mapName}_${Date.now()}.json`;
+  link.click();
+  
+  log(`MAP SAVED: ${mapName} (localStorage + file)`, "#16ff60");
 }
 
 function loadMapState() {
@@ -1004,7 +1012,68 @@ function loadMapState() {
     log(`ERROR: No saved map found: ${mapName}`, "#ef4444");
     return false;
   }
+
+// ADD THE NEW FUNCTION RIGHT HERE:
+function loadMapFromFile(event) {
+  if (isClient) return;
   
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      
+      // Validate it's a valid save file
+      if (!data.floorData || !data.version) {
+        log("ERROR: Invalid save file format", "#ef4444");
+        return;
+      }
+      
+      // Load the data
+      config.mapType = data.mapType;
+      floorData = data.floorData;
+      interiorData = data.interiorData;
+      currentLevelIndex = data.currentLevel;
+      viewMode = data.viewMode || "sector";
+      currentInteriorKey = data.currentInteriorKey || null;
+      
+      // Rebuild tokens with images
+      tokens = data.tokens;
+      tokens.forEach(t => {
+        if (t.src) {
+          const img = new Image();
+          img.onload = () => {
+            t.img = img;
+            drawCurrentLevel();
+          };
+          img.onerror = () => {
+            t.img = null;
+            log(`Image failed for ${t.label}`, "#ef4444");
+          };
+          img.src = t.src;
+        }
+      });
+      
+      document.getElementById("mapType").value = config.mapType;
+      updateLevelControls();
+      drawCurrentLevel();
+      log(`MAP LOADED FROM FILE: ${file.name}`, "#3b82f6");
+      
+      if (typeof syncData === "function") syncData();
+    } catch (error) {
+      log(`ERROR: Failed to parse save file - ${error.message}`, "#ef4444");
+    }
+  };
+  
+  reader.readAsText(file);
+  
+  // Reset input so same file can be loaded again
+  event.target.value = '';
+}
+
+    
   const data = JSON.parse(saved);
   config.mapType = data.mapType;
   floorData = data.floorData;
@@ -4227,6 +4296,7 @@ window.sendChatMessage = sendChatMessage;
 // ADD THESE THREE LINES HERE:
 window.saveMapState = saveMapState;
 window.loadMapState = loadMapState;
+window.loadMapFromFile = loadMapFromFile;  // ADD THIS LINE
 window.listSavedMaps = listSavedMaps;
 
 // Expose new pan functions for debugging/testing
