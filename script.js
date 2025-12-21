@@ -454,41 +454,54 @@ function closeGMTokenDeploy() {
     if (customUrl) customUrl.value = "";
 }
 
-// === ADD THIS NEW FUNCTION HERE ===
+// === KEEP ONLY THIS ONE ===
 function syncCombatToMap() {
-    // Remove existing combat enemy tokens (preserve player tokens)
+    console.log('🔍 Syncing combat tracker... Found', window.currentEnemies?.length || 0, 'enemies');
+    
+    // Remove existing enemy tokens (keep players)
     tokens = tokens.filter(t => {
         const label = t.label.toLowerCase();
-        return !label.includes('feral') && !label.includes('raider') && 
-               !label.includes('ghoul') && !label.includes('mutant') &&
-               !t.label.includes('Feral') && !t.label.includes('Raider');
+        return !label.includes('feral') && !label.includes('ghoul') && 
+               !label.includes('raider') && !label.includes('mutant');
     });
     
-    // Access combat tracker enemies from other script
-    if (window.currentEnemies) {
-        window.currentEnemies.forEach(enemy => {
-            // Skip players/friendlies
-            if (enemy.style && enemy.style.includes('player')) return;
-            if (!enemy.tokensrc) return;
-            
-            // Random center cluster position
-            const mapX = config.width / 2 + (Math.random() - 0.5) * 300;
-            const mapY = config.height / 2 + (Math.random() - 0.5) * 300;
-            
-            spawnTokenAtPosition(
-                enemy.name,                    // Exact combat tracker name
-                enemy.tokencolor || '#ef4444', // Combat color or red fallback
-                enemy.tokensrc,                // Combat image
-                mapX, mapY
-            );
-        });
+    if (!window.currentEnemies || window.currentEnemies.length === 0) {
+        console.log('❌ No enemies in combat tracker');
+        return;
     }
     
+    let syncedCount = 0;
+    window.currentEnemies.forEach(enemy => {
+        console.log('🔍 Checking enemy:', enemy.name, 'style:', enemy.style); // DEBUG
+        
+        // Skip players/friendlies
+        if (enemy.style?.includes('player') || enemy.style?.includes('friendly')) {
+            console.log('⏭️ Skipping player:', enemy.name);
+            return;
+        }
+        
+        // Try ALL possible property names
+        const imgSrc = enemy.token_src || enemy.tokensrc || enemy.src;
+        const color = enemy.token_color || enemy.tokencolor || enemy.color || '#ef4444';
+        
+        console.log('📸 Image:', imgSrc ? '✅' : '❌', 'Color:', color); // DEBUG
+        
+        if (imgSrc) {
+            const mapX = config.width / 2 + (Math.random() - 0.5) * 300;
+            const mapY = config.height / 2 + (Math.random() - 0.5) * 300;
+            spawnTokenAtPosition(enemy.name, color, imgSrc, mapX, mapY);
+            syncedCount++;
+        } else {
+            console.log('❌ No image for', enemy.name);
+        }
+    });
+    
+    console.log(`✅ Synced ${syncedCount} enemies to map!`);
     drawCurrentLevel();
     if (typeof syncData === 'function') syncData();
-    log('SYNCED COMBAT ENEMIES TO MAP', '#16ff60');
 }
-// === END NEW FUNCTION ===
+// === END SINGLE FUNCTION ===
+
 
 
 // --- END TOKEN LOGIC ---
