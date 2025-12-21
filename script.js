@@ -52,12 +52,14 @@ const DOUBLE_CLICK_TIME = 500; // ms
 
 // NETWORK & TOKEN GLOBALS
 let peer = null;
-let conn = null;
+let conn = null;           // Last connection (still used on clients)
+let connections = [];      // NEW: all client connections on the host
 let isHost = false;
-let tokens = []; // { id, x, y, label, color, src, img }
+let tokens = [];           // { id, x, y, label, color, src, img }
 let tokenLabelsVisible = {}; // Track label visibility
 let draggedToken = null;
-let isClient = false; // If true, disable generation controls
+let isClient = false;      // If true, disable generation controls
+
 
 // --- TOKEN LOGIC & PRESETS (Used for Selection and GM Deploy) ---
 const OVERSEER_TOKEN_ID = "OVERSEER";
@@ -1209,13 +1211,22 @@ function hostSession() {
         activateAppUI();
     });
 
-    peer.on('connection', (c) => {
-        log("NEW TERMINAL CONNECTED", 'var(--pip-amber)');
-        conn = c;
-        conn.on('data', receiveData); // Attach data listener
-        // Send current state immediately
-        setTimeout(syncData, 500);
+  peer.on('connection', (c) => {
+    log("NEW TERMINAL CONNECTED", 'var(--pip-amber)');
+
+    conn = c;                 // keep last connection for legacy use
+    connections.push(c);      // NEW: track all client connections
+
+    c.on('data', receiveData); // Attach data listener
+
+    c.on('close', () => {
+        connections = connections.filter(x => x !== c);
     });
+
+    // Send current state immediately
+    setTimeout(syncData, 500);
+});
+
 
     peer.on('error', (err) => {
         log(`PEERJS ERROR: ${err.type}`, '#ef4444');
@@ -1280,9 +1291,19 @@ function joinSession() {
 
 function receiveData(data) {
      if (data.type === 'CHAT') {
-        log(data.message, data.color || '#fff', data.sender);
-        return;
-    }
+  // 1. Log on whoever received it
+  log(data.message, data.color, data.sender);
+
+  // 2. If this tab is the HOST, rebroadcast to all clients
+  if (isHost && connections?.length) {
+    connections.forEach(c => {
+      // Avoid echoing back to the original sender if you want,
+      // but simplest is just broadcast to all.
+      c.send(data);
+    });
+  }
+  return;
+}
 
     // RECEIVE SYNC DATA FROM GM
     if (data.type === 'SYNC') {
@@ -1355,16 +1376,13 @@ function sendChatMessage() {
     log(msg, chatColor, senderName);
 
     // 2. Send over network
-    if (conn) {
-        conn.send({
-            type: 'CHAT',
-            sender: senderName,
-            message: msg,
-            color: chatColor
-        });
-    } else {
-         log("WARN: OFFLINE. MESSAGE NOT SENT.", 'var(--pip-amber)');
-    }
+   if (isHost && connections?.length) {
+  connections.forEach(c => c.send({ type: 'CHAT', sender: senderName, message: msg, color: chatColor }));
+} else if (!isHost && conn) {
+  conn.send({ type: 'CHAT', sender: senderName, message: msg, color: chatColor });
+} else {
+  log('OFFLINE. MESSAGE NOT SENT.', 'var(--pip-amber)');
+}
 
     // 3. Clear input
     chatInput.value = '';
