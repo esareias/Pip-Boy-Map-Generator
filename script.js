@@ -4356,10 +4356,7 @@ window.handleMouseUp = handleMouseUp;
 
 // --------------------------------------------------
 
-window.onload = init;
-// AUTO-SYNC: Check for new enemies every second
-setInterval(() => {
-  if (window.sharedEnemies?.length > 0) {  // LINE 3
-    syncCombatToMap();
-  }
-}, 1000);
+window.onload = function() {
+    renderPlayerTokens();
+};
+
