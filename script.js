@@ -254,6 +254,14 @@ function openGMTokenDeploy() {
     const modal = document.getElementById('gmTokenDeployModal');
     const grid = document.getElementById('tokenGrid');
     grid.innerHTML = '';
+	
+	 // === ADD SYNC BUTTON HERE ===
+    const syncBtn = document.createElement('button');
+    syncBtn.innerHTML = '[SYNC ENEMIES]';
+    syncBtn.className = 'pip-btn w-full mb-4 bg-green-600 hover:bg-green-700';
+    syncBtn.onclick = syncCombatToMap;
+    grid.appendChild(syncBtn);
+    // === END BUTTON ===
 
     // Category dropdown with ALL categories
     const select = document.createElement('select');
@@ -446,6 +454,41 @@ function closeGMTokenDeploy() {
     if (customUrl) customUrl.value = "";
 }
 
+// === ADD THIS NEW FUNCTION HERE ===
+function syncCombatToMap() {
+    // Remove existing combat enemy tokens (preserve player tokens)
+    tokens = tokens.filter(t => {
+        const label = t.label.toLowerCase();
+        return !label.includes('feral') && !label.includes('raider') && 
+               !label.includes('ghoul') && !label.includes('mutant') &&
+               !t.label.includes('Feral') && !t.label.includes('Raider');
+    });
+    
+    // Access combat tracker enemies from other script
+    if (window.currentEnemies) {
+        window.currentEnemies.forEach(enemy => {
+            // Skip players/friendlies
+            if (enemy.style && enemy.style.includes('player')) return;
+            if (!enemy.tokensrc) return;
+            
+            // Random center cluster position
+            const mapX = config.width / 2 + (Math.random() - 0.5) * 300;
+            const mapY = config.height / 2 + (Math.random() - 0.5) * 300;
+            
+            spawnTokenAtPosition(
+                enemy.name,                    // Exact combat tracker name
+                enemy.tokencolor || '#ef4444', // Combat color or red fallback
+                enemy.tokensrc,                // Combat image
+                mapX, mapY
+            );
+        });
+    }
+    
+    drawCurrentLevel();
+    if (typeof syncData === 'function') syncData();
+    log('SYNCED COMBAT ENEMIES TO MAP', '#16ff60');
+}
+// === END NEW FUNCTION ===
 
 
 // --- END TOKEN LOGIC ---
