@@ -56,7 +56,6 @@ let conn = null;           // Last connection (still used on clients)
 let connections = [];      // NEW: all client connections on the host
 let isHost = false;
 let tokens = [];           // { id, x, y, label, color, src, img }
-window.sharedEnemies = [];
 let tokenLabelsVisible = {}; // Track label visibility
 let draggedToken = null;
 let isClient = false;      // If true, disable generation controls
@@ -455,36 +454,41 @@ function closeGMTokenDeploy() {
     if (customUrl) customUrl.value = "";
 }
 
+// === ADD THIS NEW FUNCTION HERE ===
 function syncCombatToMap() {
-    console.log('🔍 Syncing sharedEnemies:', window.sharedEnemies?.length);
-    
-    // Clear enemy tokens only
+    // Remove existing combat enemy tokens (preserve player tokens)
     tokens = tokens.filter(t => {
         const label = t.label.toLowerCase();
-        return !label.includes('feral') && !label.includes('ghoul') && 
-               !label.includes('raider') && !label.includes('mutant');
+        return !label.includes('feral') && !label.includes('raider') && 
+               !label.includes('ghoul') && !label.includes('mutant') &&
+               !t.label.includes('Feral') && !t.label.includes('Raider');
     });
     
-    window.sharedEnemies.forEach(enemy => {
-        // Skip players
-        if (enemy.style?.includes('player') || enemy.style?.includes('friendly')) return;
-        
-        const imgSrc = enemy.token_src || enemy.tokensrc || enemy.src;
-        const color = enemy.token_color || enemy.tokencolor || enemy.color || '#ef4444';
-        
-        if (imgSrc) {
+    // Access combat tracker enemies from other script
+    if (window.currentEnemies) {
+        window.currentEnemies.forEach(enemy => {
+            // Skip players/friendlies
+            if (enemy.style && enemy.style.includes('player')) return;
+            if (!enemy.tokensrc) return;
+            
+            // Random center cluster position
             const mapX = config.width / 2 + (Math.random() - 0.5) * 300;
             const mapY = config.height / 2 + (Math.random() - 0.5) * 300;
-            spawnTokenAtPosition(enemy.name, color, imgSrc, mapX, mapY);
-        }
-    });
+            
+            spawnTokenAtPosition(
+                enemy.name,                    // Exact combat tracker name
+                enemy.tokencolor || '#ef4444', // Combat color or red fallback
+                enemy.tokensrc,                // Combat image
+                mapX, mapY
+            );
+        });
+    }
     
     drawCurrentLevel();
     if (typeof syncData === 'function') syncData();
-    console.log('✅ Synced', window.sharedEnemies.length, 'enemies to map!');
+    log('SYNCED COMBAT ENEMIES TO MAP', '#16ff60');
 }
-// === END SINGLE FUNCTION ===
-
+// === END NEW FUNCTION ===
 
 
 // --- END TOKEN LOGIC ---
@@ -4356,7 +4360,4 @@ window.handleMouseUp = handleMouseUp;
 
 // --------------------------------------------------
 
-window.onload = function() {
-    renderPlayerTokens();
-};
-
+window.onload = init;
