@@ -507,14 +507,37 @@ const TRACKER_TO_MAP_TRANSLATION = {
 // 3. The Listener - This catches the signal from the tracker
 mapChannel.onmessage = (event) => {
     let { type, label } = event.data;
+
+    // --- CASE 1: ENEMY DIED (Turn them grey) ---
+    if (type === 'ENEMY_DIED') {
+        const token = tokens.find(t => t.label === label);
+        if (token) {
+            token.color = '#4b5563'; // Terminated Slate Grey
+            console.log(`V is marking ${label} as terminated. RIP asshole.`);
+            drawCurrentLevel();
+            if (typeof syncData === 'function') syncData();
+        }
+        return; // Exit early so we don't try to spawn a second one
+    }
+
+    // --- CASE 2: REMOVE TOKEN (Delete from map) ---
+    if (type === 'REMOVE_TOKEN') {
+        tokens = tokens.filter(t => t.label !== label);
+        console.log(`V is scrubbing ${label} from the records. Like they never existed.`);
+        drawCurrentLevel();
+        if (typeof syncData === 'function') syncData();
+        return; // Exit early
+    }
+
+    // --- CASE 3: DEFAULT SPAWN LOGIC ---
     console.log(`V caught a broadcast! Spawning ${label} (${type})`);
 
-    // Check if we need to fix the name for the map's list
+    // Check the cheat sheet for name mismatches
     if (TRACKER_TO_MAP_TRANSLATION[type]) {
         type = TRACKER_TO_MAP_TRANSLATION[type];
     }
 
-    // Look through your ENEMY_PRESETS categories to find the icon and color
+    // Find the icon and color from your presets
     let foundPreset = null;
     for (const category in ENEMY_PRESETS) {
         const match = ENEMY_PRESETS[category].find(p => p.name === type);
@@ -525,16 +548,14 @@ mapChannel.onmessage = (event) => {
     }
 
     if (foundPreset) {
-        // We'll add a little random "jitter" to the position so they aren't all 
-        // stacked in one big pile in the center of the screen.
+        // Add a little random "jitter" so they don't stack perfectly
         const offsetX = (Math.random() - 0.5) * 150;
         const offsetY = (Math.random() - 0.5) * 150;
 
-        // Call the function YOU found to actually place the token
         spawnTokenAtPosition(
-            label,               // The cool random name from the tracker
-            foundPreset.color,   // The color from your map preset
-            foundPreset.src,     // The image URL from your map preset
+            label,               
+            foundPreset.color,   
+            foundPreset.src,     
             config.width / 2 + offsetX, 
             config.height / 2 + offsetY
         );
