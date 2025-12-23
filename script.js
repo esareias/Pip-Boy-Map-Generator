@@ -400,7 +400,7 @@ function spawnMultipleEnemies(baseName, color, src) {
 }
 
 
-function spawnTokenAtPosition(name, color, src, x, y, multiplier = 1.0) {
+function spawnTokenAtPosition(name, color, src, x, y) {
     const t = {
         id: Date.now() + Math.random(),
         x: x,
@@ -408,8 +408,7 @@ function spawnTokenAtPosition(name, color, src, x, y, multiplier = 1.0) {
         label: name,
         color: color,
         src: src || "",
-        img: null,
-        multiplier: multiplier // <--- THE DNA: 0.75, 1.0, 1.5, or 2.0
+        img: null
     };
 
     if (src) {
@@ -430,7 +429,7 @@ function spawnTokenAtPosition(name, color, src, x, y, multiplier = 1.0) {
 
     tokens.push(t);
     if (typeof syncData === "function") syncData();
-    log(`Spawned: ${name} [Size x${multiplier}]`, color);
+    log(`Spawned: ${name}`, color);
 }
 
 // Modified original spawnToken to use the new function
@@ -556,8 +555,7 @@ mapChannel.onmessage = (event) => {
             foundPreset.color,   
             foundPreset.src,     
             config.width / 2 + offsetX, 
-            config.height / 2 + offsetY,
-			event.data.multiplier || 1.0
+            config.height / 2 + offsetY
         );
 
         console.log(`Successfully manifested ${label} on the grid. Give 'em hell, Emanuel.`);
@@ -4328,33 +4326,15 @@ function drawCurrentLevel(time = 0) {
     }
     // --- DRAW TOKENS --- (Tokens are drawn in a new, un-translated context)
     
-   // --- DRAW TOKENS ---
+    // --- DRAW TOKENS ---
     for (let t of tokens) {
-        // 1. Apply Zoom to Position
+        // 1. Apply Zoom to Position & Radius so they match the map scale
         const tx = (t.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
         const ty = (t.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
-
-        // 2. DYNAMIC RADIUS LOGIC
-        // Check if the token is a player. if not, make it bigger!
-    const isPlayer = TOKEN_PRESETS.some(p => p.name === t.label);
-    let baseSize = isPlayer ? 15 : 25; // Players are 15, Enemies are 25
-
-    // 1. SPECIFIC SPECIES SIZE OVERRIDES
-    if (t.label.includes("Behemoth") || t.label.includes("Sentry Bot") || t.label.includes("Deathclaw")) {
-        baseSize = 45; // Huge
-    }
-    if (t.label.includes("Radroach") || t.label.includes("Bloatfly") || t.label.includes("Ant")) {
-        baseSize = 12; // Tiny
-    }
-
-    // 2. THE MULTIPLIER MATH (The part you wanted!)
-    // We grab the multiplier we stored in the token (0.75, 1.0, 1.5, or 2.0)
-    // If it's a player or manual token, it uses 1.0 as a fallback.
-    const difficultyMultiplier = t.multiplier || 1.0;
-
-    // 3. FINAL CALCULATION
-    const tokenRadius = (baseSize * difficultyMultiplier) * RENDER_SCALE * zoomLevel;
-    const imgSize = tokenRadius * 2;
+        const tokenRadius = 15 * RENDER_SCALE * zoomLevel;
+        
+      if (t.img && t.img.complete) {
+            const imgSize = tokenRadius * 2;
 
             // --- A. CIRCULAR CROPPING ---
             ctx.save(); // Start isolation
