@@ -455,39 +455,38 @@ function closeGMTokenDeploy() {
     if (customUrl) customUrl.value = "";
 }
 
+// === ADD THIS NEW FUNCTION HERE ===
 function syncCombatToMap() {
-    // 1. Clear existing combat tokens
+    // Remove existing combat enemy tokens (preserve player tokens)
     tokens = tokens.filter(t => {
         const label = t.label.toLowerCase();
         return !label.includes('feral') && !label.includes('raider') && 
                !label.includes('ghoul') && !label.includes('mutant') &&
-               !t.label.includes('Feral') && !t.label.includes('Raider') &&
-               !t.label.includes('Behemoth');
+               !t.label.includes('Feral') && !t.label.includes('Raider');
     });
     
+    // Access combat tracker enemies from other script
     if (window.currentEnemies) {
         window.currentEnemies.forEach(enemy => {
+            // Skip players/friendlies
             if (enemy.style && enemy.style.includes('player')) return;
+            if (!enemy.tokensrc) return;
             
-            // FIX: Using token_src (with underscore) to match the tracker
-            if (!enemy.token_src) return;
+            // Random center cluster position
+            const mapX = config.width / 2 + (Math.random() - 0.5) * 300;
+            const mapY = config.height / 2 + (Math.random() - 0.5) * 300;
             
-            const mapX = config.width / 2 + (Math.random() - 0.5) * 400;
-            const mapY = config.height / 2 + (Math.random() - 0.5) * 400;
-            
-            // PASSING ALL 6 ARGUMENTS (Name, Color, Src, X, Y, Multiplier)
             spawnTokenAtPosition(
-                enemy.name,                    
-                enemy.token_color || '#ef4444', 
-                enemy.token_src,                
-                mapX, 
-                mapY,
-                enemy.multiplier || 1.0 // <--- SENDING THE SIZE
+                enemy.name,                    // Exact combat tracker name
+                enemy.tokencolor || '#ef4444', // Combat color or red fallback
+                enemy.tokensrc,                // Combat image
+                mapX, mapY
             );
         });
     }
     
     drawCurrentLevel();
+    if (typeof syncData === 'function') syncData();
     log('SYNCED COMBAT ENEMIES TO MAP', '#16ff60');
 }
 
@@ -4331,50 +4330,68 @@ function drawCurrentLevel(time = 0) {
     
    // --- DRAW TOKENS ---
     for (let t of tokens) {
-        // 1. Zoom/Pan Math
+        // 1. Apply Zoom to Position
         const tx = (t.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
         const ty = (t.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
 
-        // 2. Base Size Logic
-        const isPlayer = TOKEN_PRESETS.some(p => p.name === t.label);
-        let baseSize = isPlayer ? 15 : 25; 
+        // 2. DYNAMIC RADIUS LOGIC
+        // Check if the token is a player. if not, make it bigger!
+    const isPlayer = TOKEN_PRESETS.some(p => p.name === t.label);
+    let baseSize = isPlayer ? 15 : 25; // Players are 15, Enemies are 25
 
-        if (t.label.includes("Behemoth") || t.label.includes("Sentry Bot") || t.label.includes("Deathclaw")) {
-            baseSize = 45; 
-        }
-        if (t.label.includes("Radroach") || t.label.includes("Bloatfly") || t.label.includes("Ant")) {
-            baseSize = 12; 
-        }
+    // 1. SPECIFIC SPECIES SIZE OVERRIDES
+    if (t.label.includes("Behemoth") || t.label.includes("Sentry Bot") || t.label.includes("Deathclaw")) {
+        baseSize = 45; // Huge
+    }
+    if (t.label.includes("Radroach") || t.label.includes("Bloatfly") || t.label.includes("Ant")) {
+        baseSize = 12; // Tiny
+    }
 
-        // 3. Size Multiplier
-        const diffMod = t.multiplier || 1.0;
-        const tokenRadius = (baseSize * diffMod) * RENDER_SCALE * zoomLevel;
-        const imgSize = tokenRadius * 2;
+    // 2. THE MULTIPLIER MATH (The part you wanted!)
+    // We grab the multiplier we stored in the token (0.75, 1.0, 1.5, or 2.0)
+    // If it's a player or manual token, it uses 1.0 as a fallback.
+    const difficultyMultiplier = t.multiplier || 1.0;
 
-        // --- THIS WAS THE MISSING LINE CAUSING THE ERROR ---
-        if (t.img && t.img.complete) { 
-            ctx.save(); 
-            // Death Filter
+    // 3. FINAL CALCULATION
+    const tokenRadius = (baseSize * difficultyMultiplier) * RENDER_SCALE * zoomLevel;
+    const imgSize = tokenRadius * 2;
+
+            // --- A. CIRCULAR CROPPING ---
+            ctx.save(); // Start isolation
+            
+            // --- NEW: DEATH FILTERS ---
+            // If the tracker said they're dead or sent the grey color code
             if (t.dead || t.color === '#4b5563') {
-                ctx.globalAlpha = 0.5;
-                ctx.filter = 'grayscale(100%)';
+                ctx.globalAlpha = 0.5;            // Make them 50% transparent
+                ctx.filter = 'grayscale(100%)';  // Turn the image black and white
             }
-            // Circular Clip
+
+            ctx.beginPath();
+            ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2); // Define the circle
+            ctx.clip(); // Cut everything outside the circle
+            
+            // Draw the image (now grayscale/transparent if they are dead)
+            ctx.drawImage(t.img, tx - tokenRadius, ty - tokenRadius, imgSize, imgSize);
+            
+            ctx.restore(); // End isolation (Reset alpha and filter for next token)
+
+           // --- B. BORDER RING ---
+            // To remove the circle, just comment out these 5 lines:
+            /* ctx.strokeStyle = t.color;
+            ctx.lineWidth = 3 * RENDER_SCALE * zoomLevel; 
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2);
-            ctx.clip(); 
-            
-            ctx.drawImage(t.img, tx - tokenRadius, ty - tokenRadius, imgSize, imgSize);
-            ctx.restore(); 
+            ctx.stroke();
+            */
 
-        } else { 
-            // This 'else' crashed because the 'if' above it was missing!
+        } else {
+            // Draw default dot/disc (Fallback if no image)
             ctx.fillStyle = t.color;
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius * 0.8, 0, Math.PI*2);
             ctx.fill();
             
-            // Pulse Effect for non-image tokens
+            // Draw Pulse/Glow
             ctx.strokeStyle = t.color;
             ctx.lineWidth = 2 * RENDER_SCALE * zoomLevel;
             ctx.beginPath();
@@ -4382,26 +4399,33 @@ function drawCurrentLevel(time = 0) {
             ctx.stroke();
         }
 
-        // --- LABELS ---
-        if (config.showLabels && tokenLabelsVisible[t.id] !== false) {
-            ctx.save();
-            ctx.textAlign = "center";
-            ctx.textBaseline = "top";
-            const fontSize = 14 * RENDER_SCALE * zoomLevel;
-            ctx.font = `bold ${fontSize}px monospace`;
-            const labelY = ty + tokenRadius + 5 * zoomLevel;
+        // --- C. LEGIBLE LABEL ---
+if (config.showLabels && tokenLabelsVisible[t.id] !== false) {
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    const fontSize = 14 * RENDER_SCALE * zoomLevel;
+    ctx.font = `bold ${fontSize}px monospace`;
+    const labelY = ty + tokenRadius + 5 * zoomLevel;
 
-            ctx.strokeStyle = "rgba(0,0,0,0.8)";
-            ctx.lineWidth = 4 * zoomLevel;
-            ctx.lineJoin = "round";
-            ctx.strokeText(t.label, tx, labelY);
+    // 1. Black outline
+    ctx.strokeStyle = "rgba(0,0,0,0.8)";
+    ctx.lineWidth = 4 * zoomLevel;
+    ctx.lineJoin = "round";
+    ctx.strokeText(t.label, tx, labelY);
 
-            ctx.fillStyle = "#ffffff";
-            ctx.fillText(t.label, tx, labelY);
-            ctx.restore();
-        }
-    }
-	
+    // 2. White text
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(t.label, tx, labelY);
+    } // Close if(showLabels)
+
+    } // Close for(tokens) <--- THIS WAS MISSING/MISPLACED
+
+    // Restore the UI overlay context
+    // This must happen OUTSIDE the loop, or the canvas will glitch
+    ctx.restore();
+
+} // Close function drawCurrentLevel <--- THIS WAS MISSING
+
 // --- GLOBAL EXPOSURE FOR INLINE HTML HANDLERS ---
 // Expose functions used in onclick="..." attributes to the global scope
 window.init = init;
