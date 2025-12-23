@@ -165,7 +165,7 @@ const ENEMY_PRESETS = {
         { name: "Ghoul Reaver", color: "#ef4444", src: "https://static.wikia.nocookie.net/fallout/images/d/d9/Feral_ghoul_reaver.png" },
         { name: "Chinese Remnant Ghoul", color: "#dc2626", src: "https://static.wikia.nocookie.net/fallout/images/d/d5/Mama_Dolce%27s_Chinese_remnants_captain.png" },
         { name: "Trog", color: "#78716c", src: "https://static.wikia.nocookie.net/fallout/images/5/5e/Trog.png" },
-        { name: "Alien (Zetan)", color: "#a3e635", src: "https://static.wikia.nocookie.net/aliens/images/e/ee/Alien-Fallout.png" }
+        { name: "Alien", color: "#a3e635", src: "https://static.wikia.nocookie.net/aliens/images/e/ee/Alien-Fallout.png" }
     ],
     "Super Mutants": [
         { name: "Super Mutant", color: "#a3e635", src: "https://static.wikia.nocookie.net/fallout/images/4/48/FNV_super_mutant.png" },
