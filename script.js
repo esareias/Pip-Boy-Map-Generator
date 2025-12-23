@@ -4331,69 +4331,50 @@ function drawCurrentLevel(time = 0) {
     
    // --- DRAW TOKENS ---
     for (let t of tokens) {
-        // 1. Apply Zoom to Position
+        // 1. Zoom/Pan Math
         const tx = (t.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
         const ty = (t.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
 
-        // 2. DYNAMIC RADIUS LOGIC
-        // Check if the token is a player. if not, make it bigger!
-    const isPlayer = TOKEN_PRESETS.some(p => p.name === t.label);
-    let baseSize = isPlayer ? 15 : 25; // Players are 15, Enemies are 25
+        // 2. Base Size Logic
+        const isPlayer = TOKEN_PRESETS.some(p => p.name === t.label);
+        let baseSize = isPlayer ? 15 : 25; 
 
-    // 1. SPECIFIC SPECIES SIZE OVERRIDES
-    if (t.label.includes("Behemoth") || t.label.includes("Sentry Bot") || t.label.includes("Deathclaw")) {
-        baseSize = 45; // Huge
-    }
-    if (t.label.includes("Radroach") || t.label.includes("Bloatfly") || t.label.includes("Ant")) {
-        baseSize = 12; // Tiny
-    }
+        if (t.label.includes("Behemoth") || t.label.includes("Sentry Bot") || t.label.includes("Deathclaw")) {
+            baseSize = 45; 
+        }
+        if (t.label.includes("Radroach") || t.label.includes("Bloatfly") || t.label.includes("Ant")) {
+            baseSize = 12; 
+        }
 
-    // 2. THE MULTIPLIER MATH (The part you wanted!)
-    // We grab the multiplier we stored in the token (0.75, 1.0, 1.5, or 2.0)
-    // If it's a player or manual token, it uses 1.0 as a fallback.
-    const difficultyMultiplier = t.multiplier || 1.0;
+        // 3. Size Multiplier
+        const diffMod = t.multiplier || 1.0;
+        const tokenRadius = (baseSize * diffMod) * RENDER_SCALE * zoomLevel;
+        const imgSize = tokenRadius * 2;
 
-    // 3. FINAL CALCULATION
-    const tokenRadius = (baseSize * difficultyMultiplier) * RENDER_SCALE * zoomLevel;
-    const imgSize = tokenRadius * 2;
-
-            // --- A. CIRCULAR CROPPING ---
-            ctx.save(); // Start isolation
-            
-            // --- NEW: DEATH FILTERS ---
-            // If the tracker said they're dead or sent the grey color code
+        // --- THIS WAS THE MISSING LINE CAUSING THE ERROR ---
+        if (t.img && t.img.complete) { 
+            ctx.save(); 
+            // Death Filter
             if (t.dead || t.color === '#4b5563') {
-                ctx.globalAlpha = 0.5;            // Make them 50% transparent
-                ctx.filter = 'grayscale(100%)';  // Turn the image black and white
+                ctx.globalAlpha = 0.5;
+                ctx.filter = 'grayscale(100%)';
             }
-
-            ctx.beginPath();
-            ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2); // Define the circle
-            ctx.clip(); // Cut everything outside the circle
-            
-            // Draw the image (now grayscale/transparent if they are dead)
-            ctx.drawImage(t.img, tx - tokenRadius, ty - tokenRadius, imgSize, imgSize);
-            
-            ctx.restore(); // End isolation (Reset alpha and filter for next token)
-
-           // --- B. BORDER RING ---
-            // To remove the circle, just comment out these 5 lines:
-            /* ctx.strokeStyle = t.color;
-            ctx.lineWidth = 3 * RENDER_SCALE * zoomLevel; 
+            // Circular Clip
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2);
-            ctx.stroke();
-            */
+            ctx.clip(); 
+            
+            ctx.drawImage(t.img, tx - tokenRadius, ty - tokenRadius, imgSize, imgSize);
+            ctx.restore(); 
 
-        } else {
-            // Draw default dot/disc (Fallback if no image)
+        } else { 
+            // This 'else' crashed because the 'if' above it was missing!
             ctx.fillStyle = t.color;
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius * 0.8, 0, Math.PI*2);
             ctx.fill();
-		}
             
-            // Draw Pulse/Glow
+            // Pulse Effect for non-image tokens
             ctx.strokeStyle = t.color;
             ctx.lineWidth = 2 * RENDER_SCALE * zoomLevel;
             ctx.beginPath();
@@ -4401,33 +4382,26 @@ function drawCurrentLevel(time = 0) {
             ctx.stroke();
         }
 
-        // --- C. LEGIBLE LABEL ---
-if (config.showLabels && tokenLabelsVisible[t.id] !== false) {
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    const fontSize = 14 * RENDER_SCALE * zoomLevel;
-    ctx.font = `bold ${fontSize}px monospace`;
-    const labelY = ty + tokenRadius + 5 * zoomLevel;
+        // --- LABELS ---
+        if (config.showLabels && tokenLabelsVisible[t.id] !== false) {
+            ctx.save();
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+            const fontSize = 14 * RENDER_SCALE * zoomLevel;
+            ctx.font = `bold ${fontSize}px monospace`;
+            const labelY = ty + tokenRadius + 5 * zoomLevel;
 
-    // 1. Black outline
-    ctx.strokeStyle = "rgba(0,0,0,0.8)";
-    ctx.lineWidth = 4 * zoomLevel;
-    ctx.lineJoin = "round";
-    ctx.strokeText(t.label, tx, labelY);
+            ctx.strokeStyle = "rgba(0,0,0,0.8)";
+            ctx.lineWidth = 4 * zoomLevel;
+            ctx.lineJoin = "round";
+            ctx.strokeText(t.label, tx, labelY);
 
-    // 2. White text
-        ctx.fillStyle = "#ffffff";
-        ctx.fillText(t.label, tx, labelY);
-    } // Close if(showLabels)
-
-    } // Close for(tokens) <--- THIS WAS MISSING/MISPLACED
-
-    // Restore the UI overlay context
-    // This must happen OUTSIDE the loop, or the canvas will glitch
-    ctx.restore();
-
-} // Close function drawCurrentLevel <--- THIS WAS MISSING
-
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText(t.label, tx, labelY);
+            ctx.restore();
+        }
+    }
+	
 // --- GLOBAL EXPOSURE FOR INLINE HTML HANDLERS ---
 // Expose functions used in onclick="..." attributes to the global scope
 window.init = init;
