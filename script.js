@@ -508,25 +508,23 @@ const TRACKER_TO_MAP_TRANSLATION = {
 mapChannel.onmessage = (event) => {
     let { type, label } = event.data;
 
-    // --- CASE 1: ENEMY DIED (Turn them grey) ---
+    // --- CASE 1: ENEMY DIED (Tag them as dead) ---
     if (type === 'ENEMY_DIED') {
         const token = tokens.find(t => t.label === label);
         if (token) {
-            token.color = '#4b5563'; // Terminated Slate Grey
-            console.log(`V is marking ${label} as terminated. RIP asshole.`);
-            drawCurrentLevel();
-            if (typeof syncData === 'function') syncData();
+            token.color = '#4b5563'; // Slate Grey
+            token.dead = true;       // The "Death Flag"
+            console.log(`V has confirmed ${label} is pushing up rad-daisies.`);
+            if (typeof drawCurrentLevel === 'function') drawCurrentLevel();
         }
-        return; // Exit early so we don't try to spawn a second one
+        return; 
     }
 
-    // --- CASE 2: REMOVE TOKEN (Delete from map) ---
+    // --- CASE 2: REMOVE TOKEN (Hitting 'X') ---
     if (type === 'REMOVE_TOKEN') {
         tokens = tokens.filter(t => t.label !== label);
-        console.log(`V is scrubbing ${label} from the records. Like they never existed.`);
-        drawCurrentLevel();
-        if (typeof syncData === 'function') syncData();
-        return; // Exit early
+        if (typeof drawCurrentLevel === 'function') drawCurrentLevel();
+        return;
     }
 
     // --- CASE 3: DEFAULT SPAWN LOGIC ---
@@ -4335,18 +4333,27 @@ function drawCurrentLevel(time = 0) {
         const ty = (t.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
         const tokenRadius = 15 * RENDER_SCALE * zoomLevel;
         
-        if (t.img && t.img.complete) {
+      if (t.img && t.img.complete) {
             const imgSize = tokenRadius * 2;
 
             // --- A. CIRCULAR CROPPING ---
             ctx.save(); // Start isolation
+            
+            // --- NEW: DEATH FILTERS ---
+            // If the tracker said they're dead or sent the grey color code
+            if (t.dead || t.color === '#4b5563') {
+                ctx.globalAlpha = 0.5;            // Make them 50% transparent
+                ctx.filter = 'grayscale(100%)';  // Turn the image black and white
+            }
+
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2); // Define the circle
-            ctx.clip(); // <--- THIS IS THE MAGIC: Cut everything outside the circle
+            ctx.clip(); // Cut everything outside the circle
             
-            // Draw the image (corners will be cut off by the clip)
+            // Draw the image (now grayscale/transparent if they are dead)
             ctx.drawImage(t.img, tx - tokenRadius, ty - tokenRadius, imgSize, imgSize);
-            ctx.restore(); // End isolation (stop clipping)
+            
+            ctx.restore(); // End isolation (Reset alpha and filter for next token)
 
            // --- B. BORDER RING ---
             // To remove the circle, just comment out these 5 lines:
