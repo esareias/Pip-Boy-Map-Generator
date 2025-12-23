@@ -3907,7 +3907,7 @@ function drawCRTEffects(ctx, width, height) {
 }
 
 // === THIS LINE WAS MISSING ===
-function drawCurrentLevel(time = 0) { 
+function drawCurrentLevel(time = 0) {
     const data = (viewMode === 'interior') ? interiorData[currentInteriorKey] : floorData[currentLevelIndex];
     const gs = config.gridSize;
     
@@ -3960,49 +3960,28 @@ function drawCurrentLevel(time = 0) {
     // --- DRAW MAP GRID ---
     if (patternType === 'cave') {
         ctx.fillStyle = floorPattern;
-        // Deterministic Random Helper (Stops the jiggling)
-        const getOffset = (bx, by, seed) => {
-            return (Math.abs(Math.sin(bx * 12.9898 + by * 78.233 + seed) * 43758.5453) % 1);
-        };
-
+        const getOffset = (bx, by, seed) => (Math.abs(Math.sin(bx * 12.9898 + by * 78.233 + seed) * 43758.5453) % 1);
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
                 if (data.grid[x][y] >= 1) {
-                    const px = x * gs;  
-                    const py = y * gs;
-                    const overlap = gs * 0.4;   
-                    
+                    const px = x * gs; const py = y * gs; const overlap = gs * 0.4;   
                     ctx.beginPath();
-                    // Seed 1 (Top Left)
                     ctx.moveTo(px - (getOffset(x, y, 1) * overlap), py - (getOffset(x, y, 2) * overlap));
-                    // Seed 2 (Top Right)
                     ctx.lineTo(px + gs + (getOffset(x, y, 3) * overlap), py - (getOffset(x, y, 4) * overlap));
-                    // Seed 3 (Bottom Right)
                     ctx.lineTo(px + gs + (getOffset(x, y, 5) * overlap), py + gs + (getOffset(x, y, 6) * overlap));
-                    // Seed 4 (Bottom Left)
                     ctx.lineTo(px - (getOffset(x, y, 7) * overlap), py + gs + (getOffset(x, y, 8) * overlap));
-                    
                     ctx.fill();
-
-                    // Add Water Tint if needed
-                    if (data.grid[x][y] === 2) {
-                        ctx.fillStyle = 'rgba(59, 130, 246, 0.4)';
-                        ctx.fill();
-                        ctx.fillStyle = floorPattern; // Reset
-                    }
+                    if (data.grid[x][y] === 2) { ctx.fillStyle = 'rgba(59, 130, 246, 0.4)'; ctx.fill(); ctx.fillStyle = floorPattern; }
                 }
             }
         }
-    }   
-    else {
+    } else {
         // STANDARD / RUINS RENDERING
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
                 if (data.grid[x][y] >= 1) { 
                     const px = x * gs; const py = y * gs;
-                    
                     if (data.grid[x][y] === 2) {
-                        // Water
                         const offset = Math.sin(time/500 + x/2 + y/2) * 4;
                         ctx.fillStyle = '#1e3a8a'; ctx.fillRect(px, py, gs, gs);
                         ctx.fillStyle = '#3b82f6'; ctx.globalAlpha = 0.5;
@@ -4010,40 +3989,25 @@ function drawCurrentLevel(time = 0) {
                         ctx.fillRect(px - offset + 4, py + 12, gs-8, 2);
                         ctx.globalAlpha = 1.0;
                     } else {
-                        ctx.fillStyle = floorPattern;   
-                        ctx.fillRect(px, py, gs, gs);
-                        
-                        // Ambient Occlusion (Corner Shadows)
+                        ctx.fillStyle = floorPattern; ctx.fillRect(px, py, gs, gs);
                         ctx.fillStyle = 'rgba(0,0,0,0.4)';
-                        if (x > 0 && data.grid[x-1][y] === 0) ctx.fillRect(px, py, 4, gs); // Left Shadow
-                        if (y > 0 && data.grid[x][y-1] === 0) ctx.fillRect(px, py, gs, 4); // Top Shadow
-                        if (x < config.cols-1 && data.grid[x+1][y] === 0) ctx.fillRect(px+gs-4, py, 4, gs); // Right Shadow
-                        if (y < config.rows-1 && data.grid[x][y+1] === 0) ctx.fillRect(px, py+gs-4, gs, 4); // Bottom Shadow
+                        if (x > 0 && data.grid[x-1][y] === 0) ctx.fillRect(px, py, 4, gs);
+                        if (y > 0 && data.grid[x][y-1] === 0) ctx.fillRect(px, py, gs, 4);
+                        if (x < config.cols-1 && data.grid[x+1][y] === 0) ctx.fillRect(px+gs-4, py, 4, gs);
+                        if (y < config.rows-1 && data.grid[x][y+1] === 0) ctx.fillRect(px, py+gs-4, gs, 4);
                     }
                 }
             }
         }
     }
 
-    // FOG RENDERING (Unified)
+    // FOG RENDERING
     for (let x = 0; x < config.cols; x++) {
         for (let y = 0; y < config.rows; y++) {
             if (config.fogEnabled && !isLocationRevealed(data, x, y)) {
                 const px = x * gs; const py = y * gs;
-                // Base darkness
-                ctx.fillStyle = '#050805';  
-                ctx.fillRect(px, py, gs, gs);
-                
-                // Organic Cloud Puff (The draw image destination is already affected by ctx.translate)
-                const scrollX1 = (time * 0.02) % 512;
-                const scrollY1 = (time * 0.01) % 512;
-                // Calculate texture source coordinates based on logical map position + time scroll
-                const sx = (px + scrollX1) % 512;   
-                const sy = (py + scrollY1) % 512;
-                
-                // Draw from the pre-rendered cloud texture (cloudCanvas)
-                // This texture draw needs to cover the current tile (px, py)
-                // We draw a larger image than the tile size to ensure seamless movement.
+                ctx.fillStyle = '#050805'; ctx.fillRect(px, py, gs, gs);
+                const sx = (px + (time * 0.02) % 512) % 512; const sy = (py + (time * 0.01) % 512) % 512;
                 ctx.drawImage(cloudCanvas, sx, sy, gs, gs, px - gs/2, py - gs/2, gs*2, gs*2);
             }
         }
@@ -4055,62 +4019,33 @@ function drawCurrentLevel(time = 0) {
     }
 
     for (let t of tumbleweeds) {
-        // Tumbleweeds should also move with the map offset if they are part of the map world
-         ctx.save();
-         ctx.translate(t.x, t.y);
-         ctx.rotate(t.rot);
-         drawSprite(ctx, 'tumbleweed', -t.size/2, -t.size/2, t.size, time);
-         ctx.restore();
+         ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.rot);
+         drawSprite(ctx, 'tumbleweed', -t.size/2, -t.size/2, t.size, time); ctx.restore();
     }
 
-    // WALL RENDER (2.5D) - Only needed for non-cave types to show depth
+    // WALL RENDER
     if (patternType !== 'cave') {
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
                 if (data.grid[x][y] === 0) {
-                    const px = x * gs; const py = y * gs;
-                    const wallHeight = gs / 2;
+                    const px = x * gs; const py = y * gs; const wallHeight = gs / 2;
                     const southOpen = (y < config.rows - 1 && data.grid[x][y+1] >= 1);
                     const southRevealed = southOpen && (!config.fogEnabled || isLocationRevealed(data, x, y+1));
-
                     if (southRevealed) {
                         const grad = ctx.createLinearGradient(px, py+gs-wallHeight, px, py+gs);
-                        grad.addColorStop(0, pal.wall.front);
-                        grad.addColorStop(1, '#0a0a0a');    
-                        ctx.fillStyle = grad;
-                        ctx.fillRect(px, py + gs - wallHeight, gs, wallHeight);
-                        
-                        // Rust/Grime Detail
-                        if ((x+y) % 5 === 0) {
-                            ctx.fillStyle = 'rgba(0,0,0,0.3)';
-                            ctx.fillRect(px + gs/2, py+gs-wallHeight, 2, wallHeight);
-                        }
-
-                        ctx.fillStyle = pal.wall.top;
-                        ctx.fillRect(px, py, gs, gs - wallHeight);
-                        
-                        ctx.fillStyle = pal.wall.highlight;
-                        ctx.fillRect(px, py, gs, 2);    
-                        ctx.fillRect(px, py, 2, gs-wallHeight);    
-                        
-                        ctx.fillStyle = 'rgba(0,0,0,0.6)';
-                        ctx.fillRect(px, py+gs, gs, gs*0.4);
+                        grad.addColorStop(0, pal.wall.front); grad.addColorStop(1, '#0a0a0a');    
+                        ctx.fillStyle = grad; ctx.fillRect(px, py + gs - wallHeight, gs, wallHeight);
+                        if ((x+y) % 5 === 0) { ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(px + gs/2, py+gs-wallHeight, 2, wallHeight); }
+                        ctx.fillStyle = pal.wall.top; ctx.fillRect(px, py, gs, gs - wallHeight);
+                        ctx.fillStyle = pal.wall.highlight; ctx.fillRect(px, py, gs, 2); ctx.fillRect(px, py, 2, gs-wallHeight);    
+                        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(px, py+gs, gs, gs*0.4);
                     } else {
                         let nearRevealed = false;
-                        for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) {
-                            if (x+dx>=0 && x+dx<config.cols && y+dy>=0 && y+dy<config.rows) {
-                                if(data.grid[x+dx][y+dy]>=1 && (!config.fogEnabled || isLocationRevealed(data, x+dx, y+dy))) nearRevealed = true;
-                            }
-                        }
-                        
+                        for(let dy=-1; dy<=1; dy++) for(let dx=-1; dx<=1; dx++) { if (x+dx>=0 && x+dx<config.cols && y+dy>=0 && y+dy<config.rows) { if(data.grid[x+dx][y+dy]>=1 && (!config.fogEnabled || isLocationRevealed(data, x+dx, y+dy))) nearRevealed = true; } }
                         if(nearRevealed) {
-                            ctx.fillStyle = pal.wall.top;
-                            ctx.fillRect(px, py, gs, gs);
-                            ctx.fillStyle = pal.wall.highlight;
-                            ctx.fillRect(px, py, gs, 2);    
-                            ctx.fillRect(px, py, 2, gs);
-                            ctx.fillStyle = 'rgba(0,0,0,0.3)';  
-                            ctx.fillRect(px + 4, py + 4, gs - 8, gs - 8);
+                            ctx.fillStyle = pal.wall.top; ctx.fillRect(px, py, gs, gs);
+                            ctx.fillStyle = pal.wall.highlight; ctx.fillRect(px, py, gs, 2); ctx.fillRect(px, py, 2, gs);
+                            ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(px + 4, py + 4, gs - 8, gs - 8);
                         }
                     }
                 }
@@ -4120,74 +4055,31 @@ function drawCurrentLevel(time = 0) {
 
     if (data.doors) for(let door of data.doors) {
         const dx = door.x * gs; const dy = door.y * gs;
-        const isLocked = door.locked;
-        
         if (viewMode === 'sector') {    
             ctx.fillStyle = '#0a0a0a'; ctx.fillRect(dx + 2, dy - gs/2 + 2, gs - 4, gs/2);  
-            ctx.fillStyle = isLocked ? '#ef4444' : pal.accent;   
-            ctx.fillRect(dx + gs/2 - 4, dy - gs/2, 8, 4);   
+            ctx.fillStyle = door.locked ? '#ef4444' : pal.accent; ctx.fillRect(dx + gs/2 - 4, dy - gs/2, 8, 4);   
         } else {    
             ctx.fillStyle = '#171717'; ctx.fillRect(dx, dy-4, gs, gs+4);
-            ctx.fillStyle = isLocked ? '#7f1d1d' : '#334155';   
-            ctx.fillRect(dx + 4, dy, gs - 8, gs - 4);
-            ctx.fillStyle = 'rgba(255,255,255,0.1)';    
-            ctx.fillRect(dx+4, dy, 2, gs-4);
-            ctx.fillRect(dx+gs-6, dy, 2, gs-4);
+            ctx.fillStyle = door.locked ? '#7f1d1d' : '#334155'; ctx.fillRect(dx + 4, dy, gs - 8, gs - 4);
+            ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fillRect(dx+4, dy, 2, gs-4); ctx.fillRect(dx+gs-6, dy, 2, gs-4);
         }
     }
 
     if (data.loot) for(let item of data.loot) {
         if (config.fogEnabled && !isLocationRevealed(data, item.x, item.y)) continue;
         const px = item.x * gs; const py = item.y * gs;
-        
-       const typeMap = { 
-            "Safe": "safe", 
-            "Locker": "locker", 
-            "Desk": "desk", 
-            "Ammo Box": "ammo_box", 
-            "File Cabinet": "file_cabinet", 
-            "Footlocker": "footlocker", 
-            "Doctor's Bag": "doctors_bag", 
-            "Medkit": "medkit", 
-            "First Aid": "first_aid", 
-            "Toolbox": "toolbox",
-            "Duffel Bag": "duffel_bag",
-            "Corpse": "corpse",
-            "Hollow Rock": "hollow_rock",
-            "Sack": "sack",
-            "Crate": "crate",
-            "Dumpster": "dumpster",
-            "Register": "register",
-            "Cashier": "cashier",
-            "Cooler": "cooler"
-        };
+       const typeMap = { "Safe": "safe", "Locker": "locker", "Desk": "desk", "Ammo Box": "ammo_box", "File Cabinet": "file_cabinet", "Footlocker": "footlocker", "Doctor's Bag": "doctors_bag", "Medkit": "medkit", "First Aid": "first_aid", "Toolbox": "toolbox", "Duffel Bag": "duffel_bag", "Corpse": "corpse", "Hollow Rock": "hollow_rock", "Sack": "sack", "Crate": "crate", "Dumpster": "dumpster", "Register": "register", "Cashier": "cashier", "Cooler": "cooler" };
         let sType = "crate";
-        for(let key in typeMap) {
-            if(item.containerName.includes(key)) {
-                sType = typeMap[key];
-                break;
-            }
-        }
-        
-        if (item.looted) {
-             ctx.globalAlpha = 0.4;
-             drawSprite(ctx, sType, px, py, gs, time);
-             ctx.globalAlpha = 1.0;
-        } else {
-            drawSprite(ctx, sType, px, py, gs, time);
+        for(let key in typeMap) { if(item.containerName.includes(key)) { sType = typeMap[key]; break; } }
+        if (item.looted) { ctx.globalAlpha = 0.4; drawSprite(ctx, sType, px, py, gs, time); ctx.globalAlpha = 1.0; } 
+        else { 
+            drawSprite(ctx, sType, px, py, gs, time); 
             ctx.globalCompositeOperation = 'lighter';
             const g = ctx.createRadialGradient(px+gs/2, py+gs/2, 0, px+gs/2, py+gs/2, gs/2);
-            g.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
-            g.addColorStop(1, 'rgba(0,0,0,0)');
+            g.addColorStop(0, 'rgba(255, 255, 255, 0.2)'); g.addColorStop(1, 'rgba(0,0,0,0)');
             ctx.fillStyle = g; ctx.fillRect(px, py, gs, gs);
             ctx.globalCompositeOperation = 'source-over';
-            
-            // Locked icon over item
-            if (item.isLocked) {
-                ctx.fillStyle = '#ef4444';
-                ctx.fillRect(px + gs/2 - 4, py + gs/2 - 12, 8, 4); // Lock box
-                ctx.fillRect(px + gs/2 - 2, py + gs/2 - 8, 4, 8); // Lock body
-            }
+            if (item.isLocked) { ctx.fillStyle = '#ef4444'; ctx.fillRect(px + gs/2 - 4, py + gs/2 - 12, 8, 4); ctx.fillRect(px + gs/2 - 2, py + gs/2 - 8, 4, 8); }
         }
     }
     
@@ -4195,94 +4087,35 @@ function drawCurrentLevel(time = 0) {
         if (config.fogEnabled && !isLocationRevealed(data, stair.x, stair.y)) return;
         const sx = stair.x * gs; const sy = stair.y * gs;
         ctx.fillStyle = '#0f0f0f'; ctx.fillRect(sx, sy, gs, gs);
-        ctx.fillStyle = '#a855f7';  
-        for(let i=0; i<gs; i+=6) ctx.fillRect(sx + 4, sy + i, gs - 8, 3);   
+        ctx.fillStyle = '#a855f7'; for(let i=0; i<gs; i+=6) ctx.fillRect(sx + 4, sy + i, gs - 8, 3);   
     });
 
     if (viewMode === 'interior' && data.exit) {
         const ex = data.exit.x * gs; const ey = data.exit.y * gs;
         ctx.fillStyle = 'rgba(250, 204, 21, 0.2)'; ctx.fillRect(ex, ey, gs, gs);
-        ctx.fillStyle = '#facc15';  
-        for(let i=0; i<3; i++) {
-            const oy = (time / 100 + i * 10) % 20;
-            ctx.globalAlpha = 1 - (oy/20);
-            ctx.fillRect(ex + gs/2 - 8, ey + 20 - oy, 16, 2);
-            ctx.globalAlpha = 1.0;
-        }
+        ctx.fillStyle = '#facc15'; for(let i=0; i<3; i++) { const oy = (time / 100 + i * 10) % 20; ctx.globalAlpha = 1 - (oy/20); ctx.fillRect(ex + gs/2 - 8, ey + 20 - oy, 16, 2); ctx.globalAlpha = 1.0; }
     }
 
     // --- LIGHTING ENGINE (Volumetric Pass) ---
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.fillRect(0, 0, config.width, config.height);
-
+    ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(0, 0, config.width, config.height);
     ctx.globalCompositeOperation = 'lighter';
-
-    // Interactive Flashlight (position must be translated back relative to the view)
-    const lightX = mousePos.x - mapOffsetX;
-    const lightY = mousePos.y - mapOffsetY;
-
+    const lightX = mousePos.x - mapOffsetX; const lightY = mousePos.y - mapOffsetY;
     const cursorG = ctx.createRadialGradient(lightX, lightY, 0, lightX, lightY, 200);
-    cursorG.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
-    cursorG.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = cursorG;
-    ctx.fillRect(0, 0, config.width, config.height);
-
-    // Dust Particles
+    cursorG.addColorStop(0, 'rgba(255, 255, 255, 0.12)'); cursorG.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = cursorG; ctx.fillRect(0, 0, config.width, config.height);
     ctx.fillStyle = 'rgba(200, 255, 200, 0.3)';
-    for(let m of dustMotes) {
-        // Only draw dust near light
-        const dx = m.x - lightX; const dy = m.y - lightY;
-        if (dx*dx + dy*dy < 40000) {
-            ctx.fillRect(m.x, m.y, m.size, m.size);
-        }
-    }
+    for(let m of dustMotes) { const dx = m.x - lightX; const dy = m.y - lightY; if (dx*dx + dy*dy < 40000) ctx.fillRect(m.x, m.y, m.size, m.size); }
 
     if (data.decorations) for (let deco of data.decorations) {
         if (config.fogEnabled && !isLocationRevealed(data, deco.x, deco.y)) continue;
-        
-        const cx = deco.x * gs + gs/2;
-        const cy = deco.y * gs + gs/2;
-        let radius = 0;
-        let colorStart = '';
-        let colorMid = '';
-        
-        if (deco.type === 'fire_barrel' || deco.type === 'campfire') {
-            const flicker = Math.sin(time / 80) * 5 + Math.random() * 3;
-            radius = gs * 2.5 + flicker;
-            colorStart = 'rgba(255, 200, 100, 0.6)';    
-            colorMid = 'rgba(234, 88, 12, 0.2)';
-        }   
-        else if (deco.type === 'rad_puddle') {
-            const pulse = Math.sin(time / 600);
-            radius = gs * 2 + (pulse * 10);
-            colorStart = 'rgba(180, 255, 100, 0.5)';
-            colorMid = 'rgba(132, 204, 22, 0.2)';
-        }
-        else if (deco.type === 'glowing_fungus') {
-            radius = gs * 1.5;
-            colorStart = 'rgba(200, 255, 100, 0.4)';
-            colorMid = 'rgba(163, 230, 53, 0.15)';
-        }
-        else if (deco.type === 'overhead_light') {
-            if (Math.random() > 0.98) radius = 0;
-            else radius = gs * 4 + Math.sin(time / 200)*2;
-            colorStart = 'rgba(255, 255, 255, 0.3)';
-            colorMid = 'rgba(224, 242, 254, 0.1)';  
-        }
-        else if (deco.type === 'server_rack') {
-            radius = gs * 1.0;
-            colorStart = 'rgba(100, 255, 150, 0.3)';
-            colorMid = 'rgba(34, 197, 94, 0.1)';
-        }
-        
-        if (radius > 0) {
-            const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-            grad.addColorStop(0, colorStart);
-            grad.addColorStop(0.4, colorMid);
-            grad.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = grad;
-            ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
-        }
+        const cx = deco.x * gs + gs/2; const cy = deco.y * gs + gs/2;
+        let radius = 0; let colorStart = ''; let colorMid = '';
+        if (deco.type === 'fire_barrel' || deco.type === 'campfire') { radius = gs * 2.5 + Math.sin(time/80)*5; colorStart = 'rgba(255, 200, 100, 0.6)'; colorMid = 'rgba(234, 88, 12, 0.2)'; }   
+        else if (deco.type === 'rad_puddle') { radius = gs * 2 + Math.sin(time/600)*10; colorStart = 'rgba(180, 255, 100, 0.5)'; colorMid = 'rgba(132, 204, 22, 0.2)'; }
+        else if (deco.type === 'glowing_fungus') { radius = gs * 1.5; colorStart = 'rgba(200, 255, 100, 0.4)'; colorMid = 'rgba(163, 230, 53, 0.15)'; }
+        else if (deco.type === 'overhead_light') { if (Math.random() > 0.98) radius = 0; else radius = gs * 4 + Math.sin(time / 200)*2; colorStart = 'rgba(255, 255, 255, 0.3)'; colorMid = 'rgba(224, 242, 254, 0.1)'; }
+        else if (deco.type === 'server_rack') { radius = gs * 1.0; colorStart = 'rgba(100, 255, 150, 0.3)'; colorMid = 'rgba(34, 197, 94, 0.1)'; }
+        if (radius > 0) { const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius); grad.addColorStop(0, colorStart); grad.addColorStop(0.4, colorMid); grad.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = grad; ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2); }
     }
     
     ctx.globalCompositeOperation = 'source-over';
@@ -4293,102 +4126,80 @@ function drawCurrentLevel(time = 0) {
 
     // --- DRAW LABELS (MOVED TO UI LAYER) ---
     if (config.showLabels) {
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
         const fontSize = 14 * RENDER_SCALE * zoomLevel;
         ctx.font = `bold ${fontSize}px monospace`;
-        ctx.lineWidth = 4 * zoomLevel;
-        ctx.lineJoin = 'round';
-
+        ctx.lineWidth = 4 * zoomLevel; ctx.lineJoin = 'round';
         for (let lbl of data.labels) {
-            // 1. Fog of War Check
-            const gx = Math.floor(lbl.x / config.gridSize);
-            const gy = Math.floor(lbl.y / config.gridSize);
+            const gx = Math.floor(lbl.x / config.gridSize); const gy = Math.floor(lbl.y / config.gridSize);
             if (config.fogEnabled && !isLocationRevealed(data, gx, gy)) continue;
             if (!lbl.visible) continue;
-
-            // 2. Calculate Position
-            const lx = (lbl.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
-            const ly = (lbl.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
-
-            // 3. Determine Style (Pulse if Enterable in Sector Mode)
+            const lx = (lbl.x + mapOffsetX) * RENDER_SCALE * zoomLevel; const ly = (lbl.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
             const isInteractive = viewMode === 'sector' && isEnterable(lbl.text);
-
             if (isInteractive) {
-                // GREEN PULSE EFFECT
-                const pulse = (Math.sin(time / 200) + 1) / 2; // Oscillates 0.0 to 1.0
-                const alpha = 0.5 + (pulse * 0.5); // Oscillates 0.5 to 1.0
-                
-                // Pulsing Green Outline
-                ctx.strokeStyle = `rgba(34, 197, 94, ${alpha})`; 
-                // Bright Green-White Text
-                ctx.fillStyle = '#f0fdf4'; 
-            } else {
-                // STANDARD STYLE (Black Outline, White Text)
-                ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-                ctx.fillStyle = '#ffffff';
-            }
-
-            // Draw
-            ctx.strokeText(lbl.text, lx, ly);
-            ctx.fillText(lbl.text, lx, ly);
+                const pulse = (Math.sin(time / 200) + 1) / 2; 
+                ctx.strokeStyle = `rgba(34, 197, 94, ${0.5 + pulse * 0.5})`; ctx.fillStyle = '#f0fdf4'; 
+            } else { ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.fillStyle = '#ffffff'; }
+            ctx.strokeText(lbl.text, lx, ly); ctx.fillText(lbl.text, lx, ly);
         }
     }
     
-    // --- DRAW TOKENS (WITH NEW GLOW + SIZING LOGIC) ---
+    // --- DRAW TOKENS ---
     for (let t of tokens) {
-        // 1. Apply Zoom to Position
         const tx = (t.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
         const ty = (t.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
 
-        // 2. DYNAMIC RADIUS LOGIC
         const isPlayer = TOKEN_PRESETS.some(p => p.name === t.label);
         let baseSize = isPlayer ? 15 : 25; 
 
         if (t.label.includes("Behemoth") || t.label.includes("Sentry Bot") || t.label.includes("Deathclaw")) baseSize = 45; 
         if (t.label.includes("Radroach") || t.label.includes("Bloatfly") || t.label.includes("Ant")) baseSize = 12; 
 
-        // 2B. MULTIPLIER MATH
         const difficultyMultiplier = t.multiplier || 1.0;
         const tokenRadius = (baseSize * difficultyMultiplier) * RENDER_SCALE * zoomLevel;
         const imgSize = tokenRadius * 2;
 
-        // === 1. GLOW LOGIC ===
-        let glowColor = 'transparent';
-        let glowBlur = 0;
-
+        // === 1. GLOW LOGIC (GRADIENT UPDATE) ===
+        let glowColorStart = 'transparent';
+        
         if (!isPlayer) {
-            // Determine Glow based on Difficulty
             if (difficultyMultiplier >= 2.0) {
-                 glowColor = 'rgba(251, 191, 36, 0.7)'; // Gold (Legendary)
-                 glowBlur = 15;
+                 glowColorStart = 'rgba(255, 215, 0, 0.5)'; // Gold (Legendary) - Very bright
             } else if (difficultyMultiplier >= 1.5) {
-                 glowColor = 'rgba(249, 115, 22, 0.6)'; // Orange (Hard)
-                 glowBlur = 10;
+                 glowColorStart = 'rgba(255, 140, 0, 0.4)'; // Dark Orange (Hard)
             } else if (difficultyMultiplier <= 0.75) {
-                 glowColor = 'rgba(156, 163, 175, 0.3)'; // Faint Grey (Weak)
-                 glowBlur = 5;
+                 glowColorStart = 'rgba(200, 200, 200, 0.15)'; // Faint Grey/White (Weak) - Subtle
             } else {
-                 glowColor = 'rgba(239, 68, 68, 0.3)'; // Faint Red (Normal)
-                 glowBlur = 5;
+                 glowColorStart = 'rgba(255, 50, 50, 0.2)'; // Red (Normal) - Standard danger
             }
         } else {
-            // Players glow their own color
-            glowColor = t.color;
-            glowBlur = 8;
+            // Players get a cyan/blue-ish hero glow or match their token color
+            glowColorStart = t.color.replace('rgb', 'rgba').replace(')', ', 0.3)'); 
+            if(glowColorStart.startsWith('#')) {
+                // Quick hex-to-rgba hack if needed, or just default to cyan
+                glowColorStart = 'rgba(0, 255, 255, 0.3)'; 
+            }
         }
 
-        // === 2. DRAW THE GLOW (Behind Token) ===
-        if (glowBlur > 0) {
+        // === 2. DRAW THE GLOW (RADIAL GRADIENT) ===
+        if (glowColorStart !== 'transparent') {
             ctx.save();
+            
+            // Glow extends slightly beyond the token
+            const glowRadius = tokenRadius * 1.6; 
+            
+            // Create Gradient
+            const g = ctx.createRadialGradient(tx, ty, tokenRadius * 0.4, tx, ty, glowRadius);
+            g.addColorStop(0, glowColorStart); // Inner color
+            g.addColorStop(1, 'rgba(0,0,0,0)'); // Fade to transparent
+
+            // Use 'screen' to make it look like light adding to the scene
+            ctx.globalCompositeOperation = 'screen'; 
+            ctx.fillStyle = g;
             ctx.beginPath();
-            ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2);
-            ctx.strokeStyle = glowColor;
-            ctx.lineWidth = 2 * RENDER_SCALE * zoomLevel; // Thin glowing rim
-            ctx.shadowColor = glowColor;
-            ctx.shadowBlur = glowBlur * zoomLevel; 
-            ctx.stroke();
+            ctx.arc(tx, ty, glowRadius, 0, Math.PI*2);
+            ctx.fill();
+            
             ctx.restore();
         }
 
