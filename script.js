@@ -4391,6 +4391,7 @@ function drawCurrentLevel(time = 0) {
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius * 0.8, 0, Math.PI*2);
             ctx.fill();
+		}
             
             // Draw Pulse/Glow
             ctx.strokeStyle = t.color;
