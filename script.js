@@ -3896,7 +3896,7 @@ function drawCRTEffects(ctx, width, height) {
     // Curved Screen Distortion (Simulated via Vignette and Radial Gradient)
     const grad = ctx.createRadialGradient(width/2, height/2, width/4, width/2, height/2, width*0.85);
     grad.addColorStop(0, "rgba(0,0,0,0)");
-    grad.addColorStop(1, "rgba(0,0,0,0.6)");	
+    grad.addColorStop(1, "rgba(0,0,0,0.6)");    
     ctx.fillStyle = grad;
     ctx.fillRect(0,0, width, height);
     
@@ -3906,7 +3906,9 @@ function drawCRTEffects(ctx, width, height) {
     ctx.globalCompositeOperation = 'source-over';
 }
 
-const data = (viewMode === 'interior') ? interiorData[currentInteriorKey] : floorData[currentLevelIndex];
+// === THIS LINE WAS MISSING ===
+function drawCurrentLevel(time = 0) { 
+    const data = (viewMode === 'interior') ? interiorData[currentInteriorKey] : floorData[currentLevelIndex];
     const gs = config.gridSize;
     
     let pal = PALETTES.vault;   
@@ -4286,8 +4288,6 @@ const data = (viewMode === 'interior') ? interiorData[currentInteriorKey] : floo
     ctx.globalCompositeOperation = 'source-over';
     drawCRTEffects(ctx, config.width, config.height);
 
-    
-    
     ctx.restore(); // Restore from scaled/translated map context
     ctx.save(); // Save again for UI overlay
 
