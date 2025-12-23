@@ -465,22 +465,24 @@ function syncCombatToMap() {
                !t.label.includes('Feral') && !t.label.includes('Raider');
     });
     
-    // Access combat tracker enemies from other script
     if (window.currentEnemies) {
         window.currentEnemies.forEach(enemy => {
-            // Skip players/friendlies
             if (enemy.style && enemy.style.includes('player')) return;
-            if (!enemy.tokensrc) return;
             
-            // Random center cluster position
+            // NOTE: We use enemy.token_src (with underscore) to match the tracker
+            if (!enemy.token_src) return;
+            
             const mapX = config.width / 2 + (Math.random() - 0.5) * 300;
             const mapY = config.height / 2 + (Math.random() - 0.5) * 300;
             
+            // ADDED THE 6th ARGUMENT HERE (multiplier)
             spawnTokenAtPosition(
-                enemy.name,                    // Exact combat tracker name
-                enemy.tokencolor || '#ef4444', // Combat color or red fallback
-                enemy.tokensrc,                // Combat image
-                mapX, mapY
+                enemy.name,                    
+                enemy.token_color || '#ef4444', 
+                enemy.token_src,                
+                mapX, 
+                mapY,
+                enemy.multiplier || 1.0 // <--- THIS WAS MISSING
             );
         });
     }
