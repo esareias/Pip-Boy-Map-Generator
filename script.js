@@ -456,33 +456,42 @@ function closeGMTokenDeploy() {
 }
 
 // === ADD THIS NEW FUNCTION HERE ===
+// === FIX: Use sharedEnemies, which comes from the Tracker ===
 function syncCombatToMap() {
+    // 1. Check for the shared list from the parent/tracker
+    const incomingEnemies = window.sharedEnemies || window.currentEnemies;
+
     // Remove existing combat enemy tokens (preserve player tokens)
     tokens = tokens.filter(t => {
         const label = t.label.toLowerCase();
-        return !label.includes('feral') && !label.includes('raider') && 
-               !label.includes('ghoul') && !label.includes('mutant') &&
-               !t.label.includes('Feral') && !t.label.includes('Raider');
+        // Keep players (checked via presets usually, or style)
+        const isPlayer = TOKEN_PRESETS.some(p => p.name === t.label) || t.label === "OVERSEER";
+        if (isPlayer) return true;
+
+        // Clean sweep of standard enemies to prevent duplicates
+        return false; 
     });
     
-    if (window.currentEnemies) {
-        window.currentEnemies.forEach(enemy => {
+    if (incomingEnemies) {
+        incomingEnemies.forEach(enemy => {
             if (enemy.style && enemy.style.includes('player')) return;
             
             // NOTE: We use enemy.token_src (with underscore) to match the tracker
             if (!enemy.token_src) return;
             
+            // Random scatter around center if not already positioned (simple logic)
+            // Ideally we'd persist their X/Y, but for now we scatter them
             const mapX = config.width / 2 + (Math.random() - 0.5) * 300;
             const mapY = config.height / 2 + (Math.random() - 0.5) * 300;
             
             // ADDED THE 6th ARGUMENT HERE (multiplier)
             spawnTokenAtPosition(
-                enemy.name,                    
+                enemy.name,                     
                 enemy.token_color || '#ef4444', 
                 enemy.token_src,                
                 mapX, 
                 mapY,
-                enemy.multiplier || 1.0 // <--- THIS WAS MISSING
+                enemy.multiplier || 1.0 // <--- CRITICAL: Pass the size DNA
             );
         });
     }
