@@ -455,40 +455,39 @@ function closeGMTokenDeploy() {
     if (customUrl) customUrl.value = "";
 }
 
-// === ADD THIS NEW FUNCTION HERE ===
 function syncCombatToMap() {
-    // Remove existing combat enemy tokens (preserve player tokens)
+    // 1. Clear existing combat tokens
     tokens = tokens.filter(t => {
         const label = t.label.toLowerCase();
         return !label.includes('feral') && !label.includes('raider') && 
                !label.includes('ghoul') && !label.includes('mutant') &&
-               !t.label.includes('Feral') && !t.label.includes('Raider');
+               !t.label.includes('Feral') && !t.label.includes('Raider') &&
+               !t.label.includes('Behemoth');
     });
     
     if (window.currentEnemies) {
         window.currentEnemies.forEach(enemy => {
             if (enemy.style && enemy.style.includes('player')) return;
             
-            // NOTE: We use enemy.token_src (with underscore) to match the tracker
+            // FIX: Using token_src (with underscore) to match the tracker
             if (!enemy.token_src) return;
             
-            const mapX = config.width / 2 + (Math.random() - 0.5) * 300;
-            const mapY = config.height / 2 + (Math.random() - 0.5) * 300;
+            const mapX = config.width / 2 + (Math.random() - 0.5) * 400;
+            const mapY = config.height / 2 + (Math.random() - 0.5) * 400;
             
-            // ADDED THE 6th ARGUMENT HERE (multiplier)
+            // PASSING ALL 6 ARGUMENTS (Name, Color, Src, X, Y, Multiplier)
             spawnTokenAtPosition(
                 enemy.name,                    
                 enemy.token_color || '#ef4444', 
                 enemy.token_src,                
                 mapX, 
                 mapY,
-                enemy.multiplier || 1.0 // <--- THIS WAS MISSING
+                enemy.multiplier || 1.0 // <--- SENDING THE SIZE
             );
         });
     }
     
     drawCurrentLevel();
-    if (typeof syncData === 'function') syncData();
     log('SYNCED COMBAT ENEMIES TO MAP', '#16ff60');
 }
 
