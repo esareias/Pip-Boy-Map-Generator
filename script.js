@@ -1532,6 +1532,7 @@ async function init() {
         db = getFirestore(app);
         auth = getAuth(app);
         
+        // Sign in with custom token or anonymously
         try {
             if (initialAuthToken) {
                 await signInWithCustomToken(auth, initialAuthToken);
@@ -1541,11 +1542,13 @@ async function init() {
             userId = auth.currentUser?.uid || crypto.randomUUID();
         } catch (error) {
             console.error("Firebase Auth Error:", error);
-            log(`FIREBASE AUTH FAILED. Fallback: ${error.message}`, '#ef4444');
+            log(`FIREBASE AUTH FAILED. Fallback to anonymous: ${error.message}`, '#ef4444');
+            // Fallback to anonymous sign-in if custom token fails
             try {
                 await signInAnonymously(auth);
                 userId = auth.currentUser?.uid || crypto.randomUUID();
             } catch (e) {
+                console.error("Anonymous Sign-in Failed:", e);
                 userId = crypto.randomUUID();
             }
         }
@@ -1556,19 +1559,9 @@ async function init() {
     // --------------------------------------------------
 
     // Set High Resolution Canvas
-    // We KEEP the high resolution render scale for sharpness
     canvas.width = config.width * RENDER_SCALE;
     canvas.height = config.height * RENDER_SCALE;
-    
-    // Use 'nearest-neighbor' to keep pixel art crisp, not blurry
-    ctx.imageSmoothingEnabled = false; 
-
-    // === CANVAS DISPLAY SETTINGS (Standard Responsive) ===
-    // This ensures the map maintains its aspect ratio and doesn't look squished.
-    canvas.style.width = "100%"; 
-    canvas.style.height = "auto";
-    canvas.style.display = "block";
-    // ====================================================
+    ctx.imageSmoothingEnabled = false;
 
     // FIX: Calculate cols/rows based on fixed gridSize (24) on startup
     config.cols = Math.floor(config.width / config.gridSize);
@@ -1579,9 +1572,11 @@ async function init() {
     cloudCanvas.width = 512; cloudCanvas.height = 512;
     const cCtx = cloudCanvas.getContext('2d');
     
+    // Fill with semi-transparent dark
     cCtx.fillStyle = 'rgba(0,0,0,0.5)';
     cCtx.fillRect(0,0,512,512);
     
+    // Draw hundreds of soft puffs
     for(let i=0; i<300; i++) {
         const x = Math.random() * 512;
         const y = Math.random() * 512;
@@ -1595,8 +1590,9 @@ async function init() {
         cCtx.fillStyle = g;
         cCtx.beginPath(); cCtx.arc(x, y, r, 0, Math.PI*2); cCtx.fill();
         
-        if (x < r) {    
-            cCtx.fillStyle = g; cCtx.beginPath(); cCtx.arc(x+512, y, r, 0, Math.PI*2); cCtx.fill();    
+        // Wrap around edges for seamless tiling
+        if (x < r) {	
+            cCtx.fillStyle = g; cCtx.beginPath(); cCtx.arc(x+512, y, r, 0, Math.PI*2); cCtx.fill();	
         }
         if (y < r) {
             cCtx.fillStyle = g; cCtx.beginPath(); cCtx.arc(x, y+512, r, 0, Math.PI*2); cCtx.fill();
@@ -1615,59 +1611,38 @@ async function init() {
         });
     }
 
-    // --- UPDATED EVENT LISTENERS ---
+    // --- UPDATED EVENT LISTENERS FOR PANNING ---
+        // --- UPDATED EVENT LISTENERS FOR PANNING ---
     screenContainer.addEventListener('mousedown', handleMouseDown);
     screenContainer.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     screenContainer.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; isPanning = false; });
-    screenContainer.addEventListener('contextmenu', (e) => e.preventDefault()); 
+    screenContainer.addEventListener('contextmenu', (e) => e.preventDefault()); // ← ADD THIS
     
+    // --- NEW: Chat Input Enter Key Listener ---
     chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendChatMessage();
+        if (e.key === 'Enter') {
+            sendChatMessage();
+        }
     });
     
+    // --- Zoom Slider Event Listener ---
     const zoomSlider = document.getElementById('zoomSlider');
     if (zoomSlider) {
         zoomSlider.addEventListener('input', (e) => setZoomLevel(e.target.value));
     }
+    // ------------------------------------------
     
     updateHelperText();
-    changeLevel(0);    
-    generateCurrentLevel();    
+    changeLevel(0);	
+    generateCurrentLevel();	
     requestAnimationFrame(animate);
 
-    // === NEW: WHOLE APP AUTO-SCALER ===
-    // This function checks if the app is taller than your screen.
-    // If it is, it shrinks the whole UI (like browser zoom) to fit.
-    function resizeApp() {
-        const app = document.getElementById('mainAppContent'); // Using the main wrapper
-        if (!app) return;
 
-        // Reset first to measure true dimensions
-        app.style.transform = 'none';
-        app.style.width = '100%'; // Ensure full width
-        
-        const contentHeight = app.scrollHeight;
-        const viewportHeight = window.innerHeight;
-        
-        // Add a small buffer (40px) so it's not touching the very edge
-        if (contentHeight > (viewportHeight - 20)) {
-            const scale = (viewportHeight - 20) / contentHeight;
-            // Apply scale
-            app.style.transformOrigin = 'top center';
-            app.style.transform = `scale(${scale})`;
-            // Adjust width to compensate for scaling (optional, keeps it centered)
-            app.style.width = `${100 / scale}%`; 
-        }
-    }
 
-    // Trigger on load and on resize
-    window.addEventListener('resize', resizeApp);
-    // Give the DOM a moment to render before calculating
-    setTimeout(resizeApp, 100); 
-    // ==================================
-
+    // --- CHARACTER SELECTION GATE (Start flow) ---
     showLoginScreen();
+    // ----------------------------------------------
 }
 
 
