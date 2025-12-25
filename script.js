@@ -1532,7 +1532,6 @@ async function init() {
         db = getFirestore(app);
         auth = getAuth(app);
         
-        // Sign in with custom token or anonymously
         try {
             if (initialAuthToken) {
                 await signInWithCustomToken(auth, initialAuthToken);
@@ -1542,13 +1541,11 @@ async function init() {
             userId = auth.currentUser?.uid || crypto.randomUUID();
         } catch (error) {
             console.error("Firebase Auth Error:", error);
-            log(`FIREBASE AUTH FAILED. Fallback to anonymous: ${error.message}`, '#ef4444');
-            // Fallback to anonymous sign-in if custom token fails
+            log(`FIREBASE AUTH FAILED. Fallback: ${error.message}`, '#ef4444');
             try {
                 await signInAnonymously(auth);
                 userId = auth.currentUser?.uid || crypto.randomUUID();
             } catch (e) {
-                console.error("Anonymous Sign-in Failed:", e);
                 userId = crypto.randomUUID();
             }
         }
@@ -1558,26 +1555,26 @@ async function init() {
     }
     // --------------------------------------------------
 
-    // Set High Resolution Canvas
+    // Set High Resolution Canvas & Fix Blurriness
     canvas.width = config.width * RENDER_SCALE;
     canvas.height = config.height * RENDER_SCALE;
-    ctx.imageSmoothingEnabled = false;
-
-    // === NEW: AUTO-FIT VISUAL STYLE ===
-    // This constrains the visual size without lowering the internal resolution.
-    // 1. Reset width/height to auto so constraints take over
-    canvas.style.width = "auto";       
-    canvas.style.height = "auto";      
     
-    // 2. Max constraints to fit within the viewport
-    canvas.style.maxWidth = "100%";    
-    // 60vh means "60% of the screen height". This leaves 40% for Header + Chat.
-    canvas.style.maxHeight = "60vh";   
+    // Disable smoothing for that crisp pixel-art look
+    ctx.imageSmoothingEnabled = false; 
     
-    // 3. Centering and layout
-    canvas.style.display = "block";    
-    canvas.style.margin = "0 auto";    
-    canvas.style.objectFit = "contain"; 
+    // === NEW: AGGRESSIVE AUTO-FIT ===
+    // This calculation reserves 480px for your Header, Controls, and Chat Log.
+    // The map gets whatever space is left over.
+    canvas.style.width = "auto";
+    canvas.style.height = "auto";
+    canvas.style.maxWidth = "100%";
+    
+    // The Magic Number: 480px. Adjust this if it's still scrolling (e.g. make it 500px).
+    canvas.style.maxHeight = "calc(100vh - 480px)"; 
+    
+    canvas.style.display = "block";
+    canvas.style.margin = "0 auto";
+    canvas.style.objectFit = "contain";
     // ==================================
 
     // FIX: Calculate cols/rows based on fixed gridSize (24) on startup
@@ -1589,11 +1586,9 @@ async function init() {
     cloudCanvas.width = 512; cloudCanvas.height = 512;
     const cCtx = cloudCanvas.getContext('2d');
     
-    // Fill with semi-transparent dark
     cCtx.fillStyle = 'rgba(0,0,0,0.5)';
     cCtx.fillRect(0,0,512,512);
     
-    // Draw hundreds of soft puffs
     for(let i=0; i<300; i++) {
         const x = Math.random() * 512;
         const y = Math.random() * 512;
@@ -1607,7 +1602,6 @@ async function init() {
         cCtx.fillStyle = g;
         cCtx.beginPath(); cCtx.arc(x, y, r, 0, Math.PI*2); cCtx.fill();
         
-        // Wrap around edges for seamless tiling
         if (x < r) {    
             cCtx.fillStyle = g; cCtx.beginPath(); cCtx.arc(x+512, y, r, 0, Math.PI*2); cCtx.fill();    
         }
@@ -1628,35 +1622,30 @@ async function init() {
         });
     }
 
-    // --- UPDATED EVENT LISTENERS FOR PANNING ---
+    // --- UPDATED EVENT LISTENERS ---
     screenContainer.addEventListener('mousedown', handleMouseDown);
     screenContainer.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     screenContainer.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; isPanning = false; });
     screenContainer.addEventListener('contextmenu', (e) => e.preventDefault()); 
     
-    // --- NEW: Chat Input Enter Key Listener ---
+    // Chat Input Listener
     chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            sendChatMessage();
-        }
+        if (e.key === 'Enter') sendChatMessage();
     });
     
-    // --- Zoom Slider Event Listener ---
+    // Zoom Slider
     const zoomSlider = document.getElementById('zoomSlider');
     if (zoomSlider) {
         zoomSlider.addEventListener('input', (e) => setZoomLevel(e.target.value));
     }
-    // ------------------------------------------
     
     updateHelperText();
     changeLevel(0);    
     generateCurrentLevel();    
     requestAnimationFrame(animate);
 
-    // --- CHARACTER SELECTION GATE (Start flow) ---
     showLoginScreen();
-    // ----------------------------------------------
 }
 
 
