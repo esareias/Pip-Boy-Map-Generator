@@ -34,6 +34,11 @@ let cloudCanvas = null; // High-res procedural fog texture
 let userName = "Traveler"; // Global name for chat
 let playerToken = null; // Stores the selected character's name/color/src for chat/map identity
 
+// --- MEASUREMENT STATE ---
+let isMeasuring = false;
+let measureStart = { x: 0, y: 0 };
+let measureEnd = { x: 0, y: 0 };
+
 // --- NEW PANNING STATE ---
 let mapOffsetX = 0; // Current global map offset X (in logical pixels)
 let mapOffsetY = 0; // Current global map offset Y (in logical pixels)
@@ -1712,20 +1717,22 @@ function animate(time) {
 
 // --- NEW MOUSE HANDLER IMPLEMENTATION ---
 function handleMouseDown(e) {
-    // === RIGHT-CLICK TO TOGGLE TOKEN LABELS ===
+    // 1. GLOBAL MATH: Calculate coordinates once for everyone to use
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const rawX = (e.clientX - rect.left) * scaleX;
+    const rawY = (e.clientY - rect.top) * scaleY;
+
+    const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
+    const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
+    const pannedLogicalX = logicalMouseX - mapOffsetX;
+    const pannedLogicalY = logicalMouseY - mapOffsetY;
+
+    // 2. RIGHT-CLICK HANDLER (Toggle Token Labels)
     if (e.button === 2) {
         e.preventDefault();
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        const rawX = (e.clientX - rect.left) * scaleX;
-        const rawY = (e.clientY - rect.top) * scaleY;
-
-        const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
-        const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
-        const pannedLogicalX = logicalMouseX - mapOffsetX;
-        const pannedLogicalY = logicalMouseY - mapOffsetY;
-
+        
         for (let i = tokens.length - 1; i >= 0; i--) {
             const t = tokens[i];
             const dist = Math.hypot(pannedLogicalX - t.x, pannedLogicalY - t.y);
@@ -1742,21 +1749,18 @@ function handleMouseDown(e) {
         }
         return; // Prevent panning after right-click
     }
-    // === END RIGHT-CLICK HANDLER ===
 
-    // Calculate mouse position for left-click actions
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const rawX = (e.clientX - rect.left) * scaleX;
-    const rawY = (e.clientY - rect.top) * scaleY;
+    // 3. MEASUREMENT TOOL (Shift + Left Click)
+    // This intercepts the click before it becomes a drag or pan
+    if (e.shiftKey) {
+        isMeasuring = true;
+        measureStart = { x: pannedLogicalX, y: pannedLogicalY };
+        measureEnd = { x: pannedLogicalX, y: pannedLogicalY };
+        // We return here so we don't accidentally grab a token while measuring
+        return; 
+    }
 
-    const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
-    const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
-    const pannedLogicalX = logicalMouseX - mapOffsetX;
-    const pannedLogicalY = logicalMouseY - mapOffsetY;
-
-    // 1. CHECK TOKEN DRAG START (GM ONLY)
+    // 4. CHECK TOKEN DRAG START (GM ONLY)
     if (!isClient) {
         const isDeleteAttempt = e.altKey || e.ctrlKey || e.metaKey;
         for (let t of tokens) {
@@ -1764,7 +1768,7 @@ function handleMouseDown(e) {
             const dy = pannedLogicalY - t.y;
             if (dx * dx + dy * dy < 400) { // 20px hit radius
                 if (isDeleteAttempt) {
-                    // Deletion is a single click action, not drag.
+                    // Deletion is a single click action handled in MouseUp/Click
                 } else {
                     draggedToken = t;
                     screenContainer.classList.remove('crosshair');
@@ -1777,150 +1781,53 @@ function handleMouseDown(e) {
         }
     }
 
-    // 2. START PANNING
+    // 5. START PANNING (Default fallback)
     isPanning = true;
     lastPanX = e.clientX;
     lastPanY = e.clientY;
     screenContainer.classList.add('grabbing');
 }
 
-function handleMouseMove(e) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
+function handleMouseUp(e) {
+    screenContainer.classList.remove('grabbing');
 
-    const rawX = (e.clientX - rect.left) * scaleX;
-    const rawY = (e.clientY - rect.top) * scaleY;
-
-    const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
-    const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
-
-    const pannedLogicalX = logicalMouseX - mapOffsetX;
-    const pannedLogicalY = logicalMouseY - mapOffsetY;
-
-    mousePos = { x: logicalMouseX, y: logicalMouseY };
+    // === NEW: STOP MEASURING ===
+    if (isMeasuring) {
+        isMeasuring = false;
+        drawCurrentLevel(); // Clear the line from the screen
+        return;
+    }
+    // ===========================
 
     if (draggedToken) {
-        draggedToken.x = pannedLogicalX;
-        draggedToken.y = pannedLogicalY;
-        drawCurrentLevel();
-        screenContainer.classList.add('grabbing');
+        draggedToken = null;
+        syncData();
+        isPanning = false;
         return;
     }
 
-    if (isPanning) {
-        const dx = e.clientX - lastPanX;
-        const dy = e.clientY - lastPanY;
-
-        mapOffsetX += dx / RENDER_SCALE;
-        mapOffsetY += dy / RENDER_SCALE;
-
-        const viewportWidth = config.width / zoomLevel;
-        const viewportHeight = config.height / zoomLevel;
-        const maxOverhang = Math.max(viewportWidth, viewportHeight) / 2;
-        const maxPanX = maxOverhang;
-        const minPanX = -config.width + viewportWidth - maxOverhang;
-        const maxPanY = maxOverhang;
-        const minPanY = -config.height + viewportHeight - maxOverhang;
-
-        mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
-        mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
-
-        lastPanX = e.clientX;
-        lastPanY = e.clientY;
-
-        drawCurrentLevel();
-        return;
+    if (
+        isPanning &&
+        Math.abs(e.clientX - lastPanX) < MINIMAL_MOVEMENT_THRESHOLD &&
+        Math.abs(e.clientY - lastPanY) < MINIMAL_MOVEMENT_THRESHOLD
+    ) {
+        handleCanvasAction(e);
     }
 
-    // 2. TOOLTIP CHECK
-    const data = (viewMode === 'interior') ? interiorData[currentInteriorKey] : floorData[currentLevelIndex];
-    if (!data) return;
-
-    const gridX = Math.floor(pannedLogicalX / config.gridSize);
-    const gridY = Math.floor(pannedLogicalY / config.gridSize);
-    
-    document.getElementById('coordDisplay').innerText = `${gridX},${gridY}`;
-    let hovering = false;
-
-    // --- LOOT TOOLTIP ---
-    if (!hovering && data.loot) {
-        for(let item of data.loot) {
-            if (config.fogEnabled && !isLocationRevealed(data, gridX, gridY)) continue;
-            if(item.x === gridX && item.y === gridY) {
-                tooltip.style.display = 'block';
-                tooltip.style.left = (e.clientX + 15) + 'px';
-                tooltip.style.top = (e.clientY + 15) + 'px';
-                
-                let status;
-                if (item.looted) { status = `[ EMPTY ]`; }	
-                else if (item.isLocked) { status = `[ LOCKED: ${item.lockDetail.replace(/\[|\]/g, '')} ${item.containerName} ]`; }	
-                else { status = `[ ${item.containerName} ]`; }
-
-                tooltip.innerText = status;
-                screenContainer.classList.add('crosshair');
-                hovering = true;
-            }
-        }
-    }
-    
-    // --- DECORATION/LABEL TOOLTIP ---
-    if (!hovering && data.labels) {
-        for (let lbl of data.labels) {
-            if (config.fogEnabled && !isLocationRevealed(data, Math.floor(lbl.x/config.gridSize), Math.floor(lbl.y/config.gridSize))) continue;
-            
-            if (Math.abs(pannedLogicalX - lbl.x) < 40 && Math.abs(pannedLogicalY - lbl.y) < 15) {
-                // *** FIX: Only show ENTER tooltip if we are in Sector mode ***
-                if (viewMode === 'sector' && isEnterable(lbl.text)) {
-                    tooltip.style.display = 'block';
-                    tooltip.style.left = (e.clientX + 15) + 'px';
-                    tooltip.style.top = (e.clientY + 15) + 'px';
-                    tooltip.innerText = `[ ENTER ${lbl.text} ]`;
-                    screenContainer.classList.add('crosshair');
-                    hovering = true;
-                } else if (lbl.text.includes("STAIRS")) {
-                     tooltip.style.display = 'block';
-                     tooltip.style.left = (e.clientX + 15) + 'px';
-                     tooltip.style.top = (e.clientY + 15) + 'px';
-                     tooltip.innerText = `[ ${lbl.text} ]`;
-                     screenContainer.classList.add('crosshair');
-                     hovering = true;
-                }
-            }
-        }
-    }
-    
-    if (!hovering && viewMode === 'interior' && data.exit && data.exit.x === gridX && data.exit.y === gridY) {
-        tooltip.style.display = 'block';
-        tooltip.style.left = (e.clientX + 15) + 'px';
-        tooltip.style.top = (e.clientY + 15) + 'px';
-        tooltip.innerText = `[ EXIT TO SECTOR ]`;
-        screenContainer.classList.add('crosshair');
-        hovering = true;
-    }
-
-    // 3. TOKEN DELETE HINT
-    if (!hovering && !isClient && (e.altKey || e.ctrlKey || e.metaKey)) {
-        for (let t of tokens) {
-             const dx = pannedLogicalX - t.x;
-             const dy = pannedLogicalY - t.y;
-             if (dx*dx + dy*dy < 400) {
-                 tooltip.style.display = 'block';
-                 tooltip.style.left = (e.clientX + 15) + 'px';
-                 tooltip.style.top = (e.clientY + 15) + 'px';
-                 tooltip.innerText = `[ DELETE ${t.label} ]`;
-                 screenContainer.classList.add('crosshair');
-                 hovering = true;
-                 break;
-            }
-        }
-    }
-
-    if (!hovering) { tooltip.style.display = 'none'; screenContainer.classList.remove('crosshair'); }
+    isPanning = false;
 }
 
 function handleMouseUp(e) {
     screenContainer.classList.remove('grabbing');
+
+    // === NEW: STOP MEASURING ===
+    // When you let go of Shift+Click, the ruler vanishes.
+    if (isMeasuring) {
+        isMeasuring = false;
+        drawCurrentLevel(); // Force redraw to clear the line
+        return;
+    }
+    // ===========================
 
     if (draggedToken) {
         draggedToken = null;
@@ -4423,6 +4330,71 @@ function drawCurrentLevel(time = 0) {
 
     } // Close for(tokens)
 
+
+	// --- MEASUREMENT TOOL OVERLAY ---
+    if (isMeasuring) {
+        // Calculate screen positions (applying zoom/pan/scale)
+        const sx = (measureStart.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
+        const sy = (measureStart.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
+        const ex = (measureEnd.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
+        const ey = (measureEnd.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
+
+        // MATH: Calculate distance in pixels
+        const dx = measureEnd.x - measureStart.x;
+        const dy = measureEnd.y - measureStart.y;
+        const pixelDist = Math.sqrt(dx*dx + dy*dy);
+
+        // MATH: Convert to Grid Squares and then Feet
+        // config.gridSize is 1 square. 1 square = 5ft.
+        const gridSquares = pixelDist / config.gridSize;
+        const feet = Math.round(gridSquares * 5); 
+
+        // 1. Draw the Line
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(ex, ey);
+        ctx.strokeStyle = "#16ff60"; // Classic V.A.T.S. Green
+        ctx.lineWidth = 2 * RENDER_SCALE;
+        ctx.setLineDash([10, 5]); // Dashed line for tactical feel
+        ctx.stroke();
+        ctx.setLineDash([]); // Reset dash
+
+        // 2. Draw Endpoints
+        ctx.fillStyle = "#16ff60";
+        ctx.beginPath(); ctx.arc(sx, sy, 4 * RENDER_SCALE, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(ex, ey, 4 * RENDER_SCALE, 0, Math.PI*2); ctx.fill();
+
+        // 3. Draw The Label
+        const midX = (sx + ex) / 2;
+        const midY = (sy + ey) / 2;
+
+        ctx.font = `bold ${16 * RENDER_SCALE}px monospace`;
+        const label = `${feet} ft`;
+        const textMetrics = ctx.measureText(label);
+        const padding = 6 * RENDER_SCALE;
+
+        // Label Background (Black box so you can read it over the map)
+        ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+        ctx.fillRect(
+            midX - textMetrics.width/2 - padding, 
+            midY - 10 * RENDER_SCALE - padding, 
+            textMetrics.width + padding*2, 
+            20 * RENDER_SCALE + padding
+        );
+
+        // Label Text
+        ctx.fillStyle = "#16ff60";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(label, midX, midY);
+        
+        // Optional: Range Coloring (e.g. Turns Red if really far)
+        if (feet > 100) {
+             ctx.fillStyle = "#ef4444"; // Red warning for long range
+             ctx.fillText(label, midX, midY);
+        }
+    }
+	
     // Restore the UI overlay context
     // This must happen OUTSIDE the loop, or the canvas will glitch
     ctx.restore();
