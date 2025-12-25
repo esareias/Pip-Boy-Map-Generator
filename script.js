@@ -1788,34 +1788,6 @@ function handleMouseDown(e) {
     screenContainer.classList.add('grabbing');
 }
 
-function handleMouseUp(e) {
-    screenContainer.classList.remove('grabbing');
-
-    // === NEW: STOP MEASURING ===
-    if (isMeasuring) {
-        isMeasuring = false;
-        drawCurrentLevel(); // Clear the line from the screen
-        return;
-    }
-    // ===========================
-
-    if (draggedToken) {
-        draggedToken = null;
-        syncData();
-        isPanning = false;
-        return;
-    }
-
-    if (
-        isPanning &&
-        Math.abs(e.clientX - lastPanX) < MINIMAL_MOVEMENT_THRESHOLD &&
-        Math.abs(e.clientY - lastPanY) < MINIMAL_MOVEMENT_THRESHOLD
-    ) {
-        handleCanvasAction(e);
-    }
-
-    isPanning = false;
-}
 
 function handleMouseUp(e) {
     screenContainer.classList.remove('grabbing');
