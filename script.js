@@ -1555,27 +1555,20 @@ async function init() {
     }
     // --------------------------------------------------
 
-    // Set High Resolution Canvas & Fix Blurriness
+    // Set High Resolution Canvas
+    // We KEEP the high resolution render scale for sharpness
     canvas.width = config.width * RENDER_SCALE;
     canvas.height = config.height * RENDER_SCALE;
     
-    // Disable smoothing for that crisp pixel-art look
+    // Use 'nearest-neighbor' to keep pixel art crisp, not blurry
     ctx.imageSmoothingEnabled = false; 
-    
-    // === NEW: AGGRESSIVE AUTO-FIT ===
-    // This calculation reserves 480px for your Header, Controls, and Chat Log.
-    // The map gets whatever space is left over.
-    canvas.style.width = "auto";
+
+    // === CANVAS DISPLAY SETTINGS (Standard Responsive) ===
+    // This ensures the map maintains its aspect ratio and doesn't look squished.
+    canvas.style.width = "100%"; 
     canvas.style.height = "auto";
-    canvas.style.maxWidth = "100%";
-    
-    // The Magic Number: 480px. Adjust this if it's still scrolling (e.g. make it 500px).
-    canvas.style.maxHeight = "calc(100vh - 480px)"; 
-    
     canvas.style.display = "block";
-    canvas.style.margin = "0 auto";
-    canvas.style.objectFit = "contain";
-    // ==================================
+    // ====================================================
 
     // FIX: Calculate cols/rows based on fixed gridSize (24) on startup
     config.cols = Math.floor(config.width / config.gridSize);
@@ -1629,12 +1622,10 @@ async function init() {
     screenContainer.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; isPanning = false; });
     screenContainer.addEventListener('contextmenu', (e) => e.preventDefault()); 
     
-    // Chat Input Listener
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendChatMessage();
     });
     
-    // Zoom Slider
     const zoomSlider = document.getElementById('zoomSlider');
     if (zoomSlider) {
         zoomSlider.addEventListener('input', (e) => setZoomLevel(e.target.value));
@@ -1644,6 +1635,37 @@ async function init() {
     changeLevel(0);    
     generateCurrentLevel();    
     requestAnimationFrame(animate);
+
+    // === NEW: WHOLE APP AUTO-SCALER ===
+    // This function checks if the app is taller than your screen.
+    // If it is, it shrinks the whole UI (like browser zoom) to fit.
+    function resizeApp() {
+        const app = document.getElementById('mainAppContent'); // Using the main wrapper
+        if (!app) return;
+
+        // Reset first to measure true dimensions
+        app.style.transform = 'none';
+        app.style.width = '100%'; // Ensure full width
+        
+        const contentHeight = app.scrollHeight;
+        const viewportHeight = window.innerHeight;
+        
+        // Add a small buffer (40px) so it's not touching the very edge
+        if (contentHeight > (viewportHeight - 20)) {
+            const scale = (viewportHeight - 20) / contentHeight;
+            // Apply scale
+            app.style.transformOrigin = 'top center';
+            app.style.transform = `scale(${scale})`;
+            // Adjust width to compensate for scaling (optional, keeps it centered)
+            app.style.width = `${100 / scale}%`; 
+        }
+    }
+
+    // Trigger on load and on resize
+    window.addEventListener('resize', resizeApp);
+    // Give the DOM a moment to render before calculating
+    setTimeout(resizeApp, 100); 
+    // ==================================
 
     showLoginScreen();
 }
