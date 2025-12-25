@@ -1788,12 +1788,152 @@ function handleMouseDown(e) {
     screenContainer.classList.add('grabbing');
 }
 
+function handleMouseMove(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const rawX = (e.clientX - rect.left) * scaleX;
+    const rawY = (e.clientY - rect.top) * scaleY;
+
+    const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
+    const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
+
+    const pannedLogicalX = logicalMouseX - mapOffsetX;
+    const pannedLogicalY = logicalMouseY - mapOffsetY;
+
+    mousePos = { x: logicalMouseX, y: logicalMouseY };
+
+    // === NEW: UPDATE MEASUREMENT LINE ===
+    if (isMeasuring) {
+        measureEnd = { x: pannedLogicalX, y: pannedLogicalY };
+        drawCurrentLevel();
+        return;
+    }
+    // ====================================
+
+    if (draggedToken) {
+        draggedToken.x = pannedLogicalX;
+        draggedToken.y = pannedLogicalY;
+        drawCurrentLevel();
+        screenContainer.classList.add('grabbing');
+        return;
+    }
+
+    if (isPanning) {
+        const dx = e.clientX - lastPanX;
+        const dy = e.clientY - lastPanY;
+
+        mapOffsetX += dx / RENDER_SCALE;
+        mapOffsetY += dy / RENDER_SCALE;
+
+        const viewportWidth = config.width / zoomLevel;
+        const viewportHeight = config.height / zoomLevel;
+        const maxOverhang = Math.max(viewportWidth, viewportHeight) / 2;
+        const maxPanX = maxOverhang;
+        const minPanX = -config.width + viewportWidth - maxOverhang;
+        const maxPanY = maxOverhang;
+        const minPanY = -config.height + viewportHeight - maxOverhang;
+
+        mapOffsetX = Math.max(minPanX, Math.min(maxPanX, mapOffsetX));
+        mapOffsetY = Math.max(minPanY, Math.min(maxPanY, mapOffsetY));
+
+        lastPanX = e.clientX;
+        lastPanY = e.clientY;
+
+        drawCurrentLevel();
+        return;
+    }
+
+    // 2. TOOLTIP CHECK
+    const data = (viewMode === 'interior') ? interiorData[currentInteriorKey] : floorData[currentLevelIndex];
+    if (!data) return;
+
+    const gridX = Math.floor(pannedLogicalX / config.gridSize);
+    const gridY = Math.floor(pannedLogicalY / config.gridSize);
+    
+    document.getElementById('coordDisplay').innerText = `${gridX},${gridY}`;
+    let hovering = false;
+
+    // --- LOOT TOOLTIP ---
+    if (!hovering && data.loot) {
+        for(let item of data.loot) {
+            if (config.fogEnabled && !isLocationRevealed(data, gridX, gridY)) continue;
+            if(item.x === gridX && item.y === gridY) {
+                tooltip.style.display = 'block';
+                tooltip.style.left = (e.clientX + 15) + 'px';
+                tooltip.style.top = (e.clientY + 15) + 'px';
+                
+                let status;
+                if (item.looted) { status = `[ EMPTY ]`; }    
+                else if (item.isLocked) { status = `[ LOCKED: ${item.lockDetail.replace(/\[|\]/g, '')} ${item.containerName} ]`; }    
+                else { status = `[ ${item.containerName} ]`; }
+
+                tooltip.innerText = status;
+                screenContainer.classList.add('crosshair');
+                hovering = true;
+            }
+        }
+    }
+    
+    // --- DECORATION/LABEL TOOLTIP ---
+    if (!hovering && data.labels) {
+        for (let lbl of data.labels) {
+            if (config.fogEnabled && !isLocationRevealed(data, Math.floor(lbl.x/config.gridSize), Math.floor(lbl.y/config.gridSize))) continue;
+            
+            if (Math.abs(pannedLogicalX - lbl.x) < 40 && Math.abs(pannedLogicalY - lbl.y) < 15) {
+                if (viewMode === 'sector' && isEnterable(lbl.text)) {
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (e.clientX + 15) + 'px';
+                    tooltip.style.top = (e.clientY + 15) + 'px';
+                    tooltip.innerText = `[ ENTER ${lbl.text} ]`;
+                    screenContainer.classList.add('crosshair');
+                    hovering = true;
+                } else if (lbl.text.includes("STAIRS")) {
+                     tooltip.style.display = 'block';
+                     tooltip.style.left = (e.clientX + 15) + 'px';
+                     tooltip.style.top = (e.clientY + 15) + 'px';
+                     tooltip.innerText = `[ ${lbl.text} ]`;
+                     screenContainer.classList.add('crosshair');
+                     hovering = true;
+                }
+            }
+        }
+    }
+    
+    if (!hovering && viewMode === 'interior' && data.exit && data.exit.x === gridX && data.exit.y === gridY) {
+        tooltip.style.display = 'block';
+        tooltip.style.left = (e.clientX + 15) + 'px';
+        tooltip.style.top = (e.clientY + 15) + 'px';
+        tooltip.innerText = `[ EXIT TO SECTOR ]`;
+        screenContainer.classList.add('crosshair');
+        hovering = true;
+    }
+
+    // 3. TOKEN DELETE HINT
+    if (!hovering && !isClient && (e.altKey || e.ctrlKey || e.metaKey)) {
+        for (let t of tokens) {
+             const dx = pannedLogicalX - t.x;
+             const dy = pannedLogicalY - t.y;
+             if (dx*dx + dy*dy < 400) {
+                 tooltip.style.display = 'block';
+                 tooltip.style.left = (e.clientX + 15) + 'px';
+                 tooltip.style.top = (e.clientY + 15) + 'px';
+                 tooltip.innerText = `[ DELETE ${t.label} ]`;
+                 screenContainer.classList.add('crosshair');
+                 hovering = true;
+                 break;
+            }
+        }
+    }
+
+    if (!hovering) { tooltip.style.display = 'none'; screenContainer.classList.remove('crosshair'); }
+}
 
 function handleMouseUp(e) {
     screenContainer.classList.remove('grabbing');
 
     // === NEW: STOP MEASURING ===
-    // When you let go of Shift+Click, the ruler vanishes.
     if (isMeasuring) {
         isMeasuring = false;
         drawCurrentLevel(); // Force redraw to clear the line
@@ -1847,7 +1987,7 @@ function handleCanvasAction(e) {
     
     // 1. CHECK TOKEN DELETE (GM ONLY)
     if (!isClient) {
-        const isDeleteAttempt = e.altKey || e.ctrlKey || e.metaKey;	
+        const isDeleteAttempt = e.altKey || e.ctrlKey || e.metaKey;    
         if (isDeleteAttempt) {
             for (let i = 0; i < tokens.length; i++) {
                 let t = tokens[i];
@@ -1855,11 +1995,11 @@ function handleCanvasAction(e) {
                 const dx = pannedLogicalX - t.x;
                 const dy = pannedLogicalY - t.y;
 
-                if (dx*dx + dy*dy < 400) {	
+                if (dx*dx + dy*dy < 400) {    
                     log(`UNIT REMOVED: ${t.label}`, '#ef4444');
-                    tokens.splice(i, 1);	
+                    tokens.splice(i, 1);    
                     syncData();
-                    return;	
+                    return;    
                 }
             }
         }
@@ -1875,10 +2015,6 @@ function handleCanvasAction(e) {
                     if (!isEnterable(lbl.text)) {
                         lbl.visible = !lbl.visible;
                         log(`${lbl.text} LABEL TOGGLED [Visible: ${lbl.visible}]`);
-                        // Client cannot sync data to host, but they can update their local map data
-                        // The GM is the source of truth, so this local change might be overwritten on next sync. 
-                        // Ideally, clients only request map changes from GM, but for local flavor, we allow it.
-                        // NOTE: The current PeerJS setup only supports GM->Client broadcast.
                         clicked = true;
                     }
                 }
@@ -1896,7 +2032,7 @@ function handleCanvasAction(e) {
             room.visited = true;
             log(`SECTOR REVEALED: ${room.name || 'UNKNOWN'}`, 'var(--pip-green)');
             clicked = true;
-            syncData();	
+            syncData();    
             return;
         }
     }
@@ -1907,7 +2043,7 @@ function handleCanvasAction(e) {
             if (item.x === gridX && item.y === gridY) {
                 if (item.looted) {
                     log(`NOTE: ${item.containerName} is already emptied.`, 'var(--dim-color)');
-                }	
+                }    
                 else if (item.isLocked) {
                     const isDoubleClick = lastLootClick.x === gridX && lastLootClick.y === gridY && (currentTime - lastLootClick.time < DOUBLE_CLICK_TIME);
 
@@ -1918,13 +2054,13 @@ function handleCanvasAction(e) {
                         log(`ACCESS GRANTED: ${item.containerName} force-unlocked by Overseer.`, 'var(--pip-green)');
                         logLoot(item.containerName, item.contents);
                         // Reset click state
-                        lastLootClick = { x: -1, y: -1, time: 0 };	
+                        lastLootClick = { x: -1, y: -1, time: 0 };    
                     } else {
                         // First click on a locked item (Logs Challenge)
                         log(`ACCESS DENIED: ${item.containerName} is locked. Challenge required. ${item.lockDetail}`, '#ef4444');
                         lastLootClick = { x: gridX, y: gridY, time: currentTime };
                     }
-                }	
+                }    
                 else {
                     // Unlocked container - loot it
                     item.looted = true;
@@ -1937,7 +2073,6 @@ function handleCanvasAction(e) {
             }
         }
     }
-    // ------------------------------------------
     
     // RADIO INTERACTION
     if (!clicked && data.decorations) {
@@ -1953,9 +2088,8 @@ function handleCanvasAction(e) {
 
     // EXIT INTERIOR
     if (!clicked && viewMode === 'interior' && data.exit && data.exit.x === gridX && data.exit.y === gridY) {
-         exitInterior();	
+         exitInterior();    
          clicked = true;
-         // syncData() called inside exitInterior
     }
 
     // ENTER INTERIOR / TOGGLE LABELS
@@ -1967,7 +2101,6 @@ function handleCanvasAction(e) {
                 if (isEnterable(lbl.text)) {
                     enterInterior(lbl);
                     clicked = true;
-                    // syncData() called inside enterInterior
                 }
                 else {
                     // Toggle non-enterable labels like STREET or STAIRS
@@ -1980,7 +2113,6 @@ function handleCanvasAction(e) {
         }
     }
 }
-
 // --- END NEW MOUSE HANDLER IMPLEMENTATION ---
 
 function isLocationRevealed(data, x, y) {
