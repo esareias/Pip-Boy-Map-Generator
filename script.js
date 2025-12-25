@@ -1563,6 +1563,23 @@ async function init() {
     canvas.height = config.height * RENDER_SCALE;
     ctx.imageSmoothingEnabled = false;
 
+    // === NEW: AUTO-FIT VISUAL STYLE ===
+    // This constrains the visual size without lowering the internal resolution.
+    // 1. Reset width/height to auto so constraints take over
+    canvas.style.width = "auto";       
+    canvas.style.height = "auto";      
+    
+    // 2. Max constraints to fit within the viewport
+    canvas.style.maxWidth = "100%";    
+    // 60vh means "60% of the screen height". This leaves 40% for Header + Chat.
+    canvas.style.maxHeight = "60vh";   
+    
+    // 3. Centering and layout
+    canvas.style.display = "block";    
+    canvas.style.margin = "0 auto";    
+    canvas.style.objectFit = "contain"; 
+    // ==================================
+
     // FIX: Calculate cols/rows based on fixed gridSize (24) on startup
     config.cols = Math.floor(config.width / config.gridSize);
     config.rows = Math.floor(config.height / config.gridSize);
@@ -1591,8 +1608,8 @@ async function init() {
         cCtx.beginPath(); cCtx.arc(x, y, r, 0, Math.PI*2); cCtx.fill();
         
         // Wrap around edges for seamless tiling
-        if (x < r) {	
-            cCtx.fillStyle = g; cCtx.beginPath(); cCtx.arc(x+512, y, r, 0, Math.PI*2); cCtx.fill();	
+        if (x < r) {    
+            cCtx.fillStyle = g; cCtx.beginPath(); cCtx.arc(x+512, y, r, 0, Math.PI*2); cCtx.fill();    
         }
         if (y < r) {
             cCtx.fillStyle = g; cCtx.beginPath(); cCtx.arc(x, y+512, r, 0, Math.PI*2); cCtx.fill();
@@ -1612,12 +1629,11 @@ async function init() {
     }
 
     // --- UPDATED EVENT LISTENERS FOR PANNING ---
-        // --- UPDATED EVENT LISTENERS FOR PANNING ---
     screenContainer.addEventListener('mousedown', handleMouseDown);
     screenContainer.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     screenContainer.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; isPanning = false; });
-    screenContainer.addEventListener('contextmenu', (e) => e.preventDefault()); // ← ADD THIS
+    screenContainer.addEventListener('contextmenu', (e) => e.preventDefault()); 
     
     // --- NEW: Chat Input Enter Key Listener ---
     chatInput.addEventListener('keypress', (e) => {
@@ -1634,11 +1650,9 @@ async function init() {
     // ------------------------------------------
     
     updateHelperText();
-    changeLevel(0);	
-    generateCurrentLevel();	
+    changeLevel(0);    
+    generateCurrentLevel();    
     requestAnimationFrame(animate);
-
-
 
     // --- CHARACTER SELECTION GATE (Start flow) ---
     showLoginScreen();
