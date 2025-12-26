@@ -325,17 +325,47 @@ function showTokenCategory(category, grid) {
             div.onclick = () => spawnToken(p.name, p.color, p.src);
             grid.appendChild(div);
         });
-    } else if (category === 'custom') {
+  } else if (category === 'custom') {
+        // Fetch the Vault from browser memory
+        const savedNPCs = JSON.parse(localStorage.getItem('pip_custom_npcs') || '[]');
+        
+        let vaultHtml = '';
+        if (savedNPCs.length > 0) {
+            vaultHtml = `
+                <label class="block mb-2 text-sm mt-2" style="color: var(--pip-amber);">RECURRING ASSETS (VAULT):</label>
+                <div class="flex flex-wrap gap-3 mb-4 p-3 border border-dashed border-[var(--dim-color)] bg-black/40" style="max-height: 250px; overflow-y: auto;">
+            `;
+            
+            savedNPCs.forEach((npc) => {
+                vaultHtml += `
+                    <div class="cursor-pointer hover:bg-[var(--dim-color)] p-2 text-center border border-[var(--dim-color)] transition-all transform hover:scale-105" 
+                         style="width: 90px; background: rgba(0,0,0,0.6);"
+                         onclick="spawnToken('${npc.name.replace(/'/g, "\\'")}', '${npc.color}', '${npc.url}')">
+                        <img src="${npc.url}" class="w-12 h-12 mb-1 mx-auto object-cover border border-[var(--dim-color)]" onerror="this.src='https://placehold.co/48x48/1e293b/a8a29e?text=?'">
+                        <div class="text-[12px] truncate" style="color: #fff;">${npc.name}</div>
+                    </div>`;
+            });
+            
+            vaultHtml += `
+                </div>
+                <button onclick="if(confirm('Wipe the NPC vault?')){localStorage.removeItem('pip_custom_npcs'); openGMTokenDeploy();}" 
+                        class="pip-btn danger mb-4" style="font-size: 1.1rem; padding: 4px 10px;">[PURGE MEMORY]</button>
+                <div class="ui-line"></div>
+            `;
+        }
+
         const div = document.createElement('div');
         div.className = "col-span-full p-4 border border-[var(--dim-color)]";
         div.innerHTML = `
-            <label class="block mb-2 text-sm">NAME:</label>
-            <input type="text" id="customName" class="pip-input mb-3" placeholder="Enemy Name">
-            <label class="block mb-2 text-sm">IMAGE URL:</label>
-            <input type="text" id="customUrl" class="pip-input mb-3" placeholder="https://...">
-            <button onclick="spawnCustomToken()" class="pip-btn w-full">[DEPLOY]</button>
+            ${vaultHtml}
+            <label class="block mb-2 text-sm">REGISTER NEW UNIT:</label>
+            <input type="text" id="customName" class="pip-input mb-3 w-full" placeholder="Unit Name/ID">
+            <label class="block mb-2 text-sm">VISUAL UPLINK (URL):</label>
+            <input type="text" id="customUrl" class="pip-input mb-3 w-full" placeholder="https://...">
+            <button onclick="spawnCustomToken()" class="pip-btn w-full">[DEPLOY & RECORD]</button>
         `;
         grid.appendChild(div);
+    }
     } else {
         // Map category value to ENEMY_PRESETS key
         const categoryMap = {
@@ -447,6 +477,18 @@ function spawnToken(name, color, src) {
 function spawnCustomToken() {
     const name = document.getElementById('customName').value || "CUSTOM UNIT";
     const url = document.getElementById('customUrl').value || "";
+    
+    // Save to LocalStorage "NPC Vault"
+    const savedNPCs = JSON.parse(localStorage.getItem('pip_custom_npcs') || '[]');
+    const newNPC = { name, url, color: "#ffffff" };
+    
+    // Only save if it's a new name/url combo
+    if (!savedNPCs.some(n => n.name === name)) {
+        savedNPCs.push(newNPC);
+        localStorage.setItem('pip_custom_npcs', JSON.stringify(savedNPCs));
+        log(`RECORDED TO VAULT: ${name}`, 'var(--pip-amber)');
+    }
+
     spawnToken(name, "#ffffff", url);
     closeGMTokenDeploy();
 }
