@@ -4602,7 +4602,7 @@ window.handleMouseUp = handleMouseUp;
 window.onload = init;
 
 
-// === V'S WIDE-BOY STRETCH RESIZER ===
+// === V'S MASTER UNIFIED RESIZER ===
 function resizeUI() {
     const ui = document.querySelector('.pip-casing');
     if (!ui) return;
@@ -4611,22 +4611,20 @@ function resizeUI() {
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight;
         
-        // Logical width of your casing
         const uiWidth = 1960; 
-        // Actual height of the HUD content
-        const uiHeight = ui.scrollHeight || 1150; 
+        const uiHeight = ui.scrollHeight || 1100; 
 
-        // We calculate X and Y separately to "STRETCH" the app
-        const scaleX = windowWidth / uiWidth;
-        const scaleY = windowHeight / uiHeight;
+        // USE THE MINIMUM SCALE (This stops the squishing)
+        const scale = Math.min(windowWidth / uiWidth, windowHeight / uiHeight) * 0.98;
         
-        // Apply independent scaling to fill every goddamn pixel
-        ui.style.transform = `scale(${scaleX}, ${scaleY})`;
+        // Safety clamps
+        let finalScale = Math.max(0.1, Math.min(1, scale));
+
+        ui.style.transform = `scale(${finalScale})`;
         ui.style.transformOrigin = 'top center';
     });
 }
 
-// Listeners to keep it snapped to the edges
 window.addEventListener('resize', resizeUI);
 window.addEventListener('load', () => setTimeout(resizeUI, 500));
-setInterval(resizeUI, 2000); // Pulse check to fix any layout shifts
+setInterval(resizeUI, 1500);
