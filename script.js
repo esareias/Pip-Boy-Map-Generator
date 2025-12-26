@@ -4565,46 +4565,34 @@ window.handleMouseUp = handleMouseUp;
 window.onload = init;
 
 
-// === V'S CORRECTED AUTO-HUD RESIZER ===
+// === V'S FAIL-SAFE RESIZER ===
 function resizeUI() {
     const ui = document.querySelector('.pip-casing');
     if (!ui) return;
 
-    // Use requestAnimationFrame to ensure the DOM has actually rendered
-    requestAnimationFrame(() => {
-        const windowWidth = window.innerWidth;
-        const windowHeight = window.innerHeight;
-        
-        const uiWidth = ui.offsetWidth || 1960; 
-        const uiHeight = ui.offsetHeight || 1200; 
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // We force a logical width of 1960. 
+    // For height, we use the actual height or a safe fallback of 1100.
+    const uiWidth = 1960; 
+    const uiHeight = ui.scrollHeight || 1100; 
 
-        const scaleX = windowWidth / uiWidth;
-        const scaleY = windowHeight / uiHeight;
-        
-        // We use a 0.96 multiplier for a clean 2% margin on all sides
-        let finalScale = Math.min(scaleX, scaleY) * 0.96;
+    const scaleX = windowWidth / uiWidth;
+    const scaleY = windowHeight / uiHeight;
+    
+    // Use the smaller scale and add a 4% safety margin
+    let finalScale = Math.min(scaleX, scaleY) * 0.96;
 
-        // Never scale UP (to prevent blurriness)
-        if (finalScale > 1) finalScale = 1;
-        // Never scale to 0 (prevents the "All Black" disappearance)
-        if (finalScale < 0.1) finalScale = 0.1;
+    // Safety checks: never bigger than 100%, never smaller than 10%
+    if (finalScale > 1) finalScale = 1;
+    if (finalScale < 0.1) finalScale = 0.1;
 
-        ui.style.transform = `scale(${finalScale})`;
-    });
+    ui.style.transform = `scale(${finalScale})`;
 }
 
-// Listen for window resizing
+// Add listeners for every possible event that changes the UI size
 window.addEventListener('resize', resizeUI);
-
-// Trigger after a short delay once everything is loaded
-window.addEventListener('load', () => {
-    setTimeout(resizeUI, 500);
-});
-
-// Also trigger it whenever you change levels or views
-const originalSync = window.syncData;
-window.syncData = function() {
-    if (originalSync) originalSync();
-    resizeUI();
-};
-// === END RESIZER ===
+window.addEventListener('load', resizeUI);
+// This one catches the map generation finishing
+setInterval(resizeUI, 1000);
