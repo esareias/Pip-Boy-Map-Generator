@@ -4490,7 +4490,7 @@ function drawCurrentLevel(time = 0) {
         const midX = (sx + ex) / 2;
         const midY = (sy + ey) / 2;
 
-        ctx.font = `bold ${16 * RENDER_SCALE}px monospace`;
+        ctx.font = `bold ${32 * RENDER_SCALE}px monospace`;
         const label = `${feet} ft`;
         const textMetrics = ctx.measureText(label);
         const padding = 6 * RENDER_SCALE;
