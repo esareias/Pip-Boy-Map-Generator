@@ -2187,6 +2187,7 @@ function handleCanvasAction(e) {
             }
         }
     }
+}
 
 
 function isLocationRevealed(data, x, y) {
