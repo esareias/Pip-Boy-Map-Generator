@@ -7,7 +7,7 @@
     --pip-amber: #ffb300;
     --pip-amber-dim: #8a5e00;
     
-    /* These are the "Active" variables everything uses */
+    /* Active variables */
     --main-color: var(--pip-green);
     --dim-color: var(--pip-green-dim);
 }
@@ -16,73 +16,70 @@
 body.theme-green { --main-color: var(--pip-green); --dim-color: var(--pip-green-dim); }
 body.theme-amber { --main-color: var(--pip-amber); --dim-color: var(--pip-amber-dim); }
 
+/* --- 1. GLOBAL RESET & BODY --- */
 body {
     background-color: #000;
     font-family: 'VT323', monospace;
     margin: 0;
     padding: 0;
-    overflow: hidden; 
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    height: 100vh;
+    overflow: hidden; /* No window scrollbars */
     width: 100vw;
+    height: 100vh;
     background-image: radial-gradient(#1a1c1a 1px, #000 1px);
     background-size: 20px 20px;
-    color: var(--main-color); /* FORCE COLOR HERE */
+    color: var(--main-color);
 }
 
-.pip-casing {
-    border: 4px solid #3d443d;
-    background-color: #1a1c1a;
-    box-shadow: inset 0 0 60px #000, 0 0 50px rgba(0,0,0,0.8);
-    border-radius: 20px;
-    padding: 20px;
-    position: relative;
-    transform-origin: top center; 
-    width: 1960px; 
-    min-height: 500px; /* Prevent it from collapsing to 0 */
-    margin: 0 auto;
+/* --- 2. COMMAND CENTER LAYOUT (The New Grid) --- */
+
+/* The Main Container that holds everything */
+.app-container {
+    display: grid;
+    grid-template-columns: 1fr 420px; /* Map takes rest, Sidebar is fixed width */
+    grid-template-rows: 100vh;        /* Fill screen height */
+    gap: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
 }
 
-/* Ensure rivets are always visible */
-.pip-casing::before, .pip-casing::after {
-    content: ''; position: absolute; width: 12px; height: 12px;
-    background: #2a302a; border-radius: 50%;
-    box-shadow: inset 1px 1px 2px #000, 1px 1px 0 #555;
-    top: 10px;
-    z-index: 100;
-}
-.pip-casing::before { left: 10px; }
-.pip-casing::after { right: 10px; }
-
-.screen-container {
-    position: relative;
-    border: 4px solid #444;
-    border-radius: 20px 20px 4px 4px;
-    background-color: #050505;
+/* LEFT SIDE: The Map Viewport */
+.map-viewport {
+    background: #050505;
+    position: relative; /* Anchor for overlays */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-right: 2px solid var(--dim-color);
     overflow: hidden;
-    box-shadow: 0 0 40px rgba(0,0,0,0.9), inset 0 0 30px rgba(0,0,0,1);
-    cursor: grab;
-    max-width: 100%;
-    width: 1920px;  /* ADDED: Fixed width for the screen */
-    height: 1080px; /* ADDED: Fixed height for the screen */
-}
-.screen-container.grabbing {
-    cursor: grabbing;
-}
-.screen-container.crosshair {
-    cursor: crosshair;
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
 }
 
-/* CHANGED: Canvas now displays at its natural logical sizes */
-canvas { 
-    display: block; 
-    width: 1920px;  /* CHANGED: From 100% to fixed 1920px */
-    height: 1080px; /* ADDED: Fixed height */
-    image-rendering: pixelated; 
+/* The Canvas itself */
+canvas#mapCanvas {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* CRITICAL: Prevents stretching */
+    display: block;
+    image-rendering: pixelated;
 }
 
+/* RIGHT SIDE: The Sidebar */
+.pip-sidebar {
+    background: rgba(10, 12, 10, 0.95);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto; /* Scroll inside sidebar if needed */
+    border-left: 4px solid #3d443d;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.8);
+    /* Custom Scrollbar for sidebar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--dim-color) #000;
+}
+
+/* --- 3. CRT EFFECTS & OVERLAYS --- */
 .tracking-line {
     width: 100%; height: 2px;
     background: rgba(255,255,255,0.1);
@@ -98,103 +95,35 @@ canvas {
     background: rgba(255,255,255,0.02);
     opacity: 0;
 }
-@keyframes flicker {
-    0% { opacity: 0.02; } 50% { opacity: 0.04; } 100% { opacity: 0.02; }
-}
+@keyframes flicker { 0% { opacity: 0.02; } 50% { opacity: 0.04; } 100% { opacity: 0.02; } }
 
+/* --- 4. TOOLTIP --- */
 #tooltip {
-    position: fixed; background: rgba(10, 15, 10, 0.95); border: 2px solid var(--main-color);
-    color: var(--main-color); padding: 6px 10px; font-size: 1.2rem; pointer-events: none; z-index: 9999;
+    position: fixed; /* Fixed relative to window so it floats above everything */
+    background: rgba(10, 15, 10, 0.95); border: 2px solid var(--main-color);
+    color: var(--main-color); padding: 6px 10px; font-size: 1.5rem; pointer-events: none; z-index: 9999;
     display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.8); white-space: nowrap;
     text-transform: uppercase; border-radius: 2px; text-shadow: 0 0 5px var(--main-color);
 }
 
-#reportModal {
-    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.9); z-index: 10000; align-items: center; justify-content: center;
-    backdrop-filter: blur(2px);
-}
+/* --- 5. COMPONENT STYLES --- */
 
-.modal-content {
-    background: #1a1c1a; border: 2px solid var(--main-color); padding: 20px;
-    width: 80%; max-width: 800px; max-height: 80vh; overflow-y: auto;
-    box-shadow: 0 0 30px var(--dim-color); color: var(--main-color);
-}
-
-textarea.report-text {
-    width: 100%; height: 400px; background: #000; color: var(--main-color);
-    border: 1px solid var(--dim-color); padding: 10px; font-family: monospace;
-    font-size: 0.9rem; margin-top: 10px; resize: none;
-}
-
-/* --- THE CHAT LOG (Updated) --- */
-.loot-log {
-    background: rgba(0, 0, 0, 0.8); 
-    border: 1px solid var(--dim-color); 
-    height: 150px;
-    overflow-y: auto; 
-    padding: 10px; 
-    font-size: 1.2rem; /* V's Edit: Bumped from 1rem to 1.2rem */
-    margin-top: 10px;
-    box-shadow: inset 0 0 10px #000; 
-    font-family: 'VT323', monospace;
-}
-
-/* Individual lines */
-.loot-entry {
-    margin-bottom: 8px; 
-    border-bottom: 1px dashed #333; 
-    padding-bottom: 6px; 
-    line-height: 1.4; /* V's Edit: Increased from 1.2 so text breathes */
-    animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn { 
-    from { opacity: 0; transform: translateX(-10px); } 
-    to { opacity: 1; transform: translateX(0); } 
-}
-
-/* The timestamp span */
-.loot-entry span { 
-    opacity: 0.8; 
-    margin-right: 10px; 
-    font-size: 1rem; /* V's Edit: Bumped from 0.8rem to 1rem */
-    color: var(--dim-color); /* Optional: ensures it matches theme */
-}
-
-.chat-entry {
-    font-weight: bold;
-}
-
-/* --- THE INPUT BOX (New Addition) --- */
-/* Add this so the text you type matches the log size */
-#chatInput {
-    font-size: 1.2rem !important; 
-    height: 45px;
-    padding: 5px 10px;
-    font-family: 'VT323', monospace;
-    background: #000;
-    color: var(--main-color);
-    border: 1px solid var(--dim-color);
-    width: 100%; /* Ensures it fits */
-    margin-top: 5px;
-}
-
+/* Buttons */
 .pip-btn {
     background: #111; 
     border: 2px solid var(--main-color); 
     color: var(--main-color);
     text-transform: uppercase; 
-    padding: 8px 18px;       /* V's Edit: Slightly more padding for bigger text */
-    font-size: 1.5rem;       /* V's Edit: Cranked from 1.2rem to 1.5rem */
-    font-weight: bold;       /* V's Edit: Made it thick */
+    padding: 8px 12px; 
+    font-size: 1.4rem; 
+    font-weight: bold; 
     cursor: pointer;
     transition: all 0.1s; 
     box-shadow: 0 4px 0 rgba(0,0,0,0.5); 
     border-radius: 2px;
     position: relative; 
-    top: 0; 
     text-shadow: 0 0 2px var(--main-color);
+    text-align: center;
 }
 .pip-btn:active { top: 2px; box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
 .pip-btn:hover { background: var(--dim-color); color: #fff; text-shadow: none; }
@@ -202,115 +131,100 @@ textarea.report-text {
 .pip-btn.danger:hover { background: #7f1d1d; color: #fff; }
 .pip-btn:disabled, .pip-btn.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; border-color: #444; color: #888; box-shadow: none; text-shadow: none; }
 
+/* Inputs */
 .pip-input {
     background: #000; border: 1px solid var(--dim-color); color: var(--main-color);
-    padding: 5px; font-family: 'VT323', monospace; font-size: 1.2rem; border-radius: 0px;
+    padding: 8px; font-family: 'VT323', monospace; font-size: 1.3rem; border-radius: 0px;
     box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
 }
-.pip-label { color: var(--main-color); text-shadow: 0 0 5px var(--main-color); font-size: 1.1rem; }
-.helper-text { font-size: 0.9rem; opacity: 0.7; margin-top: 2px; }
+.pip-label { color: var(--main-color); text-shadow: 0 0 5px var(--main-color); font-size: 1.3rem; font-weight: bold; }
+.helper-text { font-size: 1rem; opacity: 0.7; margin-top: 2px; }
 .ui-line { height: 2px; background-color: var(--main-color); box-shadow: 0 0 8px var(--main-color); margin: 10px 0; opacity: 0.8; }
 .hidden-ui { display: none !important; }
 
+/* Selected Token Highlight */
 .selected-token {
     box-shadow: 0 0 15px var(--main-color) !important;
     animation: pulse-border 1s infinite alternate;
 }
-
 @keyframes pulse-border {
     from { box-shadow: 0 0 15px var(--main-color) !important; }
     to { box-shadow: 0 0 25px var(--main-color) !important; }
 }
 
-/* ========================================
-   ZOOM SLIDER STYLES
-   ======================================== */
-
-input[type="range"]#zoomSlider {
-    -webkit-appearance: none;
-    appearance: none;
-    height: 8px;
-    background: linear-gradient(to right, 
-        var(--dim-color) 0%, 
-        var(--main-color) 100%);
-    outline: none;
-    border: 1px solid var(--dim-color);
-    opacity: 0.9;
-    transition: opacity 0.2s;
-    border-radius: 4px;
-    cursor: pointer;
+/* --- 6. CHAT & LOGS (Super Sized) --- */
+.loot-log {
+    background: rgba(0, 0, 0, 0.6); 
+    border: 1px solid var(--dim-color); 
+    /* No fixed height, let flexbox handle it */
+    overflow-y: auto; 
+    padding: 10px; 
+    font-size: 1.3rem; /* Big text */
+    box-shadow: inset 0 0 10px #000; 
+    font-family: 'VT323', monospace;
 }
 
-input[type="range"]#zoomSlider:hover {
-    opacity: 1;
+.loot-entry {
+    margin-bottom: 8px; 
+    border-bottom: 1px dashed #333; 
+    padding-bottom: 6px; 
+    line-height: 1.3;
+    animation: fadeIn 0.3s ease-in-out;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+
+.loot-entry span { opacity: 0.8; margin-right: 10px; font-size: 1.1rem; color: var(--dim-color); }
+.chat-entry { font-weight: bold; }
+
+#chatInput {
+    font-size: 1.3rem !important; 
+    height: 50px;
+    padding: 5px 10px;
+    font-family: 'VT323', monospace;
+    background: #000;
+    color: var(--main-color);
+    border: 1px solid var(--dim-color);
+    width: 100%;
+}
+
+/* --- 7. MODALS (Keep existing styles) --- */
+.modal-content {
+    background: #1a1c1a; border: 2px solid var(--main-color); padding: 20px;
+    width: 80%; max-width: 800px; max-height: 80vh; overflow-y: auto;
+    box-shadow: 0 0 30px var(--dim-color); color: var(--main-color);
+}
+textarea.report-text {
+    width: 100%; height: 400px; background: #000; color: var(--main-color);
+    border: 1px solid var(--dim-color); padding: 10px; font-family: monospace;
+    font-size: 1.1rem; margin-top: 10px; resize: none;
+}
+
+/* --- 8. ZOOM SLIDER --- */
+input[type="range"] {
+    -webkit-appearance: none; appearance: none; height: 8px;
+    background: linear-gradient(to right, var(--dim-color) 0%, var(--main-color) 100%);
+    outline: none; border: 1px solid var(--dim-color); opacity: 0.9;
+    border-radius: 4px; cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 20px; height: 20px;
+    background: var(--main-color); cursor: pointer; border: 2px solid #000;
+    border-radius: 50%; box-shadow: 0 0 10px var(--main-color);
+}
+input[type="range"]::-moz-range-thumb {
+    width: 20px; height: 20px; background: var(--main-color);
+    cursor: pointer; border: 2px solid #000; border-radius: 50%;
     box-shadow: 0 0 10px var(--main-color);
 }
 
-input[type="range"]#zoomSlider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    background: var(--main-color);
-    cursor: pointer;
-    border: 2px solid #000;
-    border-radius: 50%;
-    box-shadow: 0 0 10px var(--main-color),
-                0 0 5px rgba(0, 0, 0, 0.8);
-    transition: all 0.2s;
-}
-
-input[type="range"]#zoomSlider::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-    box-shadow: 0 0 15px var(--main-color),
-                0 0 8px var(--main-color);
-}
-
-input[type="range"]#zoomSlider::-webkit-slider-thumb:active {
-    transform: scale(1.1);
-}
-
-input[type="range"]#zoomSlider::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    background: var(--main-color);
-    cursor: pointer;
-    border: 2px solid #000;
-    border-radius: 50%;
-    box-shadow: 0 0 10px var(--main-color),
-                0 0 5px rgba(0, 0, 0, 0.8);
-    transition: all 0.2s;
-}
-
-input[type="range"]#zoomSlider::-moz-range-thumb:hover {
-    transform: scale(1.2);
-    box-shadow: 0 0 15px var(--main-color),
-                0 0 8px var(--main-color);
-}
-
-input[type="range"]#zoomSlider::-moz-range-track {
-    background: linear-gradient(to right, 
-        var(--dim-color) 0%, 
-        var(--main-color) 100%);
-    height: 8px;
-    border-radius: 4px;
-}
-
-#zoomDisplay {
-    font-weight: bold;
-    text-shadow: 0 0 8px var(--main-color);
-    color: var(--main-color);
-    animation: zoomPulse 2s infinite alternate;
-}
-
-@keyframes zoomPulse {
-    from { opacity: 0.8; }
-    to { opacity: 1; }
-}
-
-.pip-btn[onclick*="zoom"] {
-    min-width: 40px;
-    font-weight: bold;
-    font-size: 1.5rem;
-    padding: 4px 12px;
+/* Mobile Responsive Tweak */
+@media (max-width: 1000px) {
+    .app-container {
+        grid-template-columns: 1fr; /* Stack on small screens */
+        grid-template-rows: 50vh 1fr;
+    }
+    .pip-sidebar {
+        border-left: none;
+        border-top: 4px solid #3d443d;
+    }
 }
