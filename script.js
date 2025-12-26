@@ -1442,72 +1442,64 @@ function joinSession() {
 }
 
 function receiveData(data) {
-     if (data.type === 'CHAT') {
-  // 1. Log on whoever received it
-  log(data.message, data.color, data.sender);
+    // 1. CHAT HANDLER
+    if (data.type === 'CHAT') {
+        log(data.message, data.color, data.sender);
 
-  // 2. If this tab is the HOST, rebroadcast to all clients
-  if (isHost && connections?.length) {
-    connections.forEach(c => {
-      // Avoid echoing back to the original sender if you want,
-      // but simplest is just broadcast to all.
-      c.send(data);
-    });
-  }
-  return;
-}
-	// === V'S ADDITION: HANDLE MEASUREMENT SYNC ===
+        // If Host, rebroadcast to others
+        if (isHost && connections?.length) {
+            connections.forEach(c => {
+                c.send(data);
+            });
+        }
+        return;
+    }
+
+    // 2. MEASUREMENT HANDLER
     if (data.type === 'MEASUREMENT') {
-        // Update local state based on Host's data
         isMeasuring = data.active;
         if (data.active) {
             measureStart = data.start;
             measureEnd = data.end;
         }
-        drawCurrentLevel(); // Force an immediate redraw
+        drawCurrentLevel();
         return;
     }
-    // =============================================
 
-    // ... existing SYNC logic ...
-    if (data.type === 'SYNC') {
-        // ...
-    }
-}
-
-    // RECEIVE SYNC DATA FROM GM
+    // 3. SYNC HANDLER (Now correctly inside the function)
     if (data.type === 'SYNC') {
         floorData = data.floorData;
-        // Special handling for tokens: re-create image objects from URLs
+        
+        // Rebuild tokens with images
         tokens = data.tokens.map(t => {
-            // Check if image object exists or if source URL is different
             const existingToken = tokens.find(et => et.id === t.id);
             if (existingToken && existingToken.src === t.src && existingToken.img) {
                 t.img = existingToken.img;
             } else if (t.src) {
                 const img = new Image();
                 img.src = t.src;
-                img.onload = () => drawCurrentLevel(); // Redraw once image loads
-                img.onerror = () => { t.img = null; drawCurrentLevel(); }; // Handle broken image
+                img.onload = () => drawCurrentLevel();
+                img.onerror = () => { t.img = null; drawCurrentLevel(); };
                 t.img = img;
             }
             return t;
         });
+
         currentLevelIndex = data.levelIdx;
         config.mapType = data.mapType;
         interiorData = data.interiorData;
         viewMode = data.viewMode;
         currentInteriorKey = data.currentInteriorKey;
         
-        // --- UPDATED CLIENT SYNC & REDRAW ---
+        // Update UI
         document.getElementById('mapType').value = config.mapType;
         updateLevelControls();
         const interiorName = interiorData[currentInteriorKey]?.name || 'INTERIOR';
         updateUIForMode(viewMode, interiorName);
         drawCurrentLevel();
-        // ------------------------------------
     }
-}
+} 
+// <--- THIS is where the function actually ends now.
 
 function syncData() {
     if (isHost && conn) {
