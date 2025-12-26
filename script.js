@@ -4534,7 +4534,7 @@ function drawCurrentLevel(time = 0) {
     } // Close for(tokens)
 
 
-	// --- MEASUREMENT TOOL OVERLAY ---
+	// --- MEASUREMENT TOOL OVERLAY (YARDS EDITION) ---
     if (isMeasuring) {
         // Calculate screen positions (applying zoom/pan/scale)
         const sx = (measureStart.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
@@ -4547,10 +4547,13 @@ function drawCurrentLevel(time = 0) {
         const dy = measureEnd.y - measureStart.y;
         const pixelDist = Math.sqrt(dx*dx + dy*dy);
 
-        // MATH: Convert to Grid Squares and then Feet
-        // config.gridSize is 1 square. 1 square = 5ft.
+        // MATH: Convert to Grid Squares and then Yards
+        // config.gridSize is 1 square. 1 square = 5ft. 3ft = 1yd.
         const gridSquares = pixelDist / config.gridSize;
-        const feet = Math.round(gridSquares * 5); 
+        
+        // V'S MATH LESSON: 5 feet per square / 3 feet per yard = 1.666... yards.
+        // We keep one decimal place because rounding 1.6 yards to 2 is just lying to yourself.
+        const yards = (gridSquares * (5 / 3)).toFixed(1); 
 
         // 1. Draw the Line
         ctx.beginPath();
@@ -4572,7 +4575,10 @@ function drawCurrentLevel(time = 0) {
         const midY = (sy + ey) / 2;
 
         ctx.font = `bold ${32 * RENDER_SCALE}px monospace`;
-        const label = `${feet} ft`;
+        
+        // UPDATE THE LABEL STRING
+        const label = `${yards} yds`;
+        
         const textMetrics = ctx.measureText(label);
         const padding = 6 * RENDER_SCALE;
 
@@ -4592,7 +4598,8 @@ function drawCurrentLevel(time = 0) {
         ctx.fillText(label, midX, midY);
         
         // Optional: Range Coloring (e.g. Turns Red if really far)
-        if (feet > 100) {
+        // I adjusted this to 35 yards (approx 105 feet) so the warning logic stays consistent with the old "100ft" warning
+        if (parseFloat(yards) > 35) {
              ctx.fillStyle = "#ef4444"; // Red warning for long range
              ctx.fillText(label, midX, midY);
         }
