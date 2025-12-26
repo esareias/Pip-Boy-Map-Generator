@@ -1,19 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
 :root {
+    /* DEFAULT COLORS (Fallback to Green) */
     --pip-green: #16ff60;
     --pip-green-dim: #0f692e;
     --pip-amber: #ffb300;
     --pip-amber-dim: #8a5e00;
-    --bg-color: #1a1c1a;
+    
+    /* These are the "Active" variables everything uses */
+    --main-color: var(--pip-green);
+    --dim-color: var(--pip-green-dim);
 }
+
+/* Theme overrides */
+body.theme-green { --main-color: var(--pip-green); --dim-color: var(--pip-green-dim); }
+body.theme-amber { --main-color: var(--pip-amber); --dim-color: var(--pip-amber-dim); }
 
 body {
     background-color: #000;
     font-family: 'VT323', monospace;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* V'S FIX: Keeps the buttons on-screen */
+    overflow: hidden; 
     display: flex;
     justify-content: center;
     align-items: flex-start;
@@ -21,9 +29,9 @@ body {
     width: 100vw;
     background-image: radial-gradient(#1a1c1a 1px, #000 1px);
     background-size: 20px 20px;
+    color: var(--main-color); /* FORCE COLOR HERE */
 }
 
-/* The Main Casing with Scaling & Color Fixes */
 .pip-casing {
     border: 4px solid #3d443d;
     background-color: #1a1c1a;
@@ -31,30 +39,20 @@ body {
     border-radius: 20px;
     padding: 20px;
     position: relative;
-    
-    /* V'S FIX: Anchor for the scaling script */
     transform-origin: top center; 
-    
-    /* Keep the logical width fixed */
     width: 1960px; 
+    min-height: 500px; /* Prevent it from collapsing to 0 */
     margin: 0 auto;
-    
-    /* V'S FIX: Ensures green/amber themes bleed through to children */
-    color: inherit; 
 }
 
-/* THE RIVETS: Don't let these slip away */
+/* Ensure rivets are always visible */
 .pip-casing::before, .pip-casing::after {
-    content: ''; 
-    position: absolute; 
-    width: 12px; 
-    height: 12px;
-    background: #2a302a; 
-    border-radius: 50%;
+    content: ''; position: absolute; width: 12px; height: 12px;
+    background: #2a302a; border-radius: 50%;
     box-shadow: inset 1px 1px 2px #000, 1px 1px 0 #555;
     top: 10px;
+    z-index: 100;
 }
-
 .pip-casing::before { left: 10px; }
 .pip-casing::after { right: 10px; }
 
