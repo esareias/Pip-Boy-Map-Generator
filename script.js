@@ -292,7 +292,7 @@ function openGMTokenDeploy() {
     modal.style.display = 'flex';
 }
 
-// === CORRECTED: showTokenCategory (V.29.5) ===
+// === PART 2: UPDATE showTokenCategory() ===
 function showTokenCategory(category, grid) {
     grid.innerHTML = '';
 
@@ -326,45 +326,18 @@ function showTokenCategory(category, grid) {
             grid.appendChild(div);
         });
     } else if (category === 'custom') {
-        const savedNPCs = JSON.parse(localStorage.getItem('pip_custom_npcs') || '[]');
-        
-        let vaultHtml = '';
-        if (savedNPCs.length > 0) {
-            vaultHtml = `
-                <label class="block mb-2 text-sm mt-2" style="color: var(--pip-amber);">RECURRING ASSETS (VAULT):</label>
-                <div class="flex flex-wrap gap-3 mb-4 p-3 border border-dashed border-[var(--dim-color)] bg-black/40" style="max-height: 250px; overflow-y: auto;">
-            `;
-            
-            savedNPCs.forEach((npc) => {
-                vaultHtml += `
-                    <div class="cursor-pointer hover:bg-[var(--dim-color)] p-2 text-center border border-[var(--dim-color)] transition-all transform hover:scale-105" 
-                         style="width: 90px; background: rgba(0,0,0,0.6);"
-                         onclick="spawnToken('${npc.name.replace(/'/g, "\\'")}', '${npc.color}', '${npc.url}')">
-                        <img src="${npc.url}" class="w-12 h-12 mb-1 mx-auto object-cover border border-[var(--dim-color)]" onerror="this.src='https://placehold.co/48x48/1e293b/a8a29e?text=?'">
-                        <div class="text-[12px] truncate" style="color: #fff;">${npc.name}</div>
-                    </div>`;
-            });
-            
-            vaultHtml += `
-                </div>
-                <button onclick="if(confirm('Wipe the NPC vault?')){localStorage.removeItem('pip_custom_npcs'); openGMTokenDeploy();}" 
-                        class="pip-btn danger mb-4" style="font-size: 1.1rem; padding: 4px 10px;">[PURGE MEMORY]</button>
-                <div class="ui-line"></div>
-            `;
-        }
-
         const div = document.createElement('div');
         div.className = "col-span-full p-4 border border-[var(--dim-color)]";
         div.innerHTML = `
-            ${vaultHtml}
-            <label class="block mb-2 text-sm">REGISTER NEW UNIT:</label>
-            <input type="text" id="customName" class="pip-input mb-3 w-full" placeholder="Unit Name/ID">
-            <label class="block mb-2 text-sm">VISUAL UPLINK (URL):</label>
-            <input type="text" id="customUrl" class="pip-input mb-3 w-full" placeholder="https://...">
-            <button onclick="spawnCustomToken()" class="pip-btn w-full">[DEPLOY & RECORD]</button>
+            <label class="block mb-2 text-sm">NAME:</label>
+            <input type="text" id="customName" class="pip-input mb-3" placeholder="Enemy Name">
+            <label class="block mb-2 text-sm">IMAGE URL:</label>
+            <input type="text" id="customUrl" class="pip-input mb-3" placeholder="https://...">
+            <button onclick="spawnCustomToken()" class="pip-btn w-full">[DEPLOY]</button>
         `;
         grid.appendChild(div);
-    } else { // THE EXTRA BRACE WAS REMOVED FROM ABOVE THIS LINE
+    } else {
+        // Map category value to ENEMY_PRESETS key
         const categoryMap = {
             'ghouls': 'Ghouls',
             'supermutants': 'Super Mutants',
@@ -391,8 +364,10 @@ function showTokenCategory(category, grid) {
                         <button class="pip-btn flex-1 text-xs">[SPAWN]</button>
                     </div>
                 `;
+
                 const spawnBtn = div.querySelector('button');
                 spawnBtn.onclick = () => spawnMultipleEnemies(enemy.name, enemy.color, enemy.src);
+
                 grid.appendChild(div);
             });
         }
@@ -472,18 +447,6 @@ function spawnToken(name, color, src) {
 function spawnCustomToken() {
     const name = document.getElementById('customName').value || "CUSTOM UNIT";
     const url = document.getElementById('customUrl').value || "";
-    
-    // Save to LocalStorage "NPC Vault"
-    const savedNPCs = JSON.parse(localStorage.getItem('pip_custom_npcs') || '[]');
-    const newNPC = { name, url, color: "#ffffff" };
-    
-    // Only save if it's a new name/url combo
-    if (!savedNPCs.some(n => n.name === name)) {
-        savedNPCs.push(newNPC);
-        localStorage.setItem('pip_custom_npcs', JSON.stringify(savedNPCs));
-        log(`RECORDED TO VAULT: ${name}`, 'var(--pip-amber)');
-    }
-
     spawnToken(name, "#ffffff", url);
     closeGMTokenDeploy();
 }
@@ -4602,30 +4565,34 @@ window.handleMouseUp = handleMouseUp;
 window.onload = init;
 
 
-// === V'S MASTER UNIFIED RESIZER (Anti-Squish Version) ===
+// === V'S FAIL-SAFE RESIZER ===
 function resizeUI() {
     const ui = document.querySelector('.pip-casing');
     if (!ui) return;
 
-    requestAnimationFrame(() => {
-        const windowWidth = window.innerWidth;
-        const windowHeight = window.innerHeight;
-        
-        const uiWidth = 1960; 
-        const uiHeight = ui.scrollHeight || 1100; 
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // We force a logical width of 1960. 
+    // For height, we use the actual height or a safe fallback of 1100.
+    const uiWidth = 1960; 
+    const uiHeight = ui.scrollHeight || 1100; 
 
-        // 1. Calculate the single scale factor to prevent squishing
-        const scale = Math.min(windowWidth / uiWidth, windowHeight / uiHeight) * 0.98;
-        
-        // 2. Clamp it so it doesn't get too small or giant
-        let finalScale = Math.max(0.1, Math.min(1, scale));
+    const scaleX = windowWidth / uiWidth;
+    const scaleY = windowHeight / uiHeight;
+    
+    // Use the smaller scale and add a 4% safety margin
+    let finalScale = Math.min(scaleX, scaleY) * 0.96;
 
-        // 3. Apply the UNIFORM scale
-        ui.style.transform = `scale(${finalScale})`;
-        ui.style.transformOrigin = 'top center';
-    });
+    // Safety checks: never bigger than 100%, never smaller than 10%
+    if (finalScale > 1) finalScale = 1;
+    if (finalScale < 0.1) finalScale = 0.1;
+
+    ui.style.transform = `scale(${finalScale})`;
 }
 
+// Add listeners for every possible event that changes the UI size
 window.addEventListener('resize', resizeUI);
-window.addEventListener('load', () => setTimeout(resizeUI, 500));
-setInterval(resizeUI, 1500);
+window.addEventListener('load', resizeUI);
+// This one catches the map generation finishing
+setInterval(resizeUI, 1000);
