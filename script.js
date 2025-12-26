@@ -1,14 +1,23 @@
-// --- FIREBASE IMPORTS (MANDATORY BOILERPLATE) ---
+// --- FIREBASE SETUP (CLEANED UP) ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// Global Firebase variables provided by the environment
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+// Your ACTUAL configuration (Merged from your snippet)
+const firebaseConfig = {
+  apiKey: "AIzaSyCCteaarXhk5VgW5o_WbNsbUXh1jMg1k6c",
+  authDomain: "big-apple-wasteland.firebaseapp.com",
+  databaseURL: "https://big-apple-wasteland-default-rtdb.firebaseio.com",
+  projectId: "big-apple-wasteland",
+  storageBucket: "big-apple-wasteland.firebasestorage.app",
+  messagingSenderId: "1037976504390",
+  appId: "1:1037976504390:web:21576647ee3bdba6a76247"
+};
 
+// Global variables
 let db, auth, userId;
+const initialAuthToken = null; // Default to null since we aren't using env variables here
+// --------------------------------------------------
 // --------------------------------------------------
 
 const canvas = document.getElementById('mapCanvas');
@@ -4563,34 +4572,4 @@ window.handleMouseUp = handleMouseUp;
 window.onload = init;
 
 
-// === V'S FAIL-SAFE RESIZER ===
-function resizeUI() {
-    const ui = document.querySelector('.pip-casing');
-    if (!ui) return;
 
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    
-    // We force a logical width of 1960. 
-    // For height, we use the actual height or a safe fallback of 1100.
-    const uiWidth = 1960; 
-    const uiHeight = ui.scrollHeight || 1100; 
-
-    const scaleX = windowWidth / uiWidth;
-    const scaleY = windowHeight / uiHeight;
-    
-    // Use the smaller scale and add a 4% safety margin
-    let finalScale = Math.min(scaleX, scaleY) * 0.96;
-
-    // Safety checks: never bigger than 100%, never smaller than 10%
-    if (finalScale > 1) finalScale = 1;
-    if (finalScale < 0.1) finalScale = 0.1;
-
-    ui.style.transform = `scale(${finalScale})`;
-}
-
-// Add listeners for every possible event that changes the UI size
-window.addEventListener('resize', resizeUI);
-window.addEventListener('load', resizeUI);
-// This one catches the map generation finishing
-setInterval(resizeUI, 1000);
