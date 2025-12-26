@@ -1456,6 +1456,24 @@ function receiveData(data) {
   }
   return;
 }
+	// === V'S ADDITION: HANDLE MEASUREMENT SYNC ===
+    if (data.type === 'MEASUREMENT') {
+        // Update local state based on Host's data
+        isMeasuring = data.active;
+        if (data.active) {
+            measureStart = data.start;
+            measureEnd = data.end;
+        }
+        drawCurrentLevel(); // Force an immediate redraw
+        return;
+    }
+    // =============================================
+
+    // ... existing SYNC logic ...
+    if (data.type === 'SYNC') {
+        // ...
+    }
+}
 
     // RECEIVE SYNC DATA FROM GM
     if (data.type === 'SYNC') {
@@ -1513,6 +1531,26 @@ function syncData() {
             viewMode: viewMode,
             currentInteriorKey: currentInteriorKey
             // Removed gridSize from payload since it is now fixed/constant
+        });
+    }
+}
+
+// --- NEW: REAL-TIME MEASUREMENT SYNC ---
+function broadcastMeasurement(data) {
+    // Only the Host broadcasts measurements
+    if (!isHost) return;
+
+    // Send to all connected clients
+    if (connections && connections.length > 0) {
+        connections.forEach(c => {
+            if (c.open) {
+                c.send({
+                    type: 'MEASUREMENT',
+                    active: data.active,
+                    start: data.start,
+                    end: data.end
+                });
+            }
         });
     }
 }
@@ -1833,6 +1871,17 @@ function handleMouseMove(e) {
     // === MEASUREMENT UPDATE ===
     if (isMeasuring) {
         measureEnd = { x: pannedLogicalX, y: pannedLogicalY };
+        
+        // V'S EDIT: BROADCAST TO PLAYERS
+        if (isHost) {
+            broadcastMeasurement({
+                active: true,
+                start: measureStart,
+                end: measureEnd
+            });
+        }
+        // -----------------------------
+
         drawCurrentLevel();
         return;
     }
@@ -1965,9 +2014,16 @@ function handleMouseMove(e) {
 function handleMouseUp(e) {
     screenContainer.classList.remove('grabbing');
 
-    // Stop Measuring
+   // Stop Measuring
     if (isMeasuring) {
         isMeasuring = false;
+        
+        // V'S EDIT: TELL PLAYERS TO CLEAR THE LINE
+        if (isHost) {
+            broadcastMeasurement({ active: false });
+        }
+        // ----------------------------------------
+
         drawCurrentLevel();
         return;
     }
@@ -2255,18 +2311,36 @@ function exitInterior() {
     syncData();
 }
 
+updateUIForMode function in script.js with this:
+
+JavaScript
+
 function updateUIForMode(mode, text) {
-    const sec = document.getElementById('sectorControls');
-    const int = document.getElementById('interiorControls');
+    // V'S EDIT: Target the new Sidebar IDs
+    const sec = document.getElementById('sectorNav');
+    const int = document.getElementById('interiorNav');
     const btn = document.getElementById('scanBtn');
+    
     if (mode === 'interior') {
-        sec.classList.add('hidden-ui'); int.classList.remove('hidden-ui');
-        document.getElementById('interiorDisplay').innerText = text;
-        btn.disabled = true; btn.classList.add('opacity-50');
-    } else {	
-        sec.classList.remove('hidden-ui'); int.classList.add('hidden-ui');
-        btn.disabled = false; btn.classList.remove('opacity-50');
+        // Hide Sector Nav, Show Interior Nav
+        sec.classList.add('hidden-ui'); 
+        int.classList.remove('hidden-ui');
+        
+        document.getElementById('interiorDisplay').innerText = text || "UNKNOWN INTERIOR";
+        
+        // Disable scanning while inside
+        btn.disabled = true; 
+        btn.classList.add('opacity-50');
+    } else {    
+        // Show Sector Nav, Hide Interior Nav
+        sec.classList.remove('hidden-ui'); 
+        int.classList.add('hidden-ui');
+        
+        // Enable scanning
+        btn.disabled = false; 
+        btn.classList.remove('opacity-50');
     }
+    
     // Always redraw to ensure the new viewmode is rendered correctly
     drawCurrentLevel();
 }
