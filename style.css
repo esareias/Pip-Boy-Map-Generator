@@ -144,119 +144,36 @@ textarea.report-text {
     font-weight: bold;
 }
 
-/* === THE GODZILLA HUD UPDATE === */
-
-/* --- THE "CLEAN COMMANDER" HUD UPDATE --- */
-
-/* V's Organization: Forces buttons to sit side-by-side in columns */
-#sectorControls, #interiorControls, #gmControls {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 15px;
-    align-items: center;
-    padding: 15px;
-}
-
 .pip-btn {
-    background: #111; 
-    border: 3px solid var(--main-color); 
-    color: var(--main-color);
-    text-transform: uppercase; 
-    padding: 10px 25px; 
-    font-size: 2.2rem !important; /* THE SWEET SPOT */
-    font-weight: 900;
-    cursor: pointer;
-    transition: all 0.1s; 
-    box-shadow: 0 6px 0 rgba(0,0,0,0.6); 
-    border-radius: 4px;
-    position: relative; 
-    top: 0; 
-    text-shadow: 0 0 6px var(--main-color);
-    white-space: nowrap;
+    background: #111; border: 2px solid var(--main-color); color: var(--main-color);
+    text-transform: uppercase; padding: 6px 16px; font-size: 1.2rem; cursor: pointer;
+    transition: all 0.1s; box-shadow: 0 4px 0 rgba(0,0,0,0.5); border-radius: 2px;
+    position: relative; top: 0; text-shadow: 0 0 2px var(--main-color);
 }
-
-/* Button Interaction */
-.pip-btn:active { top: 3px; box-shadow: 0 3px 0 rgba(0,0,0,0.5); }
+.pip-btn:active { top: 2px; box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
 .pip-btn:hover { background: var(--dim-color); color: #fff; text-shadow: none; }
-.pip-btn.danger { border-color: #ef4444; color: #ef4444; text-shadow: 0 0 5px #ef4444; }
+.pip-btn.danger { border-color: #ef4444; color: #ef4444; text-shadow: 0 0 2px #ef4444; }
 .pip-btn.danger:hover { background: #7f1d1d; color: #fff; }
+.pip-btn:disabled, .pip-btn.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; border-color: #444; color: #888; box-shadow: none; text-shadow: none; }
 
-/* Input Styling */
 .pip-input {
-    background: #000; 
-    border: 3px solid var(--dim-color) !important; 
-    color: var(--main-color);
-    padding: 12px;           
-    font-family: 'VT323', monospace; 
-    font-size: 2rem !important; 
-    border-radius: 0px;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
-    outline: none;     
-    font-weight: bold;
-    width: 100%;
-    box-sizing: border-box;
+    background: #000; border: 1px solid var(--dim-color); color: var(--main-color);
+    padding: 5px; font-family: 'VT323', monospace; font-size: 1.2rem; border-radius: 0px;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
 }
+.pip-label { color: var(--main-color); text-shadow: 0 0 5px var(--main-color); font-size: 1.1rem; }
+.helper-text { font-size: 0.9rem; opacity: 0.7; margin-top: 2px; }
+.ui-line { height: 2px; background-color: var(--main-color); box-shadow: 0 0 8px var(--main-color); margin: 10px 0; opacity: 0.8; }
+.hidden-ui { display: none !important; }
 
-/* Dropdown Arrow Fix */
-select.pip-input {
-    cursor: pointer;
-    appearance: none;       
-    background-image: linear-gradient(var(--main-color), var(--main-color));
-    background-position: calc(100% - 25px) 50%;
-    background-size: 4px 15px;
-    background-repeat: no-repeat;
-    padding-right: 50px !important;
-}
-
-/* Labels and Data Readouts */
-.pip-label { 
-    color: var(--main-color); 
-    text-shadow: 0 0 8px var(--main-color); 
-    font-size: 2rem !important; 
-    font-weight: bold;
-}
-
-.helper-text, #coordDisplay { 
-    font-size: 1.8rem !important; 
-    opacity: 0.9; 
-    font-weight: bold; 
-    text-shadow: 0 0 5px var(--main-color);
-}
-
-.ui-line { 
-    height: 4px; 
-    background-color: var(--main-color); 
-    box-shadow: 0 0 15px var(--dim-color); 
-    margin: 25px 0; 
-    opacity: 0.6; 
-}
-
-/* Updated Casing with the "Aura" to fill side space */
-.pip-casing {
-    border: 4px solid #3d443d;
-    background-color: #1a1c1a;
-    box-shadow: 
-        inset 0 0 60px #000, 
-        0 0 100px rgba(0,0,0,0.9),
-        0 0 250px var(--dim-color); /* This fills the empty black space with theme light */
-    border-radius: 20px;
-    padding: 25px;
-    position: relative;
-    transform-origin: top center; 
-    width: 1960px; 
-    margin: 0 auto;
-}
-
-/* Selection Highlight */
 .selected-token {
-    box-shadow: 0 0 30px var(--main-color) !important;
-    border: 6px solid var(--main-color) !important;
+    box-shadow: 0 0 15px var(--main-color) !important;
     animation: pulse-border 1s infinite alternate;
 }
 
 @keyframes pulse-border {
-    from { opacity: 0.8; transform: scale(1.0); }
-    to { opacity: 1; transform: scale(1.05); }
+    from { box-shadow: 0 0 15px var(--main-color) !important; }
+    to { box-shadow: 0 0 25px var(--main-color) !important; }
 }
 
 /* ========================================
