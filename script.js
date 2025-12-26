@@ -283,7 +283,6 @@ function openGMTokenDeploy() {
         <option value="insects">INSECTS</option>
         <option value="deathclaws">DEATHCLAWS</option>
         <option value="wildlife">WILDLIFE</option>
-        <option value="custom">CUSTOM</option>
     `;
     select.onchange = () => showTokenCategory(select.value, grid);
     grid.appendChild(select);
@@ -311,7 +310,6 @@ function showTokenCategory(category, grid) {
         <option value="insects">INSECTS</option>
         <option value="deathclaws">DEATHCLAWS</option>
         <option value="wildlife">WILDLIFE</option>
-        <option value="custom">CUSTOM</option>
     `;
     select.value = category;
     select.onchange = () => showTokenCategory(select.value, grid);
