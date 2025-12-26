@@ -4624,8 +4624,8 @@ function resizeUI() {
     const scaleY = windowHeight / uiHeight;
     
     // Use the smaller scale and add a 4% safety margin
-    let finalScale = Math.min(scaleX, scaleY) * 0.96;
-
+let finalScale = Math.min(scaleX, scaleY) * 0.99; // Tighter fit
+	
     // Safety checks: never bigger than 100%, never smaller than 10%
     if (finalScale > 1) finalScale = 1;
     if (finalScale < 0.1) finalScale = 0.1;
