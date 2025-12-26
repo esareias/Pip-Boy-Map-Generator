@@ -7,16 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
     <link rel="stylesheet" href="style.css">
-<script type="importmap">
-{
-  "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
-  }
-}
-</script>
+    <script type="importmap">
+    {
+      "imports": {
+        "react/": "https://aistudiocdn.com/react@^19.2.0/",
+        "react": "https://aistudiocdn.com/react@^19.2.0",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
+      }
+    }
+    </script>
 </head>
 <body class="theme-green" id="app-body">
 
@@ -103,65 +103,65 @@
             <div class="border border-[var(--dim-color)] p-2 mb-2 bg-black/40">
                 <div class="flex flex-col gap-2">
                     <div class="flex justify-between items-center">
-                        <span class="pip-label text-sm">NETWORK:</span>
-                        <span id="netStatus" class="text-xs opacity-50">OFFLINE</span>
+                        <span class="pip-label">NETWORK:</span>
+                        <span id="netStatus" class="text-sm opacity-50">OFFLINE</span>
                     </div>
                     
                     <div class="flex gap-2 flex-wrap">
-                        <button onclick="hostSession()" id="hostBtn" class="pip-btn text-sm border-green-500 text-green-500 hidden-ui flex-grow">[ HOST ]</button>
+                        <button onclick="hostSession()" id="hostBtn" class="pip-btn border-green-500 text-green-500 hidden-ui flex-grow">[ HOST ]</button>
                         
                         <div id="hostIdDisplay" class="flex gap-1 items-center hidden-ui w-full">
                             <span id="currentHostId" class="text-xs font-mono bg-black p-1 border border-gray-700 flex-grow text-center truncate"></span>
-                            <button onclick="copyHostId()" class="pip-btn text-xs px-2 border-gray-400 text-gray-400">[ CP ]</button>
+                            <button onclick="copyHostId()" class="pip-btn px-2 border-gray-400 text-gray-400">[ CP ]</button>
                         </div>
 
-                        <input type="text" id="joinInput" placeholder="ID..." class="pip-input text-sm w-24 hidden-ui">
-                        <button onclick="joinSession()" id="joinBtn" class="pip-btn text-sm border-blue-500 text-blue-500 hidden-ui flex-grow">[ JOIN ]</button>
+                        <input type="text" id="joinInput" placeholder="ID..." class="pip-input w-24 hidden-ui">
+                        <button onclick="joinSession()" id="joinBtn" class="pip-btn border-blue-500 text-blue-500 hidden-ui flex-grow">[ JOIN ]</button>
                     </div>
                 </div>
             </div>
 
             <div class="border border-[var(--dim-color)] p-2 mb-2 bg-black/40">
                 <div class="flex justify-between items-center">
-                    <span class="pip-label text-sm">NAVIGATION:</span>
+                    <span class="pip-label">NAVIGATION:</span>
                 </div>
 
                 <div id="sectorNav" class="flex flex-col gap-2 mt-2">
                     <div class="flex justify-between items-center gap-2">
-                        <button onclick="changeLevel(-1)" id="btnDown" class="pip-btn text-xs px-3 py-1">&lt; DOWN</button>
-                        <div class="text-lg font-bold tracking-widest text-center flex-grow truncate text-[var(--main-color)]" id="levelDisplay">LEVEL 1</div>
-                        <button onclick="changeLevel(1)" id="btnUp" class="pip-btn text-xs px-3 py-1">UP &gt;</button>
+                        <button onclick="changeLevel(-1)" id="btnDown" class="pip-btn px-3 py-1">&lt; DOWN</button>
+                        <div class="text-xl font-bold tracking-widest text-center flex-grow truncate text-[var(--main-color)]" id="levelDisplay">LEVEL 1</div>
+                        <button onclick="changeLevel(1)" id="btnUp" class="pip-btn px-3 py-1">UP &gt;</button>
                     </div>
                 </div>
 
                 <div id="interiorNav" class="hidden-ui flex flex-col gap-2 mt-2">
-                    <div class="text-lg font-bold tracking-widest text-center text-blue-400 truncate border-b border-blue-900 pb-1" id="interiorDisplay">INTERIOR</div>
-                    <button onclick="exitInterior()" class="pip-btn text-sm w-full border-blue-400 text-blue-400 hover:bg-blue-900">&lt; EXIT TO SECTOR</button>
+                    <div class="text-xl font-bold tracking-widest text-center text-blue-400 truncate border-b border-blue-900 pb-1" id="interiorDisplay">INTERIOR</div>
+                    <button onclick="exitInterior()" class="pip-btn w-full border-blue-400 text-blue-400 hover:bg-blue-900">&lt; EXIT TO SECTOR</button>
                 </div>
             </div>
 
             <div class="flex flex-col gap-3 mb-2" id="gmControls">
                 <div class="grid grid-cols-2 gap-2">
                     <div class="flex flex-col gap-1">
-                        <label class="pip-label text-xs">SECTOR TYPE</label>
-                        <select id="mapType" class="pip-input text-sm" onchange="updateHelperText()">
+                        <label class="pip-label text-sm">SECTOR TYPE</label>
+                        <select id="mapType" class="pip-input" onchange="updateHelperText()">
                             <option value="vault">VAULT SECTOR</option>
                             <option value="ruins">VEGAS RUINS</option>
                             <option value="cave">MOJAVE WASTELAND</option>
                         </select>
                     </div>
                     <div class="flex flex-col gap-1">
-                        <label class="pip-label text-xs">DENSITY</label>
+                        <label class="pip-label text-sm">DENSITY</label>
                         <input type="range" id="density" min="20" max="80" value="45" class="accent-[var(--main-color)] w-full cursor-pointer mt-2">
-                        <div id="densityHelper" class="text-[10px] text-center opacity-60">ROOM COUNT</div>
+                        <div id="densityHelper" class="text-xs text-center opacity-60">ROOM COUNT</div>
                     </div>
                 </div>
 
                 <button onclick="generateCurrentLevel()" class="pip-btn font-bold w-full" id="scanBtn">>> SCAN SECTOR</button>
                 
                 <div class="grid grid-cols-2 gap-2">
-                    <button onclick="openGMTokenDeploy()" id="addTokenBtn" class="pip-btn text-sm">[ + UNIT ]</button>
-                    <button onclick="exportReport()" class="pip-btn text-sm border-blue-400 text-blue-400">[ DATA ]</button>
+                    <button onclick="openGMTokenDeploy()" id="addTokenBtn" class="pip-btn">[ + UNIT ]</button>
+                    <button onclick="exportReport()" class="pip-btn border-blue-400 text-blue-400">[ DATA ]</button>
                 </div>
             </div>
 
@@ -169,41 +169,36 @@
 
             <div class="flex flex-col gap-2 mb-2">
                 <div class="flex justify-between">
-                    <button onclick="toggleLabels()" id="labelBtn" class="pip-btn text-xs flex-grow mr-1">[ LABELS ]</button>
-                    <button onclick="toggleFog()" id="fogBtn" class="pip-btn text-xs flex-grow ml-1 border-yellow-600 text-yellow-600">[ FOG ]</button>
+                    <button onclick="toggleLabels()" id="labelBtn" class="pip-btn flex-grow mr-1">[ LABELS ]</button>
+                    <button onclick="toggleFog()" id="fogBtn" class="pip-btn flex-grow ml-1 border-yellow-600 text-yellow-600">[ FOG ]</button>
                 </div>
                 
                 <div class="flex items-center border border-[var(--dim-color)] px-2 py-1 bg-black/40 rounded-sm">
-                    <button onclick="zoomOut()" class="pip-btn text-xs px-2 border-none hover:bg-[var(--dim-color)]">−</button>
+                    <button onclick="zoomOut()" class="pip-btn px-2 border-none hover:bg-[var(--dim-color)]">−</button>
                     <input type="range" id="zoomSlider" min="0.5" max="4.0" step="0.05" value="1.0" class="accent-[var(--main-color)] flex-grow mx-2 cursor-pointer">
-                    <button onclick="zoomIn()" class="pip-btn text-xs px-2 border-none hover:bg-[var(--dim-color)]">+</button>
+                    <button onclick="zoomIn()" class="pip-btn px-2 border-none hover:bg-[var(--dim-color)]">+</button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-1 mb-2">
-                <button onclick="saveMapState()" class="pip-btn text-xs border-green-500 text-green-500">[ SAVE ]</button>
-                <button onclick="loadMapState()" class="pip-btn text-xs border-blue-500 text-blue-500">[ LOAD ]</button>
-                <button onclick="document.getElementById('fileInput').click()" class="pip-btn text-xs border-cyan-500 text-cyan-500">[ IMP ]</button>
-                <input type="file" id="fileInput" accept=".json" style="display:none;" onchange="loadMapFromFile(event)">
+            <div class="grid grid-cols-3 gap-2 mb-2">
+                <button onclick="saveMapState()" class="pip-btn border-green-500 text-green-500">[ SAVE ]</button>
+                <button onclick="loadMapState()" class="pip-btn border-blue-500 text-blue-500">[ LOAD ]</button>
+                <button onclick="downloadMap()" class="pip-btn border-gray-400 text-gray-400">[ IMG ]</button>
             </div>
             
-            <div class="flex gap-2 mb-2">
-                 <button onclick="recordClip()" id="recBtn" class="pip-btn text-xs w-1/2 border-red-500 text-red-500">[ REC ]</button>
-                 <button onclick="downloadMap()" class="pip-btn text-xs w-1/2">[ IMG ]</button>
-                 <button onclick="listSavedMaps()" class="pip-btn text-xs border-yellow-600 text-yellow-600 hover:bg-yellow-900" id="listSavesBtn">[ LIST ]</button>
-            </div>
-
             <div class="flex flex-col flex-grow overflow-hidden">
-                <label class="pip-label text-xs">COMM_LOG_</label>
+                <label class="pip-label mb-1">COMM_LOG_</label>
                 <div class="loot-log custom-scrollbar flex-grow" id="lootLog">
                     <div class="text-[var(--dim-color)]">> SYSTEM ONLINE.</div>
                 </div>
                 <div class="flex gap-2 mt-2">
-                    <input type="text" id="chatInput" placeholder="TRANSMIT..." class="pip-input text-sm flex-grow" disabled>
-                    <button onclick="sendChatMessage()" class="pip-btn text-sm px-3" id="sendChatBtn" disabled>></button>
+                    <input type="text" id="chatInput" placeholder="TRANSMIT..." class="pip-input flex-grow" disabled>
+                    <button onclick="sendChatMessage()" class="pip-btn px-4" id="sendChatBtn" disabled>></button>
                 </div>
             </div>
 
-        </div> </div> <script type="module" src="script.js?v=2"></script>
+        </div> 
+    </div> 
+    <script type="module" src="script.js?v=2"></script>
 </body>
 </html>
