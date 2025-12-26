@@ -4607,34 +4607,31 @@ window.handleMouseUp = handleMouseUp;
 window.onload = init;
 
 
-// === V'S FAIL-SAFE RESIZER ===
+// === V'S WIDE-BOY STRETCH RESIZER ===
 function resizeUI() {
     const ui = document.querySelector('.pip-casing');
     if (!ui) return;
 
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    
-    // We force a logical width of 1960. 
-    // For height, we use the actual height or a safe fallback of 1100.
-    const uiWidth = 1960; 
-    const uiHeight = ui.scrollHeight || 1100; 
+    requestAnimationFrame(() => {
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        
+        // Logical width of your casing
+        const uiWidth = 1960; 
+        // Actual height of the HUD content
+        const uiHeight = ui.scrollHeight || 1150; 
 
-    const scaleX = windowWidth / uiWidth;
-    const scaleY = windowHeight / uiHeight;
-    
-    // Use the smaller scale and add a 4% safety margin
-let finalScale = Math.min(scaleX, scaleY) * 0.99; // Tighter fit
-	
-    // Safety checks: never bigger than 100%, never smaller than 10%
-    if (finalScale > 1) finalScale = 1;
-    if (finalScale < 0.1) finalScale = 0.1;
-
-    ui.style.transform = `scale(${finalScale})`;
+        // We calculate X and Y separately to "STRETCH" the app
+        const scaleX = windowWidth / uiWidth;
+        const scaleY = windowHeight / uiHeight;
+        
+        // Apply independent scaling to fill every goddamn pixel
+        ui.style.transform = `scale(${scaleX}, ${scaleY})`;
+        ui.style.transformOrigin = 'top center';
+    });
 }
 
-// Add listeners for every possible event that changes the UI size
+// Listeners to keep it snapped to the edges
 window.addEventListener('resize', resizeUI);
-window.addEventListener('load', resizeUI);
-// This one catches the map generation finishing
-setInterval(resizeUI, 1000);
+window.addEventListener('load', () => setTimeout(resizeUI, 500));
+setInterval(resizeUI, 2000); // Pulse check to fix any layout shifts
