@@ -11,13 +11,18 @@
 body {
     background-color: #000;
     font-family: 'VT323', monospace;
-    overflow-x: hidden;
+    /* Prevent the body from scrolling so the scaling feels like a native app */
+    overflow: hidden; 
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: flex-start; /* Keep it at the top */
+    justify-content: center;
     background-image: radial-gradient(#1a1c1a 1px, #000 1px);
     background-size: 20px 20px;
 }
-
-.theme-green { color: var(--pip-green); --main-color: var(--pip-green); --dim-color: var(--pip-green-dim); }
-.theme-amber { color: var(--pip-amber); --main-color: var(--pip-amber); --dim-color: var(--pip-amber-dim); }
 
 .pip-casing {
     border: 4px solid #3d443d;
@@ -25,9 +30,15 @@ body {
     box-shadow: inset 0 0 60px #000, 0 0 50px rgba(0,0,0,0.8);
     border-radius: 20px;
     padding: 20px;
-    max-width: 1960px; /* CHANGED: Increased to fit 1920px canvas + padding */
-    margin: 20px auto;
     position: relative;
+    
+    /* V'S FIX: This is the anchor for our scaling magic */
+    transform-origin: top center; 
+    transition: transform 0.2s ease-out; /* Smooth resizing */
+    
+    /* Keep internal logical size fixed */
+    width: 1960px; 
+    margin: 0 auto;
 }
 
 .pip-casing::before, .pip-casing::after {
