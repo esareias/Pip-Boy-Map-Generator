@@ -75,7 +75,7 @@ body {
     cursor: crosshair;
 }
 
-/* CHANGED: Canvas now displays at its natural logical size */
+/* CHANGED: Canvas now displays at its natural logical sizes */
 canvas { 
     display: block; 
     width: 1920px;  /* CHANGED: From 100% to fixed 1920px */
