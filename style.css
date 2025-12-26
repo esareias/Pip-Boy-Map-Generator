@@ -1,28 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
 :root {
-    /* DEFAULT COLORS (Fallback to Green) */
     --pip-green: #16ff60;
     --pip-green-dim: #0f692e;
     --pip-amber: #ffb300;
     --pip-amber-dim: #8a5e00;
-    
-    /* Active variables */
     --main-color: var(--pip-green);
     --dim-color: var(--pip-green-dim);
 }
 
-/* Theme overrides */
 body.theme-green { --main-color: var(--pip-green); --dim-color: var(--pip-green-dim); }
 body.theme-amber { --main-color: var(--pip-amber); --dim-color: var(--pip-amber-dim); }
 
-/* --- 1. GLOBAL RESET & BODY --- */
+/* --- 1. GLOBAL LAYOUT --- */
 body {
     background-color: #000;
     font-family: 'VT323', monospace;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* No window scrollbars */
+    overflow: hidden; /* CRITICAL: No Scrollbars allowed */
     width: 100vw;
     height: 100vh;
     background-image: radial-gradient(#1a1c1a 1px, #000 1px);
@@ -30,64 +26,116 @@ body {
     color: var(--main-color);
 }
 
-/* --- 2. COMMAND CENTER LAYOUT (The New Grid) --- */
-
-/* The Main Container that holds everything */
 .app-container {
     display: grid;
-    grid-template-columns: 1fr 420px; /* Map takes rest, Sidebar is fixed width */
-    grid-template-rows: 100vh;        /* Fill screen height */
+    /* V'S EDIT: Reduced Sidebar to 320px to give map more room */
+    grid-template-columns: 1fr 320px; 
+    grid-template-rows: 100vh;
     gap: 0;
     width: 100%;
     height: 100%;
-    box-sizing: border-box;
 }
 
-/* LEFT SIDE: The Map Viewport */
+/* --- 2. MAP VIEWPORT --- */
 .map-viewport {
     background: #050505;
-    position: relative; /* Anchor for overlays */
+    position: relative;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: center; /* Center Horizontal */
+    align-items: center;     /* Center Vertical */
     border-right: 2px solid var(--dim-color);
     overflow: hidden;
-    box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
-}
-
-/* The Canvas itself */
-canvas#mapCanvas {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* CRITICAL: Prevents stretching */
+}
+
+/* THE MOUSE TRACKING FIX */
+canvas#mapCanvas {
+    /* Allow it to shrink to fit, but never grow larger than the container */
+    max-width: 100%;
+    max-height: 100%;
+    
+    /* Force the element to lock to the 16:9 ratio of your 4K image */
+    aspect-ratio: 16 / 9;
+    
     display: block;
     image-rendering: pixelated;
+    box-shadow: 0 0 20px rgba(0,0,0,0.8);
+    
+    /* Ensure it centers if there's extra space */
+    margin: auto; 
 }
 
-/* RIGHT SIDE: The Sidebar */
+/* --- 3. SIDEBAR (The Diet Version) --- */
 .pip-sidebar {
     background: rgba(10, 12, 10, 0.95);
-    padding: 20px;
+    padding: 15px; /* Reduced padding */
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    overflow-y: auto; /* Scroll inside sidebar if needed */
+    gap: 10px;     /* Reduced gap */
+    overflow-y: auto; 
     border-left: 4px solid #3d443d;
     box-shadow: -10px 0 30px rgba(0,0,0,0.8);
-    /* Custom Scrollbar for sidebar */
-    scrollbar-width: thin;
-    scrollbar-color: var(--dim-color) #000;
 }
 
-/* --- 3. CRT EFFECTS & OVERLAYS --- */
+/* --- 4. COMPONENT SIZING (Scaled Down for 100% Zoom) --- */
+
+/* Buttons */
+.pip-btn {
+    background: #111; 
+    border: 2px solid var(--main-color); 
+    color: var(--main-color);
+    text-transform: uppercase; 
+    padding: 4px 10px;   /* Reduced Padding */
+    font-size: 1.1rem;   /* V's Edit: Reduced from 1.5rem to 1.1rem */
+    font-weight: bold; 
+    cursor: pointer;
+    transition: all 0.1s; 
+    box-shadow: 0 2px 0 rgba(0,0,0,0.5); 
+    border-radius: 2px;
+    position: relative; 
+    text-shadow: 0 0 2px var(--main-color);
+    text-align: center;
+}
+.pip-btn:hover { background: var(--dim-color); color: #fff; text-shadow: none; }
+.pip-btn:disabled { opacity: 0.4; pointer-events: none; border-color: #444; color: #888; }
+
+/* Inputs */
+.pip-input {
+    background: #000; border: 1px solid var(--dim-color); color: var(--main-color);
+    padding: 4px 8px; font-family: 'VT323', monospace; 
+    font-size: 1.1rem; /* Scaled down */
+    border-radius: 0px;
+}
+.pip-label { color: var(--main-color); font-size: 1.1rem; font-weight: bold; }
+
+/* --- 5. CHAT LOGS --- */
+.loot-log {
+    background: rgba(0, 0, 0, 0.6); 
+    border: 1px solid var(--dim-color); 
+    flex-grow: 1; /* Fill remaining vertical space */
+    min-height: 150px;
+    overflow-y: auto; 
+    padding: 8px; 
+    font-size: 1.1rem; /* Readable but not huge */
+    font-family: 'VT323', monospace;
+    margin-bottom: 5px;
+}
+
+#chatInput {
+    font-size: 1.1rem !important; 
+    height: 40px;
+    width: 100%;
+}
+
+/* --- 6. OVERLAYS & EFFECTS (Keep these) --- */
 .tracking-line {
     width: 100%; height: 2px;
     background: rgba(255,255,255,0.1);
     position: absolute; top: 0; left: 0; pointer-events: none; z-index: 42;
     animation: tracking 8s linear infinite;
-    box-shadow: 0 0 10px rgba(255,255,255,0.2);
 }
-@keyframes tracking { 0% { top: -10%; opacity: 0; } 10% { opacity: 0.5; } 90% { opacity: 0.5; } 100% { top: 110%; opacity: 0; } }
+@keyframes tracking { 0% { top: -10%; opacity: 0; } 100% { top: 110%; opacity: 0; } }
 
 .crt-flicker {
     animation: flicker 0.15s infinite;
@@ -97,134 +145,21 @@ canvas#mapCanvas {
 }
 @keyframes flicker { 0% { opacity: 0.02; } 50% { opacity: 0.04; } 100% { opacity: 0.02; } }
 
-/* --- 4. TOOLTIP --- */
 #tooltip {
-    position: fixed; /* Fixed relative to window so it floats above everything */
+    position: fixed; 
     background: rgba(10, 15, 10, 0.95); border: 2px solid var(--main-color);
-    color: var(--main-color); padding: 6px 10px; font-size: 1.5rem; pointer-events: none; z-index: 9999;
-    display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.8); white-space: nowrap;
-    text-transform: uppercase; border-radius: 2px; text-shadow: 0 0 5px var(--main-color);
+    color: var(--main-color); padding: 4px 8px; font-size: 1.1rem; pointer-events: none; z-index: 9999;
+    display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.8);
 }
 
-/* --- 5. COMPONENT STYLES --- */
+/* --- 7. SLIDER --- */
+input[type="range"] { height: 6px; }
+input[type="range"]::-webkit-slider-thumb { width: 16px; height: 16px; }
 
-/* Buttons */
-.pip-btn {
-    background: #111; 
-    border: 2px solid var(--main-color); 
-    color: var(--main-color);
-    text-transform: uppercase; 
-    padding: 8px 12px; 
-    font-size: 1.4rem; 
-    font-weight: bold; 
-    cursor: pointer;
-    transition: all 0.1s; 
-    box-shadow: 0 4px 0 rgba(0,0,0,0.5); 
-    border-radius: 2px;
-    position: relative; 
-    text-shadow: 0 0 2px var(--main-color);
-    text-align: center;
-}
-.pip-btn:active { top: 2px; box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
-.pip-btn:hover { background: var(--dim-color); color: #fff; text-shadow: none; }
-.pip-btn.danger { border-color: #ef4444; color: #ef4444; text-shadow: 0 0 2px #ef4444; }
-.pip-btn.danger:hover { background: #7f1d1d; color: #fff; }
-.pip-btn:disabled, .pip-btn.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; border-color: #444; color: #888; box-shadow: none; text-shadow: none; }
-
-/* Inputs */
-.pip-input {
-    background: #000; border: 1px solid var(--dim-color); color: var(--main-color);
-    padding: 8px; font-family: 'VT323', monospace; font-size: 1.3rem; border-radius: 0px;
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
-}
-.pip-label { color: var(--main-color); text-shadow: 0 0 5px var(--main-color); font-size: 1.3rem; font-weight: bold; }
-.helper-text { font-size: 1rem; opacity: 0.7; margin-top: 2px; }
-.ui-line { height: 2px; background-color: var(--main-color); box-shadow: 0 0 8px var(--main-color); margin: 10px 0; opacity: 0.8; }
-.hidden-ui { display: none !important; }
-
-/* Selected Token Highlight */
-.selected-token {
-    box-shadow: 0 0 15px var(--main-color) !important;
-    animation: pulse-border 1s infinite alternate;
-}
-@keyframes pulse-border {
-    from { box-shadow: 0 0 15px var(--main-color) !important; }
-    to { box-shadow: 0 0 25px var(--main-color) !important; }
-}
-
-/* --- 6. CHAT & LOGS (Super Sized) --- */
-.loot-log {
-    background: rgba(0, 0, 0, 0.6); 
-    border: 1px solid var(--dim-color); 
-    /* No fixed height, let flexbox handle it */
-    overflow-y: auto; 
-    padding: 10px; 
-    font-size: 1.3rem; /* Big text */
-    box-shadow: inset 0 0 10px #000; 
-    font-family: 'VT323', monospace;
-}
-
-.loot-entry {
-    margin-bottom: 8px; 
-    border-bottom: 1px dashed #333; 
-    padding-bottom: 6px; 
-    line-height: 1.3;
-    animation: fadeIn 0.3s ease-in-out;
-}
-@keyframes fadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-
-.loot-entry span { opacity: 0.8; margin-right: 10px; font-size: 1.1rem; color: var(--dim-color); }
-.chat-entry { font-weight: bold; }
-
-#chatInput {
-    font-size: 1.3rem !important; 
-    height: 50px;
-    padding: 5px 10px;
-    font-family: 'VT323', monospace;
-    background: #000;
-    color: var(--main-color);
-    border: 1px solid var(--dim-color);
-    width: 100%;
-}
-
-/* --- 7. MODALS (Keep existing styles) --- */
-.modal-content {
-    background: #1a1c1a; border: 2px solid var(--main-color); padding: 20px;
-    width: 80%; max-width: 800px; max-height: 80vh; overflow-y: auto;
-    box-shadow: 0 0 30px var(--dim-color); color: var(--main-color);
-}
-textarea.report-text {
-    width: 100%; height: 400px; background: #000; color: var(--main-color);
-    border: 1px solid var(--dim-color); padding: 10px; font-family: monospace;
-    font-size: 1.1rem; margin-top: 10px; resize: none;
-}
-
-/* --- 8. ZOOM SLIDER --- */
-input[type="range"] {
-    -webkit-appearance: none; appearance: none; height: 8px;
-    background: linear-gradient(to right, var(--dim-color) 0%, var(--main-color) 100%);
-    outline: none; border: 1px solid var(--dim-color); opacity: 0.9;
-    border-radius: 4px; cursor: pointer;
-}
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none; appearance: none; width: 20px; height: 20px;
-    background: var(--main-color); cursor: pointer; border: 2px solid #000;
-    border-radius: 50%; box-shadow: 0 0 10px var(--main-color);
-}
-input[type="range"]::-moz-range-thumb {
-    width: 20px; height: 20px; background: var(--main-color);
-    cursor: pointer; border: 2px solid #000; border-radius: 50%;
-    box-shadow: 0 0 10px var(--main-color);
-}
-
-/* Mobile Responsive Tweak */
+/* Mobile Support */
 @media (max-width: 1000px) {
     .app-container {
-        grid-template-columns: 1fr; /* Stack on small screens */
-        grid-template-rows: 50vh 1fr;
-    }
-    .pip-sidebar {
-        border-left: none;
-        border-top: 4px solid #3d443d;
+        grid-template-columns: 1fr;
+        grid-template-rows: 60vh 1fr;
     }
 }
