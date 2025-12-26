@@ -144,39 +144,56 @@ textarea.report-text {
     font-weight: bold;
 }
 
+/* === THE GODZILLA HUD UPDATE === */
+
 .pip-btn {
     background: #111; 
-    border: 2px solid var(--main-color); 
+    border: 3px solid var(--main-color); /* Thicker border for heavy use */
     color: var(--main-color);
     text-transform: uppercase; 
-    padding: 8px 20px; /* Increased padding */
-    font-size: 1.6rem;  /* BUMPED: from 1.2rem */
-    font-weight: bold;  /* Added for extra legibility */
+    padding: 15px 35px; /* Heavy duty padding */
+    font-size: 3.2rem !important; /* MEGA BUMP */
+    font-weight: 900;
     cursor: pointer;
     transition: all 0.1s; 
-    box-shadow: 0 4px 0 rgba(0,0,0,0.5); 
-    border-radius: 2px;
+    box-shadow: 0 8px 0 rgba(0,0,0,0.6); 
+    border-radius: 4px;
     position: relative; 
     top: 0; 
-    text-shadow: 0 0 4px var(--main-color);
+    text-shadow: 0 0 10px var(--main-color);
+    white-space: nowrap; /* V'S SAFETY: No text wrapping inside buttons */
 }
-.pip-btn:active { top: 2px; box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
+
+/* Button Physics */
+.pip-btn:active { top: 4px; box-shadow: 0 4px 0 rgba(0,0,0,0.5); }
 .pip-btn:hover { background: var(--dim-color); color: #fff; text-shadow: none; }
-.pip-btn.danger { border-color: #ef4444; color: #ef4444; text-shadow: 0 0 2px #ef4444; }
+
+/* Danger Variant (Kill Buttons) */
+.pip-btn.danger { border-color: #ef4444; color: #ef4444; text-shadow: 0 0 5px #ef4444; }
 .pip-btn.danger:hover { background: #7f1d1d; color: #fff; }
-.pip-btn:disabled, .pip-btn.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; border-color: #444; color: #888; box-shadow: none; text-shadow: none; }
+
+/* Disabled States */
+.pip-btn:disabled, .pip-btn.disabled { 
+    opacity: 0.3; 
+    cursor: not-allowed; 
+    pointer-events: none; 
+    border-color: #444; 
+    color: #666; 
+    box-shadow: none; 
+}
 
 /* General Inputs */
 .pip-input {
     background: #000; 
-    border: 1px solid var(--dim-color); 
+    border: 3px solid var(--dim-color) !important; 
     color: var(--main-color);
-    padding: 8px;           
+    padding: 15px;           
     font-family: 'VT323', monospace; 
-    font-size: 1.6rem;      
+    font-size: 2.8rem !important; /* MEGA BUMP */
     border-radius: 0px;
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
-    outline: none;          
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+    outline: none;     
+    font-weight: bold;
 }
 
 /* Specialized Dropdown Styling */
@@ -184,19 +201,49 @@ select.pip-input {
     cursor: pointer;
     appearance: none;       
     background-image: linear-gradient(var(--main-color), var(--main-color));
-    background-position: calc(100% - 15px) 50%;
-    background-size: 2px 10px;
+    background-position: calc(100% - 25px) 50%;
+    background-size: 4px 15px; /* Bigger arrow */
     background-repeat: no-repeat;
+    padding-right: 50px !important;
 }
 
-.pip-label { color: var(--main-color); text-shadow: 0 0 5px var(--main-color); font-size: 1.1rem; }
-.helper-text { font-size: 0.9rem; opacity: 0.7; margin-top: 2px; }
-.ui-line { height: 2px; background-color: var(--main-color); box-shadow: 0 0 8px var(--main-color); margin: 10px 0; opacity: 0.8; }
+/* UI Text Elements */
+.pip-label { 
+    color: var(--main-color); 
+    text-shadow: 0 0 8px var(--main-color); 
+    font-size: 2.2rem !important; 
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 5px;
+}
+
+.helper-text, #coordDisplay { 
+    font-size: 1.8rem !important; 
+    opacity: 0.9; 
+    font-weight: bold; 
+    text-shadow: 0 0 5px var(--main-color);
+}
+
+.ui-line { 
+    height: 4px; /* Thicker separator */
+    background-color: var(--main-color); 
+    box-shadow: 0 0 12px var(--main-color); 
+    margin: 20px 0; 
+    opacity: 0.8; 
+}
+
 .hidden-ui { display: none !important; }
 
+/* Token Selection Highlight */
 .selected-token {
-    box-shadow: 0 0 15px var(--main-color) !important;
+    box-shadow: 0 0 30px var(--main-color) !important;
+    border-width: 6px !important;
     animation: pulse-border 1s infinite alternate;
+}
+
+@keyframes pulse-border {
+    from { box-shadow: 0 0 15px var(--main-color); transform: scale(1.0); }
+    to { box-shadow: 0 0 40px var(--main-color); transform: scale(1.05); }
 }
 
 @keyframes pulse-border {
