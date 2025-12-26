@@ -4563,3 +4563,40 @@ window.handleMouseUp = handleMouseUp;
 // --------------------------------------------------
 
 window.onload = init;
+
+
+// === V'S AUTO-HUD RESIZER ===
+// This handles the visual scaling so the buttons stay on screen
+function resizeUI() {
+    const ui = document.querySelector('.pip-casing');
+    if (!ui) return;
+
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // The fixed size of your app casing
+    const uiWidth = 1960; 
+    const uiHeight = ui.offsetHeight; // Gets the total height including buttons
+
+    // Calculate the scale needed to fit width OR height
+    const scaleX = windowWidth / uiWidth;
+    const scaleY = windowHeight / uiHeight;
+    
+    // We use the smaller of the two so the whole Pip-Boy fits
+    // I added a 0.98 multiplier to give it a tiny bit of breathing room
+    let finalScale = Math.min(scaleX, scaleY) * 0.98;
+
+    // We never want to scale UP (it would look like pixelated shit)
+    if (finalScale > 1) finalScale = 1;
+
+    // Apply the transformation
+    ui.style.transform = `scale(${finalScale})`;
+}
+
+// Listen for window resizing
+window.addEventListener('resize', resizeUI);
+
+// Trigger immediately after the map generates
+// We use a tiny timeout to let the browser calculate the final height
+setTimeout(resizeUI, 300);
+// === END RESIZER ===
