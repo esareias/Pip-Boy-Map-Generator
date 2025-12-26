@@ -2303,10 +2303,6 @@ function exitInterior() {
     syncData();
 }
 
-updateUIForMode function in script.js with this:
-
-JavaScript
-
 function updateUIForMode(mode, text) {
     // V'S EDIT: Target the new Sidebar IDs
     const sec = document.getElementById('sectorNav');
@@ -2336,7 +2332,6 @@ function updateUIForMode(mode, text) {
     // Always redraw to ensure the new viewmode is rendered correctly
     drawCurrentLevel();
 }
-
 // --- UPDATED GENERATE INTERIOR (V.29.0) ---
 function generateInterior(key, name) {
     const densityInput = parseInt(document.getElementById('density').value);
