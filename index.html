@@ -81,23 +81,11 @@
     <div class="app-container hidden-ui" id="mainAppContent">
 
         <div id="screenContainer" class="map-viewport">
-            
             <div id="tooltip"></div>
             <div class="tracking-line"></div>
             <div class="crt-flicker"></div>
             
             <div class="absolute inset-0 pointer-events-none z-10" style="background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%; mix-blend-mode: overlay;"></div>
-
-            <div class="absolute top-0 w-full flex justify-between items-center p-4 pointer-events-auto z-20 bg-gradient-to-b from-black/90 to-transparent" id="sectorControls">
-                <button onclick="changeLevel(-1)" id="btnDown" class="pip-btn text-sm px-4 rounded-sm">&lt; LOWER</button>
-                <div class="text-2xl font-bold tracking-widest bg-black/80 px-6 py-1 border-b-4 border-[var(--dim-color)] text-shadow-glow" id="levelDisplay">LEVEL 1 (GROUND)</div>
-                <button onclick="changeLevel(1)" id="btnUp" class="pip-btn text-sm px-4 rounded-sm">UPPER &gt;</button>
-            </div>
-
-            <div class="absolute top-0 w-full flex justify-between items-center p-4 pointer-events-auto z-20 bg-gradient-to-b from-black/90 to-transparent hidden-ui" id="interiorControls">
-                <button onclick="exitInterior()" class="pip-btn text-sm px-4 border-blue-400 text-blue-400 hover:bg-blue-900">&lt; EXIT TO SECTOR</button>
-                <div class="text-2xl font-bold tracking-widest bg-black/80 px-6 py-1 border-b-4 border-blue-400 text-blue-400" id="interiorDisplay">INTERIOR</div>
-                <div style="width: 100px;"></div> </div>
 
             <div class="absolute bottom-2 left-2 text-xl font-bold pointer-events-none opacity-80 bg-black/80 px-3 border border-[var(--dim-color)] z-30 tracking-widest">POS: <span id="coordDisplay">0,0</span></div>
             
@@ -106,13 +94,13 @@
 
         <div class="pip-sidebar">
             
-            <div class="mb-4">
+            <div class="mb-2">
                 <h1 class="text-3xl font-bold tracking-wider mb-1" style="text-shadow: 0 0 15px var(--main-color);">CARTOGRAPHY</h1>
                 <p class="opacity-70 tracking-widest text-xs">V.29.3 - VAULT-TEC PRO</p>
                 <div class="ui-line my-2"></div>
             </div>
 
-            <div class="border border-[var(--dim-color)] p-2 mb-4 bg-black/40">
+            <div class="border border-[var(--dim-color)] p-2 mb-2 bg-black/40">
                 <div class="flex flex-col gap-2">
                     <div class="flex justify-between items-center">
                         <span class="pip-label text-sm">NETWORK:</span>
@@ -133,20 +121,40 @@
                 </div>
             </div>
 
-            <div class="flex flex-col gap-4 mb-4" id="gmControls">
-                <div class="flex flex-col gap-1">
-                    <label class="pip-label text-xs">SECTOR TYPE</label>
-                    <select id="mapType" class="pip-input text-sm" onchange="updateHelperText()">
-                        <option value="vault">VAULT SECTOR</option>
-                        <option value="ruins">VEGAS RUINS</option>
-                        <option value="cave">MOJAVE WASTELAND</option>
-                    </select>
+            <div class="border border-[var(--dim-color)] p-2 mb-2 bg-black/40">
+                <div class="flex justify-between items-center">
+                    <span class="pip-label text-sm">NAVIGATION:</span>
                 </div>
 
-                <div class="flex flex-col gap-1">
-                    <label class="pip-label text-xs">DENSITY / COMPLEXITY</label>
-                    <input type="range" id="density" min="20" max="80" value="45" class="accent-[var(--main-color)] w-full cursor-pointer">
-                    <div id="densityHelper" class="text-[10px] text-center opacity-60">ROOM COUNT</div>
+                <div id="sectorNav" class="flex flex-col gap-2 mt-2">
+                    <div class="flex justify-between items-center gap-2">
+                        <button onclick="changeLevel(-1)" id="btnDown" class="pip-btn text-xs px-3 py-1">&lt; DOWN</button>
+                        <div class="text-lg font-bold tracking-widest text-center flex-grow truncate text-[var(--main-color)]" id="levelDisplay">LEVEL 1</div>
+                        <button onclick="changeLevel(1)" id="btnUp" class="pip-btn text-xs px-3 py-1">UP &gt;</button>
+                    </div>
+                </div>
+
+                <div id="interiorNav" class="hidden-ui flex flex-col gap-2 mt-2">
+                    <div class="text-lg font-bold tracking-widest text-center text-blue-400 truncate border-b border-blue-900 pb-1" id="interiorDisplay">INTERIOR</div>
+                    <button onclick="exitInterior()" class="pip-btn text-sm w-full border-blue-400 text-blue-400 hover:bg-blue-900">&lt; EXIT TO SECTOR</button>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3 mb-2" id="gmControls">
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="flex flex-col gap-1">
+                        <label class="pip-label text-xs">SECTOR TYPE</label>
+                        <select id="mapType" class="pip-input text-sm" onchange="updateHelperText()">
+                            <option value="vault">VAULT SECTOR</option>
+                            <option value="ruins">VEGAS RUINS</option>
+                            <option value="cave">MOJAVE WASTELAND</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="pip-label text-xs">DENSITY</label>
+                        <input type="range" id="density" min="20" max="80" value="45" class="accent-[var(--main-color)] w-full cursor-pointer mt-2">
+                        <div id="densityHelper" class="text-[10px] text-center opacity-60">ROOM COUNT</div>
+                    </div>
                 </div>
 
                 <button onclick="generateCurrentLevel()" class="pip-btn font-bold w-full" id="scanBtn">>> SCAN SECTOR</button>
@@ -157,9 +165,9 @@
                 </div>
             </div>
 
-            <div class="ui-line mb-4"></div>
+            <div class="ui-line mb-2"></div>
 
-            <div class="flex flex-col gap-2 mb-4">
+            <div class="flex flex-col gap-2 mb-2">
                 <div class="flex justify-between">
                     <button onclick="toggleLabels()" id="labelBtn" class="pip-btn text-xs flex-grow mr-1">[ LABELS ]</button>
                     <button onclick="toggleFog()" id="fogBtn" class="pip-btn text-xs flex-grow ml-1 border-yellow-600 text-yellow-600">[ FOG ]</button>
@@ -172,16 +180,17 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-1 mb-4">
+            <div class="grid grid-cols-3 gap-1 mb-2">
                 <button onclick="saveMapState()" class="pip-btn text-xs border-green-500 text-green-500">[ SAVE ]</button>
                 <button onclick="loadMapState()" class="pip-btn text-xs border-blue-500 text-blue-500">[ LOAD ]</button>
-                <button onclick="document.getElementById('fileInput').click()" class="pip-btn text-xs border-cyan-500 text-cyan-500">[ IMPORT ]</button>
+                <button onclick="document.getElementById('fileInput').click()" class="pip-btn text-xs border-cyan-500 text-cyan-500">[ IMP ]</button>
                 <input type="file" id="fileInput" accept=".json" style="display:none;" onchange="loadMapFromFile(event)">
             </div>
             
-            <div class="flex gap-2 mb-4">
+            <div class="flex gap-2 mb-2">
                  <button onclick="recordClip()" id="recBtn" class="pip-btn text-xs w-1/2 border-red-500 text-red-500">[ REC ]</button>
                  <button onclick="downloadMap()" class="pip-btn text-xs w-1/2">[ IMG ]</button>
+                 <button onclick="listSavedMaps()" class="pip-btn text-xs border-yellow-600 text-yellow-600 hover:bg-yellow-900" id="listSavesBtn">[ LIST ]</button>
             </div>
 
             <div class="flex flex-col flex-grow overflow-hidden">
