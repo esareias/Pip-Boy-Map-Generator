@@ -87,8 +87,10 @@ canvas#mapCanvas {
     border: 2px solid var(--main-color); 
     color: var(--main-color);
     text-transform: uppercase; 
-    padding: 4px 8px; 
-    font-size: 1rem; 
+    
+    /* V'S UPDATE: Increased padding and font size for better readability */
+    padding: 6px 10px; 
+    font-size: 1.1rem; 
     
     /* V'S EDIT: Bump weight to 800 so it pops without the glow */
     font-weight: 800; 
@@ -114,19 +116,36 @@ canvas#mapCanvas {
     background: #050505; 
     border: 1px solid var(--dim-color); 
     color: var(--main-color);
-    padding: 6px 8px; 
+    padding: 8px; 
     
     /* Switch inputs to the clean font too */
     font-family: 'Consolas', 'Monaco', monospace; 
-    font-size: 1rem; 
-    font-weight: bold;
+    font-size: 1.1rem; 
+    font-weight: 700;
     border-radius: 0px;
     
     /* No glow on typing */
     text-shadow: none; 
 }
-.pip-label { color: var(--main-color); font-size: 1rem; font-weight: bold; }
 
+/* Fix for Dropdowns so they aren't tiny */
+select.pip-input {
+    height: auto;       /* Let it grow with the padding */
+    cursor: pointer;    /* Show hand icon on hover */
+    appearance: none;   /* Removes default ugly browser arrow (optional, keeps it cleaner) */
+    -webkit-appearance: none; 
+    
+    /* Re-add a custom arrow if you use appearance: none, 
+       or just leave appearance normal if you prefer the system arrow. 
+       For now, just height/cursor is enough. */
+}
+
+.pip-label { 
+    color: var(--main-color); 
+    font-size: 1.2rem; /* Bumped up */
+    font-weight: 800; 
+    letter-spacing: 1px;
+}
 /* --- 5. CHAT LOGS --- */
 .loot-log {
     /* Darker background for better contrast */
@@ -138,13 +157,13 @@ canvas#mapCanvas {
     padding: 10px; 
     
     /* V'S FIX: Use a clean font for data/logs */
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 0.95rem; 
+    font-family: 'Consolas', 'Monaco', monospace;    
+    font-size: 1.05rem; 
     font-weight: 600;
     
     /* CRITICAL: No blur on small text */
     text-shadow: none; 
-    line-height: 1.4;
+    line-height: 1.5;
     margin-bottom: 5px;
 }
 
