@@ -525,6 +525,17 @@ const TRACKER_TO_MAP_TRANSLATION = {
 mapChannel.onmessage = (event) => {
     let { type, label } = event.data;
 
+    // --- CASE 0: ENEMY DAMAGED (New Shake/Flash Signal) ---
+    if (type === 'ENEMY_DAMAGED') {
+        const token = tokens.find(t => t.label === label);
+        if (token) {
+            token.hitTimer = 10; // Trigger 10 frames of visual "juice"
+            // Force a redraw so the animation starts immediately
+            if (typeof drawCurrentLevel === 'function') drawCurrentLevel();
+        }
+        return;
+    }
+
     // --- CASE 1: ENEMY DIED (Tag them as dead) ---
     if (type === 'ENEMY_DIED') {
         const token = tokens.find(t => t.label === label);
@@ -573,7 +584,7 @@ mapChannel.onmessage = (event) => {
             foundPreset.src,     
             config.width / 2 + offsetX, 
             config.height / 2 + offsetY,
-			event.data.multiplier || 1.0
+            event.data.multiplier || 1.0
         );
 
         console.log(`Successfully manifested ${label} on the grid. Give 'em hell, Emanuel.`);
@@ -581,8 +592,6 @@ mapChannel.onmessage = (event) => {
         console.warn(`Fuck! I heard you wanted a "${type}", but I don't have a map preset for it.`);
     }
 };
-// === END NEW FUNCTION ===
-
 
 // --- END TOKEN LOGIC ---
 
@@ -4350,56 +4359,65 @@ function drawCurrentLevel(time = 0) {
     }
     // --- DRAW TOKENS --- (Tokens are drawn in a new, un-translated context)
     
-   // --- DRAW TOKENS ---
+// --- DRAW TOKENS ---
     for (let t of tokens) {
         // 1. Apply Zoom to Position
-        const tx = (t.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
-        const ty = (t.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
+        let tx = (t.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
+        let ty = (t.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
+
+        // --- THE JUICE: DAMAGE ANIMATION (Shake & Flash) ---
+        if (t.hitTimer > 0) {
+            // Shake the token position randomly while the timer is active
+            tx += (Math.random() - 0.5) * (15 * zoomLevel); 
+            ty += (Math.random() - 0.5) * (15 * zoomLevel);
+            
+            // Apply a violent red glow for the duration of the hit
+            ctx.shadowColor = '#ff0000';
+            ctx.shadowBlur = 25 * zoomLevel;
+            
+            // Decrement the timer so the animation eventually stops
+            t.hitTimer--; 
+        }
 
         // 2. DYNAMIC RADIUS LOGIC
         const isPlayer = TOKEN_PRESETS.some(p => p.name === t.label);
-        let baseSize = isPlayer ? 15 : 25; // Players are 15, Enemies are 25
+        let baseSize = isPlayer ? 15 : 25;
 
         // A. SPECIFIC SPECIES SIZE OVERRIDES
         if (t.label.includes("Behemoth") || t.label.includes("Sentry Bot") || t.label.includes("Deathclaw")) {
-            baseSize = 45; // Huge
+            baseSize = 45;
         }
         if (t.label.includes("Radroach") || t.label.includes("Bloatfly") || t.label.includes("Ant")) {
-            baseSize = 12; // Tiny
+            baseSize = 12;
         }
 
         // B. THE MULTIPLIER MATH
-        // We grab the multiplier we stored in the token (0.75, 1.0, 1.5, or 2.0)
-        // If it's a player or manual token, it uses 1.0 as a fallback.
         const difficultyMultiplier = t.multiplier || 1.0;
 
         // C. FINAL CALCULATION
         const tokenRadius = (baseSize * difficultyMultiplier) * RENDER_SCALE * zoomLevel;
         const imgSize = tokenRadius * 2;
 
-        // --- CHECK IF IMAGE EXISTS ---
+        // --- DRAWING EXECUTION ---
         if (t.img) {
+            ctx.save(); 
             
-            // --- D. CIRCULAR CROPPING ---
-            ctx.save(); // Start isolation
-            
-            // --- DEATH FILTERS ---
+            // DEATH FILTERS
             if (t.dead || t.color === '#4b5563') {
-                ctx.globalAlpha = 0.5;            // Make them 50% transparent
-                ctx.filter = 'grayscale(100%)';   // Turn the image black and white
+                ctx.globalAlpha = 0.5;
+                ctx.filter = 'grayscale(100%)';
             }
 
             ctx.beginPath();
-            ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2); // Define the circle
-            ctx.clip(); // Cut everything outside the circle
+            ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2);
+            ctx.clip(); 
             
-            // Draw the image
             ctx.drawImage(t.img, tx - tokenRadius, ty - tokenRadius, imgSize, imgSize);
             
-            ctx.restore(); // End isolation
+            ctx.restore(); 
 
         } else {
-            // --- FALLBACK: Draw default dot/disc if no image ---
+            // FALLBACK: Draw default dot/disc
             ctx.fillStyle = t.color;
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius * 0.8, 0, Math.PI*2);
@@ -4412,6 +4430,9 @@ function drawCurrentLevel(time = 0) {
             ctx.arc(tx, ty, (10 + Math.sin(time/200)*2) * RENDER_SCALE * zoomLevel, 0, Math.PI*2);
             ctx.stroke();
         }
+
+        // --- RESET SHADOWS (Crucial so it doesn't bleed into the label) ---
+        ctx.shadowBlur = 0;
 
         // --- E. LEGIBLE LABEL ---
         if (config.showLabels && tokenLabelsVisible[t.id] !== false) {
@@ -4431,7 +4452,6 @@ function drawCurrentLevel(time = 0) {
             ctx.fillStyle = "#ffffff";
             ctx.fillText(t.label, tx, labelY);
         } 
-
     } // Close for(tokens)
 
 
