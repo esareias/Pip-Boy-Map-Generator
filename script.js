@@ -4602,7 +4602,7 @@ window.handleMouseUp = handleMouseUp;
 window.onload = init;
 
 
-// === V'S MASTER UNIFIED RESIZER ===
+// === V'S MASTER UNIFIED RESIZER (Anti-Squish Version) ===
 function resizeUI() {
     const ui = document.querySelector('.pip-casing');
     if (!ui) return;
@@ -4614,12 +4614,13 @@ function resizeUI() {
         const uiWidth = 1960; 
         const uiHeight = ui.scrollHeight || 1100; 
 
-        // USE THE MINIMUM SCALE (This stops the squishing)
+        // 1. Calculate the single scale factor to prevent squishing
         const scale = Math.min(windowWidth / uiWidth, windowHeight / uiHeight) * 0.98;
         
-        // Safety clamps
+        // 2. Clamp it so it doesn't get too small or giant
         let finalScale = Math.max(0.1, Math.min(1, scale));
 
+        // 3. Apply the UNIFORM scale
         ui.style.transform = `scale(${finalScale})`;
         ui.style.transformOrigin = 'top center';
     });
