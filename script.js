@@ -292,7 +292,7 @@ function openGMTokenDeploy() {
     modal.style.display = 'flex';
 }
 
-// === PART 2: UPDATE showTokenCategory() ===
+// === CORRECTED: showTokenCategory (V.29.5) ===
 function showTokenCategory(category, grid) {
     grid.innerHTML = '';
 
@@ -325,8 +325,7 @@ function showTokenCategory(category, grid) {
             div.onclick = () => spawnToken(p.name, p.color, p.src);
             grid.appendChild(div);
         });
-  } else if (category === 'custom') {
-        // Fetch the Vault from browser memory
+    } else if (category === 'custom') {
         const savedNPCs = JSON.parse(localStorage.getItem('pip_custom_npcs') || '[]');
         
         let vaultHtml = '';
@@ -365,9 +364,7 @@ function showTokenCategory(category, grid) {
             <button onclick="spawnCustomToken()" class="pip-btn w-full">[DEPLOY & RECORD]</button>
         `;
         grid.appendChild(div);
-    }
-    } else {
-        // Map category value to ENEMY_PRESETS key
+    } else { // THE EXTRA BRACE WAS REMOVED FROM ABOVE THIS LINE
         const categoryMap = {
             'ghouls': 'Ghouls',
             'supermutants': 'Super Mutants',
@@ -394,10 +391,8 @@ function showTokenCategory(category, grid) {
                         <button class="pip-btn flex-1 text-xs">[SPAWN]</button>
                     </div>
                 `;
-
                 const spawnBtn = div.querySelector('button');
                 spawnBtn.onclick = () => spawnMultipleEnemies(enemy.name, enemy.color, enemy.src);
-
                 grid.appendChild(div);
             });
         }
