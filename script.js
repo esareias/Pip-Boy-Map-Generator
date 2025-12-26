@@ -1733,6 +1733,10 @@ function animate(time) {
 
 // --- NEW MOUSE HANDLER IMPLEMENTATION ---
 function handleMouseDown(e) {
+// === V'S FIX: IGNORE CLICKS ON UI BUTTONS ===
+    if (e.target.closest('button') || e.target.closest('input')) return;
+    // ============================================
+	
     // 1. GLOBAL MATH: Calculate coordinates once for everyone to use
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
