@@ -938,8 +938,18 @@ let floorData = {}; let viewMode = 'sector'; let currentInteriorKey = null; let 
 function getArchetype(name) {
     const n = name.toUpperCase();
     
-    // Quick patch to stop Banks from becoming Vaults
+    // --- MANUAL OVERRIDES (The "Don't Be Stupid" List) ---
+    
+    // Banks are buildings, not Vaults
     if (n.includes("BANK")) return 'COMMERCIAL'; 
+    
+    // Chem Dens are drug shops, not bear caves
+    if (n.includes("CHEM")) return 'RETAIL'; 
+
+    // Sniper Nests are military posts, not bug hives
+    if (n.includes("SNIPER")) return 'BUNKER'; // or 'MILITARY' works too
+
+    // -----------------------------------------------------
 
     for (const key in BUILDING_ARCHETYPES) {
         const arch = BUILDING_ARCHETYPES[key];
@@ -3111,36 +3121,104 @@ function generateRuins(data, density, anchors) {
 }
 
 function generateCaves(data, density, anchors) {
-    // 1. Cellular Automata Generation
-    for (let x = 0; x < config.cols; x++) for (let y = 0; y < config.rows; y++) data.grid[x][y] = (x === 0 || x === config.cols - 1 || y === 0 || y === config.rows - 1) ? 0 : (Math.random() * 100 < density) ? 1 : 0;
-    for (let i = 0; i < 4; i++) {	
-        let newGrid = JSON.parse(JSON.stringify(data.grid));	
-        for (let x = 1; x < config.cols - 1; x++) for (let y = 1; y < config.rows - 1; y++) {	
-            let neighbors = getWallCount(data.grid, x, y);	
-            if (neighbors > 4) newGrid[x][y] = 0; else if (neighbors < 4) newGrid[x][y] = 1;	
-        }	
-        data.grid = newGrid;	
+    // MODE A: SURFACE (MOJAVE WASTELAND) - Level 0, 1, 2
+    // Logic: Open ground with scattered rock formations
+    if (currentLevelIndex >= 0) {
+        // 1. Fill the entire world with Sand (1)
+        for (let x = 0; x < config.cols; x++) {
+            for (let y = 0; y < config.rows; y++) {
+                // Create a border of impassable rocks (0), otherwise sand (1)
+                const isBorder = (x === 0 || x === config.cols - 1 || y === 0 || y === config.rows - 1);
+                data.grid[x][y] = isBorder ? 0 : 1;
+            }
+        }
+
+        // 2. Scatter Rock Formations (0s)
+        // We use a lower density here because we are placing OBSTACLES, not floor.
+        // Inverting the density slider logic slightly: Higher slider = More open space? 
+        // Let's stick to: Slider = "Density of Playable Area". 
+        // So higher density input = Fewer rocks.
+        const rockChance = Math.max(0.05, (100 - density) / 200); 
+
+        for (let x = 2; x < config.cols - 2; x++) {
+            for (let y = 2; y < config.rows - 2; y++) {
+                if (Math.random() < rockChance) {
+                    // Spawn a rock clump
+                    const radius = Math.random() * 2 + 1;
+                    for (let rx = x - radius; rx <= x + radius; rx++) {
+                        for (let ry = y - radius; ry <= y + radius; ry++) {
+                            if (rx > 0 && rx < config.cols - 1 && ry > 0 && ry < config.rows - 1) {
+                                // Simple distance check for roundish rocks
+                                if (Math.hypot(rx - x, ry - y) <= radius) {
+                                    data.grid[Math.floor(rx)][Math.floor(ry)] = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } 
+    // MODE B: UNDERGROUND (TUNNELS) - Level -1, -2
+    // Logic: Cellular Automata (Swiss Cheese)
+    else {
+        // 1. Cellular Automata Initialization
+        for (let x = 0; x < config.cols; x++) {
+            for (let y = 0; y < config.rows; y++) {
+                data.grid[x][y] = (x === 0 || x === config.cols - 1 || y === 0 || y === config.rows - 1) 
+                    ? 0 
+                    : (Math.random() * 100 < density) ? 1 : 0;
+            }
+        }
+
+        // 2. Smooth the caves (4 passes)
+        for (let i = 0; i < 4; i++) {
+            let newGrid = JSON.parse(JSON.stringify(data.grid));
+            for (let x = 1; x < config.cols - 1; x++) {
+                for (let y = 1; y < config.rows - 1; y++) {
+                    let neighbors = getWallCount(data.grid, x, y);
+                    if (neighbors > 4) newGrid[x][y] = 0;
+                    else if (neighbors < 4) newGrid[x][y] = 1;
+                }
+            }
+            data.grid = newGrid;
+        }
     }
-    
-    // 2. Ensure Anchors are Clear
-    anchors.forEach(anchor => { for(let dx = -2; dx <= 2; dx++) for(let dy = -2; dy <= 2; dy++) if (anchor.x+dx > 0 && anchor.x+dx < config.cols-1 && anchor.y+dy > 0 && anchor.y+dy < config.rows-1) data.grid[anchor.x+dx][anchor.y+dy] = 1; });
-    
-    // 3. CONNECTIVITY FIX (Flood Fill + Tunneling)
+
+    // SHARED: Ensure Anchors (Stairs) are always accessible
+    anchors.forEach(anchor => {
+        for (let dx = -2; dx <= 2; dx++) {
+            for (let dy = -2; dy <= 2; dy++) {
+                if (anchor.x + dx > 0 && anchor.x + dx < config.cols - 1 && 
+                    anchor.y + dy > 0 && anchor.y + dy < config.rows - 1) {
+                    data.grid[anchor.x + dx][anchor.y + dy] = 1; // Force Floor
+                }
+            }
+        }
+    });
+
+    // SHARED: Connectivity check (Flood Fill) to ensure no isolated islands
+    // For surface maps, this connects isolated patches of sand.
+    // For caves, it connects tunnels.
     const visited = new Set();
     const regions = [];
-    
+
     for (let x = 1; x < config.cols - 1; x++) {
         for (let y = 1; y < config.rows - 1; y++) {
             if (data.grid[x][y] === 1 && !visited.has(`${x},${y}`)) {
                 const region = [];
-                const queue = [{x,y}];
+                const queue = [{ x, y }];
                 visited.add(`${x},${y}`);
-                while(queue.length > 0) {
+                while (queue.length > 0) {
                     const curr = queue.pop();
                     region.push(curr);
-                    const neighbors = [{x: curr.x+1, y: curr.y}, {x: curr.x-1, y: curr.y}, {x: curr.x, y: curr.y+1}, {x: curr.x, y: curr.y-1}];
-                    for(let n of neighbors) {
-                        if (n.x > 0 && n.x < config.cols-1 && n.y > 0 && n.y < config.rows-1 && data.grid[n.x][n.y] === 1 && !visited.has(`${n.x},${n.y}`)) {
+                    const neighbors = [
+                        { x: curr.x + 1, y: curr.y }, { x: curr.x - 1, y: curr.y },
+                        { x: curr.x, y: curr.y + 1 }, { x: curr.x, y: curr.y - 1 }
+                    ];
+                    for (let n of neighbors) {
+                        if (n.x > 0 && n.x < config.cols - 1 && n.y > 0 && n.y < config.rows - 1 &&
+                            data.grid[n.x][n.y] === 1 && !visited.has(`${n.x},${n.y}`)) {
                             visited.add(`${n.x},${n.y}`);
                             queue.push(n);
                         }
@@ -3152,7 +3230,7 @@ function generateCaves(data, density, anchors) {
     }
 
     regions.sort((a, b) => b.length - a.length);
-    
+
     if (regions.length > 1) {
         const mainRegion = regions[0];
         for (let i = 1; i < regions.length; i++) {
@@ -3160,8 +3238,8 @@ function generateCaves(data, density, anchors) {
             let minDistance = Infinity;
             let startPoint = null;
             let endPoint = null;
-            
-            const targetPt = targetRegion[Math.floor(targetRegion.length/2)];
+
+            const targetPt = targetRegion[Math.floor(targetRegion.length / 2)];
             for (let mainPt of mainRegion) {
                 const d = Math.abs(mainPt.x - targetPt.x) + Math.abs(mainPt.y - targetPt.y);
                 if (d < minDistance) {
@@ -3170,13 +3248,13 @@ function generateCaves(data, density, anchors) {
                     endPoint = targetPt;
                 }
             }
-            
+
             if (startPoint && endPoint) {
                 createCorridor(data.grid, startPoint.x, startPoint.y, endPoint.x, endPoint.y, config);
             }
         }
     }
-    
+
     addRandomLabels(data, currentLevelIndex < 0 ? 'cave_underground' : 'cave_surface', 4, anchors);
 }
 
