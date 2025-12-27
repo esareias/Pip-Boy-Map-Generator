@@ -4080,30 +4080,27 @@ function drawCurrentLevel(time = 0) {
     const data = (viewMode === 'interior') ? interiorData[currentInteriorKey] : floorData[currentLevelIndex];
     const gs = config.gridSize;
     
-    let pal = PALETTES.vault;	
+    let pal = PALETTES.vault;   
     let patternType = 'vault';
 
     if (viewMode === 'sector') {
         if (config.mapType === 'ruins') { pal = PALETTES.ruins; patternType = 'ruins'; }
         if (config.mapType === 'cave') { pal = PALETTES.cave; patternType = 'cave'; }
-    } else {	
+    } else {    
         if (config.mapType === 'ruins') { pal = PALETTES.interior_ruins; patternType = 'interior_ruins'; }
         if (config.mapType === 'cave') { pal = PALETTES.interior_cave; patternType = 'cave'; }
     }
     
-    // --- HARD CLEAR BEFORE PHOSPHOR ---
-    ctx.clearRect(0, 0, canvas.width, canvas.height);	
+    // --- HARD CLEAR ---
+    ctx.clearRect(0, 0, canvas.width, canvas.height);   
 
-    // PHOSPHOR PERSISTENCE (Trails)
-    ctx.fillStyle = 'rgba(5, 8, 5, 0.2)'; // Dark green-black tint
+    // PHOSPHOR PERSISTENCE
+    ctx.fillStyle = 'rgba(5, 8, 5, 0.2)'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // BEGIN SCALED RENDER
     ctx.save();
-    // Multiply the render scale by the current zoom level
     ctx.scale(RENDER_SCALE * zoomLevel, RENDER_SCALE * zoomLevel); 
-    
-    // *** NEW: Apply Pan Offset to the map drawing coordinate system ***
     ctx.translate(mapOffsetX, mapOffsetY);
     
     if (!patternCache[patternType]) {
@@ -4112,25 +4109,41 @@ function drawCurrentLevel(time = 0) {
     
     const floorPattern = patternCache[patternType];
 
-    if (!data) {	
-        // --- STRONGER ERROR MESSAGE ---
-        ctx.font = "bold 30px 'VT323', monospace";	
-        ctx.fillStyle = 'var(--pip-amber)';	
-        ctx.textAlign = "center";	
-        ctx.fillText(">> NO MAP DATA DETECTED <<", config.width/2, config.height/2);	
-        
+    if (!data) {    
+        ctx.font = "bold 30px 'VT323', monospace"; 
+        ctx.fillStyle = 'var(--pip-amber)'; 
+        ctx.textAlign = "center";   
+        ctx.fillText(">> NO MAP DATA DETECTED <<", config.width/2, config.height/2);    
         ctx.font = "20px 'VT323', monospace";
-        ctx.fillText("INITIATE [ >> SCAN LEVEL ] TO GENERATE", config.width/2, config.height/2 + 30);	
-
+        ctx.fillText("INITIATE [ >> SCAN LEVEL ] TO GENERATE", config.width/2, config.height/2 + 30);   
         ctx.restore();
-        return;	
+        return; 
     }
 
-    // --- ORGANIC CAVE RENDERING (JAGGED ROCK) ---
+    // --- ORGANIC CAVE / SURFACE RENDERING (JAGGED ROCK) ---
     if (patternType === 'cave') {
-        ctx.fillStyle = floorPattern;
+        // === V'S FIX: GEOLOGICAL SUBSTRATE LAYER ===
+        // Before drawing the floor, we draw the "Rock" texture everywhere.
+        // This fills in the "0s" (Voids) with actual rock texture.
         
-        // Deterministic Random Helper (Stops the jiggling)
+        if (!patternCache['cave_rock_fill']) {
+            // Create a darker, rockier palette for the un-walkable areas
+            const rockColors = {
+                base: pal.wall.front,      // Darker rock base
+                dark: pal.wall.outline,    // Deep fissures
+                light: pal.wall.top,       // Highlights matching the sand slightly
+                noise: pal.wall.shadow
+            };
+            patternCache['cave_rock_fill'] = createPixelPattern(rockColors, 'cave');
+        }
+        
+        ctx.fillStyle = patternCache['cave_rock_fill'];
+        // Fill the entire map bounds with Rock
+        ctx.fillRect(0, 0, config.cols * gs, config.rows * gs);
+        // ===========================================
+
+        ctx.fillStyle = floorPattern; // Now switch back to Sand/Floor
+        
         const getOffset = (bx, by, seed) => {
             return (Math.abs(Math.sin(bx * 12.9898 + by * 78.233 + seed) * 43758.5453) % 1);
         };
@@ -4138,18 +4151,14 @@ function drawCurrentLevel(time = 0) {
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
                 if (data.grid[x][y] >= 1) {
-                    const px = x * gs;	
+                    const px = x * gs;  
                     const py = y * gs;
-                    const overlap = gs * 0.4;	
+                    const overlap = gs * 0.4;   
                     
                     ctx.beginPath();
-                    // Seed 1 (Top Left)
                     ctx.moveTo(px - (getOffset(x, y, 1) * overlap), py - (getOffset(x, y, 2) * overlap));
-                    // Seed 2 (Top Right)
                     ctx.lineTo(px + gs + (getOffset(x, y, 3) * overlap), py - (getOffset(x, y, 4) * overlap));
-                    // Seed 3 (Bottom Right)
                     ctx.lineTo(px + gs + (getOffset(x, y, 5) * overlap), py + gs + (getOffset(x, y, 6) * overlap));
-                    // Seed 4 (Bottom Left)
                     ctx.lineTo(px - (getOffset(x, y, 7) * overlap), py + gs + (getOffset(x, y, 8) * overlap));
                     
                     ctx.fill();
@@ -4163,12 +4172,12 @@ function drawCurrentLevel(time = 0) {
                 }
             }
         }
-    }	
+    }   
     else {
         // STANDARD / RUINS RENDERING
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
-                if (data.grid[x][y] >= 1) {	
+                if (data.grid[x][y] >= 1) { 
                     const px = x * gs; const py = y * gs;
                     
                     if (data.grid[x][y] === 2) {
@@ -4180,40 +4189,34 @@ function drawCurrentLevel(time = 0) {
                         ctx.fillRect(px - offset + 4, py + 12, gs-8, 2);
                         ctx.globalAlpha = 1.0;
                     } else {
-                        ctx.fillStyle = floorPattern;	
+                        ctx.fillStyle = floorPattern;   
                         ctx.fillRect(px, py, gs, gs);
                         
                         // Ambient Occlusion (Corner Shadows)
                         ctx.fillStyle = 'rgba(0,0,0,0.4)';
-                        if (x > 0 && data.grid[x-1][y] === 0) ctx.fillRect(px, py, 4, gs); // Left Shadow
-                        if (y > 0 && data.grid[x][y-1] === 0) ctx.fillRect(px, py, gs, 4); // Top Shadow
-                        if (x < config.cols-1 && data.grid[x+1][y] === 0) ctx.fillRect(px+gs-4, py, 4, gs); // Right Shadow
-                        if (y < config.rows-1 && data.grid[x][y+1] === 0) ctx.fillRect(px, py+gs-4, gs, 4); // Bottom Shadow
+                        if (x > 0 && data.grid[x-1][y] === 0) ctx.fillRect(px, py, 4, gs); // Left
+                        if (y > 0 && data.grid[x][y-1] === 0) ctx.fillRect(px, py, gs, 4); // Top
+                        if (x < config.cols-1 && data.grid[x+1][y] === 0) ctx.fillRect(px+gs-4, py, 4, gs); // Right
+                        if (y < config.rows-1 && data.grid[x][y+1] === 0) ctx.fillRect(px, py+gs-4, gs, 4); // Bottom
                     }
                 }
             }
         }
     }
 
-    // FOG RENDERING (Unified)
+    // FOG RENDERING
     for (let x = 0; x < config.cols; x++) {
         for (let y = 0; y < config.rows; y++) {
             if (config.fogEnabled && !isLocationRevealed(data, x, y)) {
                 const px = x * gs; const py = y * gs;
-                // Base darkness
-                ctx.fillStyle = '#050805';	
+                ctx.fillStyle = '#050805';  
                 ctx.fillRect(px, py, gs, gs);
                 
-                // Organic Cloud Puff (The draw image destination is already affected by ctx.translate)
                 const scrollX1 = (time * 0.02) % 512;
                 const scrollY1 = (time * 0.01) % 512;
-                // Calculate texture source coordinates based on logical map position + time scroll
-                const sx = (px + scrollX1) % 512;	
+                const sx = (px + scrollX1) % 512;   
                 const sy = (py + scrollY1) % 512;
                 
-                // Draw from the pre-rendered cloud texture (cloudCanvas)
-                // This texture draw needs to cover the current tile (px, py)
-                // We draw a larger image than the tile size to ensure seamless movement.
                 ctx.drawImage(cloudCanvas, sx, sy, gs, gs, px - gs/2, py - gs/2, gs*2, gs*2);
             }
         }
@@ -4225,7 +4228,6 @@ function drawCurrentLevel(time = 0) {
     }
 
     for (let t of tumbleweeds) {
-        // Tumbleweeds should also move with the map offset if they are part of the map world
          ctx.save();
          ctx.translate(t.x, t.y);
          ctx.rotate(t.rot);
@@ -4233,7 +4235,7 @@ function drawCurrentLevel(time = 0) {
          ctx.restore();
     }
 
-    // WALL RENDER (2.5D) - Only needed for non-cave types to show depth
+    // WALL RENDER (2.5D) - Only for RUINS/VAULT
     if (patternType !== 'cave') {
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
@@ -4246,11 +4248,10 @@ function drawCurrentLevel(time = 0) {
                     if (southRevealed) {
                         const grad = ctx.createLinearGradient(px, py+gs-wallHeight, px, py+gs);
                         grad.addColorStop(0, pal.wall.front);
-                        grad.addColorStop(1, '#0a0a0a');	
+                        grad.addColorStop(1, '#0a0a0a');   
                         ctx.fillStyle = grad;
                         ctx.fillRect(px, py + gs - wallHeight, gs, wallHeight);
                         
-                        // Rust/Grime Detail
                         if ((x+y) % 5 === 0) {
                             ctx.fillStyle = 'rgba(0,0,0,0.3)';
                             ctx.fillRect(px + gs/2, py+gs-wallHeight, 2, wallHeight);
@@ -4260,8 +4261,8 @@ function drawCurrentLevel(time = 0) {
                         ctx.fillRect(px, py, gs, gs - wallHeight);
                         
                         ctx.fillStyle = pal.wall.highlight;
-                        ctx.fillRect(px, py, gs, 2);	
-                        ctx.fillRect(px, py, 2, gs-wallHeight);	
+                        ctx.fillRect(px, py, gs, 2);    
+                        ctx.fillRect(px, py, 2, gs-wallHeight); 
                         
                         ctx.fillStyle = 'rgba(0,0,0,0.6)';
                         ctx.fillRect(px, py+gs, gs, gs*0.4);
@@ -4277,9 +4278,9 @@ function drawCurrentLevel(time = 0) {
                             ctx.fillStyle = pal.wall.top;
                             ctx.fillRect(px, py, gs, gs);
                             ctx.fillStyle = pal.wall.highlight;
-                            ctx.fillRect(px, py, gs, 2);	
+                            ctx.fillRect(px, py, gs, 2);    
                             ctx.fillRect(px, py, 2, gs);
-                            ctx.fillStyle = 'rgba(0,0,0,0.3)';	
+                            ctx.fillStyle = 'rgba(0,0,0,0.3)';  
                             ctx.fillRect(px + 4, py + 4, gs - 8, gs - 8);
                         }
                     }
@@ -4292,15 +4293,15 @@ function drawCurrentLevel(time = 0) {
         const dx = door.x * gs; const dy = door.y * gs;
         const isLocked = door.locked;
         
-        if (viewMode === 'sector') {	
-            ctx.fillStyle = '#0a0a0a'; ctx.fillRect(dx + 2, dy - gs/2 + 2, gs - 4, gs/2);	
-            ctx.fillStyle = isLocked ? '#ef4444' : pal.accent;	
-            ctx.fillRect(dx + gs/2 - 4, dy - gs/2, 8, 4);	
-        } else {	
+        if (viewMode === 'sector') {    
+            ctx.fillStyle = '#0a0a0a'; ctx.fillRect(dx + 2, dy - gs/2 + 2, gs - 4, gs/2);  
+            ctx.fillStyle = isLocked ? '#ef4444' : pal.accent;  
+            ctx.fillRect(dx + gs/2 - 4, dy - gs/2, 8, 4);   
+        } else {    
             ctx.fillStyle = '#171717'; ctx.fillRect(dx, dy-4, gs, gs+4);
-            ctx.fillStyle = isLocked ? '#7f1d1d' : '#334155';	
+            ctx.fillStyle = isLocked ? '#7f1d1d' : '#334155';   
             ctx.fillRect(dx + 4, dy, gs - 8, gs - 4);
-            ctx.fillStyle = 'rgba(255,255,255,0.1)';	
+            ctx.fillStyle = 'rgba(255,255,255,0.1)';    
             ctx.fillRect(dx+4, dy, 2, gs-4);
             ctx.fillRect(dx+gs-6, dy, 2, gs-4);
         }
@@ -4352,11 +4353,10 @@ function drawCurrentLevel(time = 0) {
             ctx.fillStyle = g; ctx.fillRect(px, py, gs, gs);
             ctx.globalCompositeOperation = 'source-over';
             
-            // Locked icon over item
             if (item.isLocked) {
                 ctx.fillStyle = '#ef4444';
-                ctx.fillRect(px + gs/2 - 4, py + gs/2 - 12, 8, 4); // Lock box
-                ctx.fillRect(px + gs/2 - 2, py + gs/2 - 8, 4, 8); // Lock body
+                ctx.fillRect(px + gs/2 - 4, py + gs/2 - 12, 8, 4); 
+                ctx.fillRect(px + gs/2 - 2, py + gs/2 - 8, 4, 8); 
             }
         }
     }
@@ -4365,14 +4365,14 @@ function drawCurrentLevel(time = 0) {
         if (config.fogEnabled && !isLocationRevealed(data, stair.x, stair.y)) return;
         const sx = stair.x * gs; const sy = stair.y * gs;
         ctx.fillStyle = '#0f0f0f'; ctx.fillRect(sx, sy, gs, gs);
-        ctx.fillStyle = '#a855f7';	
-        for(let i=0; i<gs; i+=6) ctx.fillRect(sx + 4, sy + i, gs - 8, 3);	
+        ctx.fillStyle = '#a855f7';  
+        for(let i=0; i<gs; i+=6) ctx.fillRect(sx + 4, sy + i, gs - 8, 3);  
     });
 
     if (viewMode === 'interior' && data.exit) {
         const ex = data.exit.x * gs; const ey = data.exit.y * gs;
         ctx.fillStyle = 'rgba(250, 204, 21, 0.2)'; ctx.fillRect(ex, ey, gs, gs);
-        ctx.fillStyle = '#facc15';	
+        ctx.fillStyle = '#facc15';  
         for(let i=0; i<3; i++) {
             const oy = (time / 100 + i * 10) % 20;
             ctx.globalAlpha = 1 - (oy/20);
@@ -4381,13 +4381,12 @@ function drawCurrentLevel(time = 0) {
         }
     }
 
-    // --- LIGHTING ENGINE (Volumetric Pass) ---
+    // --- LIGHTING ENGINE ---
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.fillRect(0, 0, config.width, config.height);
 
     ctx.globalCompositeOperation = 'lighter';
 
-    // Interactive Flashlight (position must be translated back relative to the view)
     const lightX = mousePos.x - mapOffsetX;
     const lightY = mousePos.y - mapOffsetY;
 
@@ -4397,10 +4396,8 @@ function drawCurrentLevel(time = 0) {
     ctx.fillStyle = cursorG;
     ctx.fillRect(0, 0, config.width, config.height);
 
-    // Dust Particles
     ctx.fillStyle = 'rgba(200, 255, 200, 0.3)';
     for(let m of dustMotes) {
-        // Only draw dust near light
         const dx = m.x - lightX; const dy = m.y - lightY;
         if (dx*dx + dy*dy < 40000) {
             ctx.fillRect(m.x, m.y, m.size, m.size);
@@ -4419,9 +4416,9 @@ function drawCurrentLevel(time = 0) {
         if (deco.type === 'fire_barrel' || deco.type === 'campfire') {
             const flicker = Math.sin(time / 80) * 5 + Math.random() * 3;
             radius = gs * 2.5 + flicker;
-            colorStart = 'rgba(255, 200, 100, 0.6)';	
+            colorStart = 'rgba(255, 200, 100, 0.6)';    
             colorMid = 'rgba(234, 88, 12, 0.2)';
-        }	
+        }   
         else if (deco.type === 'rad_puddle') {
             const pulse = Math.sin(time / 600);
             radius = gs * 2 + (pulse * 10);
@@ -4437,7 +4434,7 @@ function drawCurrentLevel(time = 0) {
             if (Math.random() > 0.98) radius = 0;
             else radius = gs * 4 + Math.sin(time / 200)*2;
             colorStart = 'rgba(255, 255, 255, 0.3)';
-            colorMid = 'rgba(224, 242, 254, 0.1)';	
+            colorMid = 'rgba(224, 242, 254, 0.1)';  
         }
         else if (deco.type === 'server_rack') {
             radius = gs * 1.0;
@@ -4458,12 +4455,10 @@ function drawCurrentLevel(time = 0) {
     ctx.globalCompositeOperation = 'source-over';
     drawCRTEffects(ctx, config.width, config.height);
 
-   
-    
-    ctx.restore(); // Restore from scaled/translated map context
-    ctx.save(); // Save again for UI overlay
+    ctx.restore(); 
+    ctx.save(); 
 
-    // --- DRAW LABELS (MOVED TO UI LAYER) ---
+    // --- DRAW LABELS ---
     if (config.showLabels) {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -4474,66 +4469,47 @@ function drawCurrentLevel(time = 0) {
         ctx.lineJoin = 'round';
 
         for (let lbl of data.labels) {
-            // 1. Fog of War Check
             const gx = Math.floor(lbl.x / config.gridSize);
             const gy = Math.floor(lbl.y / config.gridSize);
             if (config.fogEnabled && !isLocationRevealed(data, gx, gy)) continue;
             if (!lbl.visible) continue;
 
-            // 2. Calculate Position
             const lx = (lbl.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
             const ly = (lbl.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
 
-            // 3. Determine Style (Pulse if Enterable in Sector Mode)
             const isInteractive = viewMode === 'sector' && isEnterable(lbl.text);
 
             if (isInteractive) {
-                // GREEN PULSE EFFECT
-                const pulse = (Math.sin(time / 200) + 1) / 2; // Oscillates 0.0 to 1.0
-                const alpha = 0.5 + (pulse * 0.5); // Oscillates 0.5 to 1.0
-                
-                // Pulsing Green Outline
+                const pulse = (Math.sin(time / 200) + 1) / 2; 
+                const alpha = 0.5 + (pulse * 0.5); 
                 ctx.strokeStyle = `rgba(34, 197, 94, ${alpha})`; 
-                // Bright Green-White Text
                 ctx.fillStyle = '#f0fdf4'; 
             } else {
-                // STANDARD STYLE (Black Outline, White Text)
                 ctx.strokeStyle = 'rgba(0,0,0,0.8)';
                 ctx.fillStyle = '#ffffff';
             }
 
-            // Draw
             ctx.strokeText(lbl.text, lx, ly);
             ctx.fillText(lbl.text, lx, ly);
         }
     }
-    // --- DRAW TOKENS --- (Tokens are drawn in a new, un-translated context)
     
-// --- DRAW TOKENS ---
+    // --- DRAW TOKENS ---
     for (let t of tokens) {
-        // 1. Apply Zoom to Position
         let tx = (t.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
         let ty = (t.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
 
-        // --- THE JUICE: DAMAGE ANIMATION (Shake & Flash) ---
         if (t.hitTimer > 0) {
-            // Shake the token position randomly while the timer is active
             tx += (Math.random() - 0.5) * (15 * zoomLevel); 
             ty += (Math.random() - 0.5) * (15 * zoomLevel);
-            
-            // Apply a violent red glow for the duration of the hit
             ctx.shadowColor = '#ff0000';
             ctx.shadowBlur = 25 * zoomLevel;
-            
-            // Decrement the timer so the animation eventually stops
             t.hitTimer--; 
         }
 
-        // 2. DYNAMIC RADIUS LOGIC
         const isPlayer = TOKEN_PRESETS.some(p => p.name === t.label);
         let baseSize = isPlayer ? 15 : 25;
 
-        // A. SPECIFIC SPECIES SIZE OVERRIDES
         if (t.label.includes("Behemoth") || t.label.includes("Sentry Bot") || t.label.includes("Deathclaw")) {
             baseSize = 45;
         }
@@ -4541,39 +4517,26 @@ function drawCurrentLevel(time = 0) {
             baseSize = 12;
         }
 
-        // B. THE MULTIPLIER MATH
         const difficultyMultiplier = t.multiplier || 1.0;
-
-        // C. FINAL CALCULATION
         const tokenRadius = (baseSize * difficultyMultiplier) * RENDER_SCALE * zoomLevel;
         const imgSize = tokenRadius * 2;
 
-        // --- DRAWING EXECUTION ---
         if (t.img) {
             ctx.save(); 
-            
-            // DEATH FILTERS
             if (t.dead || t.color === '#4b5563') {
                 ctx.globalAlpha = 0.5;
                 ctx.filter = 'grayscale(100%)';
             }
-
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2);
             ctx.clip(); 
-            
             ctx.drawImage(t.img, tx - tokenRadius, ty - tokenRadius, imgSize, imgSize);
-            
             ctx.restore(); 
-
         } else {
-            // FALLBACK: Draw default dot/disc
             ctx.fillStyle = t.color;
             ctx.beginPath();
             ctx.arc(tx, ty, tokenRadius * 0.8, 0, Math.PI*2);
             ctx.fill();
-            
-            // Draw Pulse/Glow
             ctx.strokeStyle = t.color;
             ctx.lineWidth = 2 * RENDER_SCALE * zoomLevel;
             ctx.beginPath();
@@ -4581,105 +4544,71 @@ function drawCurrentLevel(time = 0) {
             ctx.stroke();
         }
 
-        // --- RESET SHADOWS (Crucial so it doesn't bleed into the label) ---
         ctx.shadowBlur = 0;
 
-        // --- E. LEGIBLE LABEL ---
         if (config.showLabels && tokenLabelsVisible[t.id] !== false) {
             ctx.textAlign = "center";
             ctx.textBaseline = "top";
             const fontSize = 14 * RENDER_SCALE * zoomLevel;
             ctx.font = `bold ${fontSize}px monospace`;
             const labelY = ty + tokenRadius + 5 * zoomLevel;
-
-            // 1. Black outline
             ctx.strokeStyle = "rgba(0,0,0,0.8)";
             ctx.lineWidth = 4 * zoomLevel;
             ctx.lineJoin = "round";
             ctx.strokeText(t.label, tx, labelY);
-
-            // 2. White text
             ctx.fillStyle = "#ffffff";
             ctx.fillText(t.label, tx, labelY);
         } 
-    } // Close for(tokens)
+    } 
 
-
-	// --- MEASUREMENT TOOL OVERLAY (YARDS EDITION) ---
     if (isMeasuring) {
-        // Calculate screen positions (applying zoom/pan/scale)
         const sx = (measureStart.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
         const sy = (measureStart.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
         const ex = (measureEnd.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
         const ey = (measureEnd.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
 
-        // MATH: Calculate distance in pixels
         const dx = measureEnd.x - measureStart.x;
         const dy = measureEnd.y - measureStart.y;
         const pixelDist = Math.sqrt(dx*dx + dy*dy);
-
-        // MATH: Convert to Grid Squares and then Yards
-        // config.gridSize is 1 square. 1 square = 5ft. 3ft = 1yd.
         const gridSquares = pixelDist / config.gridSize;
-        
-        // V'S MATH LESSON: 5 feet per square / 3 feet per yard = 1.666... yards.
-        // We keep one decimal place because rounding 1.6 yards to 2 is just lying to yourself.
         const yards = (gridSquares * (5 / 3)).toFixed(1); 
 
-        // 1. Draw the Line
         ctx.beginPath();
         ctx.moveTo(sx, sy);
         ctx.lineTo(ex, ey);
-        ctx.strokeStyle = "#16ff60"; // Classic V.A.T.S. Green
+        ctx.strokeStyle = "#16ff60"; 
         ctx.lineWidth = 2 * RENDER_SCALE;
-        ctx.setLineDash([10, 5]); // Dashed line for tactical feel
+        ctx.setLineDash([10, 5]); 
         ctx.stroke();
-        ctx.setLineDash([]); // Reset dash
+        ctx.setLineDash([]); 
 
-        // 2. Draw Endpoints
         ctx.fillStyle = "#16ff60";
         ctx.beginPath(); ctx.arc(sx, sy, 4 * RENDER_SCALE, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(ex, ey, 4 * RENDER_SCALE, 0, Math.PI*2); ctx.fill();
 
-        // 3. Draw The Label
         const midX = (sx + ex) / 2;
         const midY = (sy + ey) / 2;
 
         ctx.font = `bold ${32 * RENDER_SCALE}px monospace`;
-        
-        // UPDATE THE LABEL STRING
         const label = `${yards} yds`;
-        
         const textMetrics = ctx.measureText(label);
         const padding = 6 * RENDER_SCALE;
 
-        // Label Background (Black box so you can read it over the map)
         ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-        ctx.fillRect(
-            midX - textMetrics.width/2 - padding, 
-            midY - 10 * RENDER_SCALE - padding, 
-            textMetrics.width + padding*2, 
-            20 * RENDER_SCALE + padding
-        );
+        ctx.fillRect(midX - textMetrics.width/2 - padding, midY - 10 * RENDER_SCALE - padding, textMetrics.width + padding*2, 20 * RENDER_SCALE + padding);
 
-        // Label Text
         ctx.fillStyle = "#16ff60";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(label, midX, midY);
         
-        // Optional: Range Coloring (e.g. Turns Red if really far)
-        // I adjusted this to 35 yards (approx 105 feet) so the warning logic stays consistent with the old "100ft" warning
         if (parseFloat(yards) > 35) {
-             ctx.fillStyle = "#ef4444"; // Red warning for long range
+             ctx.fillStyle = "#ef4444"; 
              ctx.fillText(label, midX, midY);
         }
     }
-	
-    // Restore the UI overlay context
-    // This must happen OUTSIDE the loop, or the canvas will glitch
+    
     ctx.restore();
-
 } // Close function drawCurrentLevel
 // --- GLOBAL EXPOSURE FOR INLINE HTML HANDLERS ---
 // Expose functions used in onclick="..." attributes to the global scope
