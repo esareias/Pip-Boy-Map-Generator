@@ -806,31 +806,7 @@ const ROOM_RELATIONS = {
     "Maintenance Tunnel": { tags: ["Connector", "Dirty"], link: [], avoid: ["Luxury"] }
 };
 
-const ROOM_LOGIC = {
-    // CAVE / MOJAVE
-    "Radscorpion Burrow": { tags: ["Nature", "Hazard"], avoid: ["Civilized", "Tech"] },
-    "Gecko Hunting Grounds": { tags: ["Nature", "Exterior"], avoid: ["Interior"] },
-    "Coyote Den": { tags: ["Nature", "Small"], avoid: ["Tech"] },
-    "Sulfur Pits": { tags: ["Nature", "Hazard"], avoid: ["Living"] },
-    "Hermit's Shack": { tags: ["Civilized", "Small"], avoid: ["Grand"] },
-    "Crashed Vertibird": { tags: ["Wreckage", "Tech"], avoid: ["Clean"] },
-    "Tribal Altar": { tags: ["Tribal", "Decorated"], avoid: ["High Tech"] },
-    "Prospector Camp": { tags: ["Civilized", "Temporary"], avoid: [] },
 
-    // RUINS / CITY
-    "Sniper Nest": { tags: ["Combat", "High"], avoid: ["Basement"] },
-    "Bombed-Out Apartment": { tags: ["Residential", "Ruined"], avoid: ["Clean"] },
-    "Makeshift Clinic": { tags: ["Medical", "Scrappy"], avoid: ["Grand"] },
-    "Raider Fighting Pit": { tags: ["Violent", "Social"], avoid: ["Quiet"] },
-    "Collapsed Subway": { tags: ["Transport", "Ruined"], avoid: ["High"] },
-    "Nuka-Cola Billboard": { tags: ["Exterior", "High"], avoid: ["Interior"] },
-    "Super Mutant Stronghold": { tags: ["Hostile", "Gore"], avoid: ["Clean"] },
-    "Slave Pen": { tags: ["Hostile", "Prison"], avoid: ["Luxury"] },
-
-    // VAULT
-    "Overseer's Office": { tags: ["Command", "Clean"], avoid: ["Dirty"] },
-    "Atrium": { tags: ["Hub", "Clean"], avoid: [] }
-};
 
 const NON_ENTERABLE = [ "Street", "Crater", "Park", "Alley", "Overpass", "Catwalk", "Ramp", "Pass", "Riverbed", "Tar Pit", "Shore", "Drive-In", "Scrapyard", "Bridge", "Wind Farm", "Solar Array", "Picnic", "Golf", "Ski", "Crash", "Wreck" ];
 
@@ -961,6 +937,10 @@ let floorData = {}; let viewMode = 'sector'; let currentInteriorKey = null; let 
 
 function getArchetype(name) {
     const n = name.toUpperCase();
+    
+    // Quick patch to stop Banks from becoming Vaults
+    if (n.includes("BANK")) return 'COMMERCIAL'; 
+
     for (const key in BUILDING_ARCHETYPES) {
         const arch = BUILDING_ARCHETYPES[key];
         for (const kw of arch.keywords) {
@@ -2954,25 +2934,47 @@ function getSmartName(category, sourceName) {
     const candidates = NAMES[category];
     if (!candidates) return "UNKNOWN SECTOR";
     if (!sourceName) return candidates[Math.floor(Math.random() * candidates.length)];
+    
     let bestName = candidates[0];
     let bestScore = -Infinity;
-    const sourceLogic = ROOM_LOGIC[sourceName] || { tags: [] };
+    
+    // V'S UPGRADE: Switched to ROOM_RELATIONS
+    const sourceLogic = ROOM_RELATIONS[sourceName] || { tags: [], link: [], avoid: [] };
     const sourceTags = sourceLogic.tags || [];
-    const linkTarget = sourceLogic.link;
+    const sourceLinks = sourceLogic.link || []; // Ensure this is an array
+
     for(let i=0; i<15; i++) {
         const candidate = candidates[Math.floor(Math.random() * candidates.length)];
-        const logic = ROOM_LOGIC[candidate] || { tags: [], avoid: [] };
+        
+        // V'S UPGRADE: Switched to ROOM_RELATIONS
+        const logic = ROOM_RELATIONS[candidate] || { tags: [], link: [], avoid: [] };
+        
         let score = 0;
+        
         const isSourceClean = sourceTags.includes("Clean");
         const isCandDirty = logic.tags && logic.tags.includes("Dirty");
+        
         if (isSourceClean && isCandDirty) score -= 100;
-        if (linkTarget === candidate) score += 50;
-        if (logic.link === sourceName) score += 50;
-        if (logic.avoid) { for(let avoidTag of logic.avoid) { if (sourceTags.includes(avoidTag)) score -= 50; } }
+        
+        // FIX: Check if the candidate is INSIDE the source's link array
+        if (sourceLinks.includes(candidate)) score += 50;
+        
+        // FIX: Check if the source is INSIDE the candidate's link array
+        if (logic.link && logic.link.includes(sourceName)) score += 50;
+        
+        if (logic.avoid) { 
+            for(let avoidTag of logic.avoid) { 
+                if (sourceTags.includes(avoidTag)) score -= 50; 
+            } 
+        }
+        
+        // Hardcoded penalties for dumb placement
         if (candidate === "Entrance Airlock" && currentLevelIndex !== 0) score -= 1000;
         if (candidate === "Reactor Core" && currentLevelIndex > -2) score -= 50;
         if (candidate === "Penthouse" && currentLevelIndex < 2) score -= 100;
+        
         score += Math.random() * 20;
+        
         if (score > bestScore) { bestScore = score; bestName = candidate; }
     }
     return bestName;
