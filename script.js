@@ -3128,35 +3128,25 @@ function generateCaves(data, density, anchors) {
         // 1. BASE LAYER: Fill the ENTIRE world with Sand (1)
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
-                // Keep the absolute edges as void (0) to prevent player wandering off map
                 const isBorder = (x === 0 || x === config.cols - 1 || y === 0 || y === config.rows - 1);
                 data.grid[x][y] = isBorder ? 0 : 1;
             }
         }
 
-        // 2. OBSTACLE PLACEMENT (The Fix)
-        // "Density" Slider = % of Walkable Ground.
-        // So (100 - Density) = % of Rocks.
-        // We calculate a specific number of rock clusters to spawn.
-        
-        // A standard map has about ~3000-4000 grid cells.
-        // Let's cap the max rocks to prevent the blackout issue.
+        // 2. OBSTACLE PLACEMENT
+        // Density Slider controls Openness. Higher Density = Less Rocks.
         const maxClusters = 150; 
-        const inverseDensity = (100 - density) / 100; // 0.0 to 1.0
+        const inverseDensity = (100 - density) / 100; 
         const rockCount = Math.floor(maxClusters * inverseDensity);
 
         for (let i = 0; i < rockCount; i++) {
             const rx = Math.floor(Math.random() * (config.cols - 4)) + 2;
             const ry = Math.floor(Math.random() * (config.rows - 4)) + 2;
-            
-            // Randomize rock size (Small to Medium)
             const radius = Math.random() * 2.5 + 1; 
 
-            // Carve the rock (Set to 0)
             for (let dx = -Math.ceil(radius); dx <= Math.ceil(radius); dx++) {
                 for (let dy = -Math.ceil(radius); dy <= Math.ceil(radius); dy++) {
-                    if (rx + dx > 0 && rx + dx < config.cols - 1 && 
-                        ry + dy > 0 && ry + dy < config.rows - 1) {
+                    if (rx + dx > 0 && rx + dx < config.cols - 1 && ry + dy > 0 && ry + dy < config.rows - 1) {
                         if (dx*dx + dy*dy <= radius*radius) {
                             data.grid[rx + dx][ry + dy] = 0;
                         }
@@ -3168,16 +3158,12 @@ function generateCaves(data, density, anchors) {
     // === MODE B: UNDERGROUND (TUNNELS) - Level -1 and down ===
     else {
         log("EXCAVATING SUBTERRANEAN SECTOR...", "var(--pip-amber)");
-        
-        // 1. Cellular Automata Setup
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
                 const isBorder = (x === 0 || x === config.cols - 1 || y === 0 || y === config.rows - 1);
                 data.grid[x][y] = isBorder ? 0 : (Math.random() * 100 < density) ? 1 : 0;
             }
         }
-
-        // 2. Smooth the caves
         for (let i = 0; i < 4; i++) {
             let newGrid = JSON.parse(JSON.stringify(data.grid));
             for (let x = 1; x < config.cols - 1; x++) {
@@ -3191,26 +3177,22 @@ function generateCaves(data, density, anchors) {
         }
     }
 
-    // === SHARED: SAFETY PASS ===
-    // Force clear ground around anchors (stairs/entrances)
+    // === SAFETY PASS ===
     anchors.forEach(anchor => {
         for (let dx = -3; dx <= 3; dx++) {
             for (let dy = -3; dy <= 3; dy++) {
                 const tx = anchor.x + dx;
                 const ty = anchor.y + dy;
                 if (tx > 0 && tx < config.cols - 1 && ty > 0 && ty < config.rows - 1) {
-                    // Create a circle of safety
                     if(dx*dx + dy*dy < 8) data.grid[tx][ty] = 1; 
                 }
             }
         }
     });
 
-    // === SHARED: CONNECTIVITY ===
-    // This ensures you don't get trapped in a sand pocket surrounded by rocks
+    // === CONNECTIVITY ===
     const visited = new Set();
     const regions = [];
-
     for (let x = 1; x < config.cols - 1; x++) {
         for (let y = 1; y < config.rows - 1; y++) {
             if (data.grid[x][y] === 1 && !visited.has(`${x},${y}`)) {
@@ -3220,13 +3202,9 @@ function generateCaves(data, density, anchors) {
                 while (queue.length > 0) {
                     const curr = queue.pop();
                     region.push(curr);
-                    const neighbors = [
-                        { x: curr.x + 1, y: curr.y }, { x: curr.x - 1, y: curr.y },
-                        { x: curr.x, y: curr.y + 1 }, { x: curr.x, y: curr.y - 1 }
-                    ];
+                    const neighbors = [{x:curr.x+1,y:curr.y}, {x:curr.x-1,y:curr.y}, {x:curr.x,y:curr.y+1}, {x:curr.x,y:curr.y-1}];
                     for (let n of neighbors) {
-                        if (n.x > 0 && n.x < config.cols - 1 && n.y > 0 && n.y < config.rows - 1 &&
-                            data.grid[n.x][n.y] === 1 && !visited.has(`${n.x},${n.y}`)) {
+                        if (n.x > 0 && n.x < config.cols - 1 && n.y > 0 && n.y < config.rows - 1 && data.grid[n.x][n.y] === 1 && !visited.has(`${n.x},${n.y}`)) {
                             visited.add(`${n.x},${n.y}`);
                             queue.push(n);
                         }
@@ -3237,7 +3215,6 @@ function generateCaves(data, density, anchors) {
         }
     }
 
-    // If multiple isolated regions exist, tunnel between them
     regions.sort((a, b) => b.length - a.length);
     if (regions.length > 1) {
         const mainRegion = regions[0];
@@ -3246,29 +3223,30 @@ function generateCaves(data, density, anchors) {
             let minDistance = Infinity;
             let startPoint = null;
             let endPoint = null;
-
-            // Optimization: Sample center of regions to save CPU
             const targetPt = targetRegion[Math.floor(targetRegion.length / 2)];
-            
-            // Find closest point in main region
             for (let mainPt of mainRegion) {
                 const d = Math.abs(mainPt.x - targetPt.x) + Math.abs(mainPt.y - targetPt.y);
-                if (d < minDistance) {
-                    minDistance = d;
-                    startPoint = mainPt;
-                    endPoint = targetPt;
-                }
-                if(d < 5) break; // Good enough
+                if (d < minDistance) { minDistance = d; startPoint = mainPt; endPoint = targetPt; }
+                if(d < 5) break; 
             }
-
             if (startPoint && endPoint) {
-                // Draw a line of floor (1) to connect them
                 createCorridor(data.grid, startPoint.x, startPoint.y, endPoint.x, endPoint.y, config);
             }
         }
     }
 
-    addRandomLabels(data, currentLevelIndex < 0 ? 'cave_underground' : 'cave_surface', 4, anchors);
+    // === V'S UPGRADE: DYNAMIC POI COUNT ===
+    // Use the density slider to determine how many locations to spawn.
+    // Minimum 3, plus 1 for every ~10% density.
+    // Density 10 = 4 locations. Density 90 = 12 locations.
+    const targetPoiCount = 3 + Math.floor(density / 10);
+
+    addRandomLabels(
+        data, 
+        currentLevelIndex < 0 ? 'cave_underground' : 'cave_surface', 
+        targetPoiCount, // <--- NO MORE HARDCODED 4
+        anchors
+    );
 }
 
 function addRandomLabels(data, source, count, anchors) {
