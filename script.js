@@ -3296,7 +3296,9 @@ function getRandomName(source) {
 
 function findSafeLabelSpot(roomX, roomY, roomW, roomH, text, stairs) { return { x: Math.floor(roomX + roomW/2), y: Math.floor(roomY + roomH/2) }; }	
 
-vault: [
+const ITEM_DATABASE = {
+    // UPDATED ITEM DATABASE (V.29.1)
+    vault: [
         // --- JUNK & COMMON ---
         {n: "Bobby Pin", v: 1}, 
         {n: "Coffee Mug", v: 1}, 
@@ -3346,30 +3348,30 @@ vault: [
         {n: "Laser Rifle", v: 1000}, 
         {n: "Pip-Boy", v: 1000},
         {n: "Mini-Nuke", v: 250} 
-    ]
+    ],
     ruins: [
         // --- JUNK & TRASH (0-10 caps) ---
         {n: "Bent Tin Can", v: 0.5},
         {n: "Tin Can", v: 1}, 
         {n: "Bobby Pin", v: 1}, 
-        {n: "Empty Syringe", v: 2}, // [cite: 2027]
+        {n: "Empty Syringe", v: 2}, 
         {n: "Coffee Pot", v: 3}, 
-        {n: "Wasteland Fruit", v: 3}, // [cite: 2027]
+        {n: "Wasteland Fruit", v: 3}, 
         {n: "Abraxo cleaner", v: 5}, 
         {n: "Duct Tape", v: 5}, 
         {n: "Scrap Metal", v: 5}, 
-        {n: "Scrap Electronics", v: 5}, // [cite: 2027]
-        {n: "Teddy Bear", v: 5}, // [cite: 2027]
-        {n: "Toy Car", v: 5}, // [cite: 2027]
+        {n: "Scrap Electronics", v: 5}, 
+        {n: "Teddy Bear", v: 5}, 
+        {n: "Toy Car", v: 5}, 
         {n: "Jet", v: 5}, 
         {n: "Pre-War Hat", v: 6}, 
-        {n: "Baseball Cap", v: 6}, // [cite: 1993]
+        {n: "Baseball Cap", v: 6}, 
         {n: "Turpentine", v: 8}, 
-        {n: "Pre-War Casualwear", v: 8}, // [cite: 1993]
+        {n: "Pre-War Casualwear", v: 8}, 
         {n: "Pre-War Money", v: 10}, 
         {n: "Lunchbox", v: 10}, 
-        {n: "Dirty Water", v: 10}, // [cite: 2027]
-        {n: "Vacuum Cleaner", v: 10}, // [cite: 2027]
+        {n: "Dirty Water", v: 10}, 
+        {n: "Vacuum Cleaner", v: 10}, 
         {n: "Paint Gun", v: 10}, 
         {n: "Cigarettes", v: 10}, 
 
@@ -3379,94 +3381,94 @@ vault: [
         {n: "Buffout", v: 15}, 
         {n: "Mentats", v: 15}, 
         {n: "Nuka-Cola", v: 20}, 
-        {n: "Raider Helmet", v: 20}, // [cite: 1989]
-        {n: "Brass Knuckles", v: 20}, // [cite: 2008]
-        {n: "Fission Battery", v: 20}, // [cite: 2027]
-        {n: "Sensor Module", v: 20}, // [cite: 2027]
+        {n: "Raider Helmet", v: 20}, 
+        {n: "Brass Knuckles", v: 20}, 
+        {n: "Fission Battery", v: 20}, 
+        {n: "Sensor Module", v: 20}, 
         {n: "Gas Tank", v: 25}, 
         {n: "Stimpak", v: 25}, 
-        {n: "Molotov Cocktail", v: 25}, // [cite: 2004]
-        {n: "Switchblade", v: 25}, // [cite: 2004]
-        {n: "Police Baton", v: 25}, // [cite: 2008]
-        {n: "Dynamite", v: 25}, // [cite: 2004]
+        {n: "Molotov Cocktail", v: 25}, 
+        {n: "Switchblade", v: 25}, 
+        {n: "Police Baton", v: 25}, 
+        {n: "Dynamite", v: 25}, 
         {n: "Psycho-D", v: 30}, 
         {n: "Radaway", v: 35}, 
-        {n: "Tire Iron", v: 40}, // [cite: 2008]
-        {n: "Combat Knife", v: 40}, // [cite: 2004]
+        {n: "Tire Iron", v: 40}, 
+        {n: "Combat Knife", v: 40}, 
         {n: "Super Stimpak", v: 50}, 
         {n: "Leather Jacket", v: 50}, 
-        {n: "Merc Outfit", v: 50}, // [cite: 1989]
+        {n: "Merc Outfit", v: 50}, 
 
         // --- WEAPONS & ARMOR (55-300 caps) ---
         {n: "Baseball Bat", v: 55}, 
-        {n: "Type 17 Chinese Pistol", v: 75}, // [cite: 1996]
-        {n: "Lead Pipe", v: 75}, // [cite: 2008]
-        {n: "Frag Grenade", v: 75}, // [cite: 2004]
-        {n: ".32 Pistol", v: 90}, // [cite: 1996]
-        {n: "9mm Pistol", v: 100}, // [cite: 1996]
+        {n: "Type 17 Chinese Pistol", v: 75}, 
+        {n: "Lead Pipe", v: 75}, 
+        {n: "Frag Grenade", v: 75}, 
+        {n: ".32 Pistol", v: 90}, 
+        {n: "9mm Pistol", v: 100}, 
         {n: "Nuka-Cola Quantum", v: 100}, 
-        {n: ".32 Hunting Rifle", v: 150}, // [cite: 1996]
-        {n: "Leather Armor", v: 160}, // [cite: 1990]
+        {n: ".32 Hunting Rifle", v: 150}, 
+        {n: "Leather Armor", v: 160}, 
         {n: "Raider Armor", v: 180}, 
         {n: "Laser Pistol", v: 200}, 
-        {n: "Single Shotgun", v: 230}, // [cite: 1999]
+        {n: "Single Shotgun", v: 230}, 
         {n: "10mm Pistol", v: 250}, 
-        {n: "9mm Submachine Gun", v: 260}, // [cite: 1996]
+        {n: "9mm Submachine Gun", v: 260}, 
         {n: "10mm Submachine Gun", v: 300}, 
-        {n: "Metal Armor", v: 320}, // [cite: 1990]
+        {n: "Metal Armor", v: 320}, 
 
         // --- HIGH TIER (350+ caps) ---
-        {n: "Sawed-Off Shotgun", v: 370}, // [cite: 1999]
-        {n: "Combat Armor", v: 390}, // [cite: 1990]
-        {n: "Chinese Assault Rifle", v: 500}, // [cite: 1996]
-        {n: "Flamer", v: 500} // [cite: 1999]
-    ]
+        {n: "Sawed-Off Shotgun", v: 370}, 
+        {n: "Combat Armor", v: 390}, 
+        {n: "Chinese Assault Rifle", v: 500}, 
+        {n: "Flamer", v: 500} 
+    ],
     cave: [
         // --- SURVIVAL & HARVEST (0-10 caps) ---
-        {n: "Rock", v: 0}, // It's a rock.
+        {n: "Rock", v: 0}, 
         {n: "Bobby Pin", v: 1}, 
         {n: "Antidote", v: 2}, 
         {n: "Broc Flower", v: 3}, 
         {n: "Xander Root", v: 3}, 
         {n: "Cave Fungus", v: 3}, 
-        {n: "Fresh Apple", v: 5}, //
+        {n: "Fresh Apple", v: 5}, 
         {n: "Mutated Fruit", v: 5}, 
         {n: "Antivenom", v: 5}, 
         {n: "Healing Powder", v: 5}, 
-        {n: "Bloatfly Meat", v: 5}, //
-        {n: "Mole Rat Meat", v: 5}, //
-        {n: "Gecko Hide", v: 8}, //
+        {n: "Bloatfly Meat", v: 5}, 
+        {n: "Mole Rat Meat", v: 5}, 
+        {n: "Gecko Hide", v: 8}, 
         {n: "Poultice", v: 10}, 
         {n: "Dirty Water", v: 10}, 
-        {n: "Radroach Meat", v: 10}, //
+        {n: "Radroach Meat", v: 10}, 
 
         // --- TRIBAL & EXPLORER GEAR (15-60 caps) ---
-        {n: "Throwing Spear", v: 15}, //
+        {n: "Throwing Spear", v: 15}, 
         {n: "Tribal Garb", v: 15}, 
-        {n: "Leather Armor", v: 20}, // Reduced value for basic condition
+        {n: "Leather Armor", v: 20}, 
         {n: "Purified Water", v: 20}, 
         {n: "Dynamite", v: 25}, 
         {n: "Stimpak", v: 25}, 
-        {n: "Gecko Meat (Cooked)", v: 30}, //
+        {n: "Gecko Meat (Cooked)", v: 30}, 
         {n: "Radaway", v: 35}, 
-        {n: "Radscorpion Stinger", v: 40}, //
+        {n: "Radscorpion Stinger", v: 40}, 
         {n: "Deathclaw Hand", v: 45}, 
         {n: "Machete", v: 50}, 
         {n: "Merc Outfit", v: 50}, 
         {n: "Skill Book", v: 50}, 
-        {n: "Tomahawk", v: 60}, //
+        {n: "Tomahawk", v: 60}, 
 
         // --- RARE WEAPONS & TREASURE (75+ caps) ---
-        {n: "Fire Axe", v: 75}, //
-        {n: "Frag Mine", v: 75}, //
+        {n: "Fire Axe", v: 75}, 
+        {n: "Frag Mine", v: 75}, 
         {n: "Power Fist", v: 100}, 
-        {n: "Gold Nugget", v: 100}, //
+        {n: "Gold Nugget", v: 100}, 
         {n: ".32 Hunting Rifle", v: 150}, 
         {n: "Leather Armor, Reinforced", v: 160}, 
-        {n: "Shishkebab", v: 200}, //
-        {n: "Super Sledge", v: 250}, //
+        {n: "Shishkebab", v: 200}, 
+        {n: "Super Sledge", v: 250}, 
         {n: "Sniper Rifle", v: 320},
-        {n: "Fat Man", v: 500} // Rare boss chest item
+        {n: "Fat Man", v: 500} 
     ]
 };
 
