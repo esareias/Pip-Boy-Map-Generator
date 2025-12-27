@@ -3122,37 +3122,43 @@ function generateRuins(data, density, anchors) {
 
 function generateCaves(data, density, anchors) {
     // === MODE A: SURFACE (MOJAVE) - Level 0 and up ===
-    // Logic: The world is SAND (1). We place ROCKS (0) as obstacles.
     if (currentLevelIndex >= 0) {
         log("GENERATING SURFACE TOPOGRAPHY...", "var(--pip-green)");
         
-        // 1. Fill the world with Floor (1)
+        // 1. BASE LAYER: Fill the ENTIRE world with Sand (1)
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
-                // Hard Border = 0 (Void), Everything else = 1 (Sand)
+                // Keep the absolute edges as void (0) to prevent player wandering off map
                 const isBorder = (x === 0 || x === config.cols - 1 || y === 0 || y === config.rows - 1);
                 data.grid[x][y] = isBorder ? 0 : 1;
             }
         }
 
-        // 2. Scatter Rock Formations (0)
-        // Invert density: High slider = Less rocks (More open space)
-        // We use a "Cluster" method so rocks aren't just single pixels
-        const obstacleDensity = Math.max(0.01, (100 - density) / 800); 
+        // 2. OBSTACLE PLACEMENT (The Fix)
+        // "Density" Slider = % of Walkable Ground.
+        // So (100 - Density) = % of Rocks.
+        // We calculate a specific number of rock clusters to spawn.
         
-        for (let x = 2; x < config.cols - 2; x++) {
-            for (let y = 2; y < config.rows - 2; y++) {
-                if (Math.random() < obstacleDensity) {
-                    // Create a rock clump of random size
-                    const radius = Math.random() * 2 + 1;
-                    for (let rx = x - radius; rx <= x + radius; rx++) {
-                        for (let ry = y - radius; ry <= y + radius; ry++) {
-                            if (rx > 0 && rx < config.cols - 1 && ry > 0 && ry < config.rows - 1) {
-                                // Draw a rough circle of "0" (Rock/Void)
-                                if (Math.hypot(rx - x, ry - y) <= radius) {
-                                    data.grid[Math.floor(rx)][Math.floor(ry)] = 0;
-                                }
-                            }
+        // A standard map has about ~3000-4000 grid cells.
+        // Let's cap the max rocks to prevent the blackout issue.
+        const maxClusters = 150; 
+        const inverseDensity = (100 - density) / 100; // 0.0 to 1.0
+        const rockCount = Math.floor(maxClusters * inverseDensity);
+
+        for (let i = 0; i < rockCount; i++) {
+            const rx = Math.floor(Math.random() * (config.cols - 4)) + 2;
+            const ry = Math.floor(Math.random() * (config.rows - 4)) + 2;
+            
+            // Randomize rock size (Small to Medium)
+            const radius = Math.random() * 2.5 + 1; 
+
+            // Carve the rock (Set to 0)
+            for (let dx = -Math.ceil(radius); dx <= Math.ceil(radius); dx++) {
+                for (let dy = -Math.ceil(radius); dy <= Math.ceil(radius); dy++) {
+                    if (rx + dx > 0 && rx + dx < config.cols - 1 && 
+                        ry + dy > 0 && ry + dy < config.rows - 1) {
+                        if (dx*dx + dy*dy <= radius*radius) {
+                            data.grid[rx + dx][ry + dy] = 0;
                         }
                     }
                 }
@@ -3160,7 +3166,6 @@ function generateCaves(data, density, anchors) {
         }
     } 
     // === MODE B: UNDERGROUND (TUNNELS) - Level -1 and down ===
-    // Logic: The world is ROCK (0). We dig TUNNELS (1).
     else {
         log("EXCAVATING SUBTERRANEAN SECTOR...", "var(--pip-amber)");
         
@@ -3168,19 +3173,16 @@ function generateCaves(data, density, anchors) {
         for (let x = 0; x < config.cols; x++) {
             for (let y = 0; y < config.rows; y++) {
                 const isBorder = (x === 0 || x === config.cols - 1 || y === 0 || y === config.rows - 1);
-                // Initial random scatter
                 data.grid[x][y] = isBorder ? 0 : (Math.random() * 100 < density) ? 1 : 0;
             }
         }
 
-        // 2. Smooth the caves (4 passes of "Life")
+        // 2. Smooth the caves
         for (let i = 0; i < 4; i++) {
-            // Create a temporary grid so we don't mess up calculations mid-pass
             let newGrid = JSON.parse(JSON.stringify(data.grid));
             for (let x = 1; x < config.cols - 1; x++) {
                 for (let y = 1; y < config.rows - 1; y++) {
                     let neighbors = getWallCount(data.grid, x, y);
-                    // Standard Smoothing Rules
                     if (neighbors > 4) newGrid[x][y] = 0;
                     else if (neighbors < 4) newGrid[x][y] = 1;
                 }
@@ -3189,22 +3191,23 @@ function generateCaves(data, density, anchors) {
         }
     }
 
-    // === SAFETY PASS (Both Modes) ===
-    // Ensure stairs/anchors are never blocked by rocks/walls
+    // === SHARED: SAFETY PASS ===
+    // Force clear ground around anchors (stairs/entrances)
     anchors.forEach(anchor => {
-        for (let dx = -2; dx <= 2; dx++) {
-            for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -3; dx <= 3; dx++) {
+            for (let dy = -3; dy <= 3; dy++) {
                 const tx = anchor.x + dx;
                 const ty = anchor.y + dy;
                 if (tx > 0 && tx < config.cols - 1 && ty > 0 && ty < config.rows - 1) {
-                    data.grid[tx][ty] = 1; // Force Floor around stairs
+                    // Create a circle of safety
+                    if(dx*dx + dy*dy < 8) data.grid[tx][ty] = 1; 
                 }
             }
         }
     });
 
-    // === CONNECTIVITY (Flood Fill) ===
-    // Ensures we don't have inaccessible islands
+    // === SHARED: CONNECTIVITY ===
+    // This ensures you don't get trapped in a sand pocket surrounded by rocks
     const visited = new Set();
     const regions = [];
 
@@ -3234,7 +3237,7 @@ function generateCaves(data, density, anchors) {
         }
     }
 
-    // Connect smaller regions to the largest one
+    // If multiple isolated regions exist, tunnel between them
     regions.sort((a, b) => b.length - a.length);
     if (regions.length > 1) {
         const mainRegion = regions[0];
@@ -3244,9 +3247,10 @@ function generateCaves(data, density, anchors) {
             let startPoint = null;
             let endPoint = null;
 
-            // Find closest points between regions (Simple approach)
-            // Sampling center points for speed
+            // Optimization: Sample center of regions to save CPU
             const targetPt = targetRegion[Math.floor(targetRegion.length / 2)];
+            
+            // Find closest point in main region
             for (let mainPt of mainRegion) {
                 const d = Math.abs(mainPt.x - targetPt.x) + Math.abs(mainPt.y - targetPt.y);
                 if (d < minDistance) {
@@ -3254,17 +3258,16 @@ function generateCaves(data, density, anchors) {
                     startPoint = mainPt;
                     endPoint = targetPt;
                 }
-                // Optimization: if close enough, stop looking
-                if (d < 5) break; 
+                if(d < 5) break; // Good enough
             }
 
             if (startPoint && endPoint) {
+                // Draw a line of floor (1) to connect them
                 createCorridor(data.grid, startPoint.x, startPoint.y, endPoint.x, endPoint.y, config);
             }
         }
     }
 
-    // Add labels (using different pools for Surface vs Underground)
     addRandomLabels(data, currentLevelIndex < 0 ? 'cave_underground' : 'cave_surface', 4, anchors);
 }
 
