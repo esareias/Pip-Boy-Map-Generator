@@ -2355,7 +2355,10 @@ function generateInterior(key, name) {
     // Use fixed config.gridSize
     const intConfig = { ...config, cols: Math.floor(config.width/config.gridSize), rows: Math.floor(config.height/config.gridSize) };
     const newData = { grid: Array(intConfig.cols).fill().map(() => Array(intConfig.rows).fill(0)), labels: [], stairs: [], loot: [], decorations: [], doors: [], rooms: [], threats: [], exit: null };
-    
+
+	newData.name = name;
+
+	
     const rooms = [];
     const entryRoom = { x: Math.floor(intConfig.cols/2) - 3, y: intConfig.rows - 8, w: 6, h: 6, name: "Entrance", visited: true };	
     createRoom(newData.grid, entryRoom, intConfig);
@@ -2424,14 +2427,44 @@ function exportReport() {
     const textArea = document.getElementById('reportArea');
     const type = document.getElementById('mapType').value.toUpperCase();
     let report = `LOCATION ANALYSIS: ${type}\n================================\n\n`;
+
+    // 1. Export Standard Floors (The part you already had)
     for(let i = -2; i <= 2; i++) {
         if(floorData[i]) {
             report += `[ ${LEVEL_NAMES[i]} ]\n--------------------------------\n`;
-            floorData[i].labels.forEach(lbl => report += ` - ${lbl.text} [GRID: ${Math.floor(lbl.x/config.gridSize)}, ${Math.floor(lbl.y/config.gridSize)}]\n`);
-            if(floorData[i].loot) floorData[i].loot.forEach(l => report += ` - ${l.containerName}: ${l.contents.map(c=>c.n).join(", ")}\n`);
+            if (floorData[i].labels) floorData[i].labels.forEach(lbl => report += ` - ${lbl.text} [GRID: ${Math.floor(lbl.x/config.gridSize)}, ${Math.floor(lbl.y/config.gridSize)}]\n`);
+            if (floorData[i].loot) floorData[i].loot.forEach(l => report += ` - ${l.containerName}: ${l.contents.map(c=>c.n).join(", ")}\n`);
             report += "\n";
         }
     }
+
+    // 2. Export Interiors (The part I fixed)
+    const intKeys = Object.keys(interiorData);
+    if (intKeys.length > 0) {
+        report += `[ INTERIOR SUB-SECTORS ]\n================================\n`;
+        
+        intKeys.forEach(key => {
+            const data = interiorData[key];
+            // Use the stored name if we have it, otherwise use the coordinate key
+            const sectorName = data.name ? data.name.toUpperCase() : `INTERIOR (KEY: ${key})`;
+
+            report += `[ ${sectorName} ]\n--------------------------------\n`;
+            
+            if (data.labels) {
+                data.labels.forEach(lbl => 
+                    report += ` - ${lbl.text} [GRID: ${Math.floor(lbl.x/config.gridSize)}, ${Math.floor(lbl.y/config.gridSize)}]\n`
+                );
+            }
+            
+            if (data.loot) {
+                data.loot.forEach(l => 
+                    report += ` - ${l.containerName}: ${l.contents.map(c=>c.n).join(", ")}\n`
+                );
+            }
+            report += "\n";
+        });
+    }
+
     textArea.value = report;
     document.getElementById('reportModal').style.display = 'flex';
 }
