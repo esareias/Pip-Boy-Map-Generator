@@ -20,6 +20,8 @@
 </head>
 <body class="theme-green" id="app-body">
 
+    <input type="file" id="mapLoaderInput" style="display: none;" accept=".json" onchange="loadMapFromFile(event)">
+
     <div id="characterSelectScreen" class="fixed inset-0 bg-black/95 z-[30000] flex items-center justify-center backdrop-blur-sm">
         <div class="bg-[#1a1c1a] border-2 border-[var(--main-color)] p-8 w-full max-w-2xl shadow-[0_0_50px_var(--dim-color)] text-[var(--main-color)] text-center">
             <h2 class="text-4xl font-bold mb-4" id="selectionTitle">SELECT UNIT DESIGNATION</h2>
@@ -182,7 +184,7 @@
 
             <div class="grid grid-cols-3 gap-2 mb-2">
                 <button onclick="saveMapState()" class="pip-btn border-green-500 text-green-500">[ SAVE ]</button>
-                <button onclick="loadMapState()" class="pip-btn border-blue-500 text-blue-500">[ LOAD ]</button>
+                <button onclick="openFilePicker()" class="pip-btn border-blue-500 text-blue-500">[ LOAD ]</button>
                 <button onclick="downloadMap()" class="pip-btn border-gray-400 text-gray-400">[ IMG ]</button>
             </div>
             
