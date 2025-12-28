@@ -1518,7 +1518,8 @@ function syncData() {
             y: t.y,
             label: t.label,
             color: t.color,
-            src: t.src // Only send the source URL
+            src: t.src, // Only send the source URL
+            multiplier: t.multiplier || 1.0 // <--- ADD THIS LINE. SEND THE DAMN SIZE.
         }));
 
         conn.send({
@@ -1530,7 +1531,6 @@ function syncData() {
             interiorData: interiorData,
             viewMode: viewMode,
             currentInteriorKey: currentInteriorKey
-            // Removed gridSize from payload since it is now fixed/constant
         });
     }
 }
