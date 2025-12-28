@@ -1191,6 +1191,11 @@ function loadMapState() {
   return true;
 }
 
+function openFilePicker() {
+    if (isClient) return;
+    document.getElementById('mapLoaderInput').click();
+}
+
 function loadMapFromFile(event) {
   if (isClient) return;
   
@@ -1207,6 +1212,7 @@ function loadMapFromFile(event) {
         return;
       }
       
+      // 1. RESTORE STATE
       config.mapType = data.mapType;
       floorData = data.floorData;
       interiorData = data.interiorData;
@@ -1214,6 +1220,7 @@ function loadMapFromFile(event) {
       viewMode = data.viewMode || "sector";
       currentInteriorKey = data.currentInteriorKey || null;
       
+      // 2. RESTORE TOKENS
       tokens = data.tokens;
       tokens.forEach(t => {
         if (t.src) {
@@ -1230,8 +1237,19 @@ function loadMapFromFile(event) {
         }
       });
       
+      // 3. UPDATE CONTROLS
       document.getElementById("mapType").value = config.mapType;
       updateLevelControls();
+
+      // === V'S FIX: FORCE UI TO MATCH VIEW MODE ===
+      // This is the part you were missing. It ensures the sidebar buttons are correct.
+      let locName = null;
+      if (viewMode === 'interior' && currentInteriorKey && interiorData[currentInteriorKey]) {
+          locName = interiorData[currentInteriorKey].name || "UNKNOWN INTERIOR";
+      }
+      updateUIForMode(viewMode, locName);
+      // ============================================
+      
       drawCurrentLevel();
       log(`MAP LOADED FROM FILE: ${file.name}`, "#3b82f6");
       
@@ -4822,6 +4840,8 @@ window.handleMouseDown = handleMouseDown;
 window.handleMouseUp = handleMouseUp;
 
 // --------------------------------------------------
+
+window.openFilePicker = openFilePicker;
 
 window.onload = init;
 
