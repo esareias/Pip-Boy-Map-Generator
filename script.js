@@ -561,17 +561,16 @@ mapChannel.onmessage = (event) => {
     if (type === 'ENEMY_DAMAGED') {
         const token = tokens.find(t => t.label === label);
         if (token) {
-            token.hitTimer = 10; // Trigger 10 frames of visual "juice"
-            
-            // Force a redraw so the animation starts immediately for YOU
+            token.hitTimer = 10; // Trigger 10 frames of visual "juice" locally
             if (typeof drawCurrentLevel === 'function') drawCurrentLevel();
 
-            // [V'S FIX]: SCREAM IT TO THE CLIENTS
+            // [V'S FIX]: BROADCAST FX TO ALL OPEN CLIENTS
             if (isHost && connections?.length) {
-                connections.forEach(c => c.send({ 
-                    type: 'FX_DAMAGE', 
-                    label: label 
-                }));
+                connections.forEach(c => {
+                    if (c.open) {
+                        c.send({ type: 'FX_DAMAGE', label: label });
+                    }
+                });
             }
         }
         return;
@@ -587,8 +586,7 @@ mapChannel.onmessage = (event) => {
             
             if (typeof drawCurrentLevel === 'function') drawCurrentLevel();
 
-            // [V'S FIX]: SYNC THE CORPSE DATA
-            // If we don't call this, the clients never get the new color/dead status
+            // Sync the dead status to players immediately
             syncData(); 
         }
         return; 
@@ -1513,11 +1511,11 @@ function receiveData(data) {
         return;
     }
 // [V'S FIX]: DAMAGE ANIMATION HANDLER
-    if (data.type === 'FX_DAMAGE') {
+  if (data.type === 'FX_DAMAGE') {
         const token = tokens.find(t => t.label === data.label);
         if (token) {
-            token.hitTimer = 10; // Set the shake timer locally on the client
-            drawCurrentLevel();  // Render it immediately
+            token.hitTimer = 10; // Set shake timer
+            drawCurrentLevel();  // Force immediate redraw
         }
         return;
     }
@@ -1557,29 +1555,44 @@ function receiveData(data) {
 // <--- THIS is where the function actually ends now.
 
 function syncData() {
-    if (isHost && conn) {
-        // Prepare tokens for serialization
-        const serializableTokens = tokens.map(t => ({
-            id: t.id,
-            x: t.x,
-            y: t.y,
-            label: t.label,
-            color: t.color,
-            src: t.src, 
-            multiplier: t.multiplier || 1.0,
-            dead: t.dead || false // [V'S FIX]: Send the death flag explicitly
-        }));
+    // Only Host can sync, and we need at least one connection
+    if (!isHost) return;
 
-        conn.send({
-            type: 'SYNC',
-            floorData: floorData,
-            tokens: serializableTokens,
-            levelIdx: currentLevelIndex,
-            mapType: config.mapType,
-            interiorData: interiorData,
-            viewMode: viewMode,
-            currentInteriorKey: currentInteriorKey
+    // 1. Prepare the data payload once
+    const serializableTokens = tokens.map(t => ({
+        id: t.id,
+        x: t.x,
+        y: t.y,
+        label: t.label,
+        color: t.color,
+        src: t.src,
+        multiplier: t.multiplier || 1.0,
+        dead: t.dead || false // Ensure dead flag is sent
+    }));
+
+    const payload = {
+        type: 'SYNC',
+        floorData: floorData,
+        tokens: serializableTokens,
+        levelIdx: currentLevelIndex,
+        mapType: config.mapType,
+        interiorData: interiorData,
+        viewMode: viewMode,
+        currentInteriorKey: currentInteriorKey
+    };
+
+    // 2. BROADCAST to ALL open connections
+    // This fixes the issue where 'conn' might be stale but 'connections' has the active player
+    if (connections.length > 0) {
+        connections.forEach(c => {
+            if (c.open) {
+                c.send(payload);
+            }
         });
+        console.log(`Synced map state to ${connections.length} clients.`);
+    } else if (conn && conn.open) {
+        // Fallback for legacy single-connection setup
+        conn.send(payload);
     }
 }
 
