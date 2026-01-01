@@ -1833,12 +1833,6 @@ function animate(time) {
     drawCurrentLevel(time);
 }
 
-// --- NEW MOUSE HANDLER IMPLEMENTATION ---
-// --- NEW MOUSE HANDLER IMPLEMENTATION (FINAL COMMAND CENTER VERSION) ---
-
-// --- GROUP SELECTION GLOBALS (Make sure these are at the top of your script) ---
-let selectedTokens = new Set(); 
-let lastDragUpdate = { x: 0, y: 0 }; 
 
 function handleMouseDown(e) {
     // 1. IGNORE UI CLICKS
