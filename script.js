@@ -562,8 +562,17 @@ mapChannel.onmessage = (event) => {
         const token = tokens.find(t => t.label === label);
         if (token) {
             token.hitTimer = 10; // Trigger 10 frames of visual "juice"
-            // Force a redraw so the animation starts immediately
+            
+            // Force a redraw so the animation starts immediately for YOU
             if (typeof drawCurrentLevel === 'function') drawCurrentLevel();
+
+            // [V'S FIX]: SCREAM IT TO THE CLIENTS
+            if (isHost && connections?.length) {
+                connections.forEach(c => c.send({ 
+                    type: 'FX_DAMAGE', 
+                    label: label 
+                }));
+            }
         }
         return;
     }
@@ -575,7 +584,12 @@ mapChannel.onmessage = (event) => {
             token.color = '#4b5563'; // Slate Grey
             token.dead = true;       // The "Death Flag"
             console.log(`V has confirmed ${label} is pushing up rad-daisies.`);
+            
             if (typeof drawCurrentLevel === 'function') drawCurrentLevel();
+
+            // [V'S FIX]: SYNC THE CORPSE DATA
+            // If we don't call this, the clients never get the new color/dead status
+            syncData(); 
         }
         return; 
     }
@@ -1498,7 +1512,15 @@ function receiveData(data) {
         drawCurrentLevel();
         return;
     }
-
+// [V'S FIX]: DAMAGE ANIMATION HANDLER
+    if (data.type === 'FX_DAMAGE') {
+        const token = tokens.find(t => t.label === data.label);
+        if (token) {
+            token.hitTimer = 10; // Set the shake timer locally on the client
+            drawCurrentLevel();  // Render it immediately
+        }
+        return;
+    }
     // 3. SYNC HANDLER (Now correctly inside the function)
     if (data.type === 'SYNC') {
         floorData = data.floorData;
@@ -1536,21 +1558,22 @@ function receiveData(data) {
 
 function syncData() {
     if (isHost && conn) {
-        // Prepare tokens for serialization: only send URL (src), not the image object (img)
+        // Prepare tokens for serialization
         const serializableTokens = tokens.map(t => ({
             id: t.id,
             x: t.x,
             y: t.y,
             label: t.label,
             color: t.color,
-            src: t.src, // Only send the source URL
-            multiplier: t.multiplier || 1.0 // <--- ADD THIS LINE. SEND THE DAMN SIZE.
+            src: t.src, 
+            multiplier: t.multiplier || 1.0,
+            dead: t.dead || false // [V'S FIX]: Send the death flag explicitly
         }));
 
         conn.send({
             type: 'SYNC',
             floorData: floorData,
-            tokens: serializableTokens, // Send simplified token list
+            tokens: serializableTokens,
             levelIdx: currentLevelIndex,
             mapType: config.mapType,
             interiorData: interiorData,
