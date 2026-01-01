@@ -2030,7 +2030,7 @@ function handleMouseMove(e) {
 function handleMouseUp(e) {
     screenContainer.classList.remove('grabbing');
 
-   // Stop Measuring
+    // Stop Measuring
     if (isMeasuring) {
         isMeasuring = false;
         
@@ -2038,21 +2038,41 @@ function handleMouseUp(e) {
         if (isHost) {
             broadcastMeasurement({ active: false });
         }
-        // ----------------------------------------
-
+        
         drawCurrentLevel();
         return;
     }
 
     // Stop Token Drag
     if (draggedToken) {
+        // === V'S FIX: DETECT CLICK VS DRAG ===
+        // Calculate how far the mouse moved since we grabbed the token
+        const distMoved = Math.hypot(e.clientX - lastPanX, e.clientY - lastPanY);
+
+        // If we moved less than the threshold, it was a CLICK, not a drag.
+        if (distMoved < MINIMAL_MOVEMENT_THRESHOLD) {
+            
+            // 1. CHECK FOR AMBUSH REVEAL (GM ONLY)
+            if (!isClient && draggedToken.isVisibleToPlayers === false) {
+                draggedToken.isVisibleToPlayers = true; // Manifest!
+                log(`[!] AMBUSH TRIGGERED: ${draggedToken.label} has manifested!`, 'var(--pip-green)');
+                
+                // Play a little sound or visual cue here if you wanted
+                
+                // Force sync and redraw immediately so players see it
+                if (typeof syncData === 'function') syncData();
+                drawCurrentLevel();
+            }
+        }
+        // ======================================
+
         draggedToken = null;
         syncData();
         isPanning = false;
         return;
     }
 
-    // Click Trigger (if we didn't drag/pan much)
+    // Click Trigger (for map interactions, not tokens)
     if (
         isPanning &&
         Math.abs(e.clientX - lastPanX) < MINIMAL_MOVEMENT_THRESHOLD &&
