@@ -78,7 +78,9 @@ let isClient = false;      // If true, disable generation controls
 // --- TOKEN LOGIC & PRESETS (Used for Selection and GM Deploy) ---
 const OVERSEER_TOKEN_ID = "OVERSEER";
 
-
+// --- GROUP SELECTION GLOBALS ---
+let selectedTokens = new Set(); // Stores the currently selected token objects
+let lastDragUpdate = { x: 0, y: 0 }; // Used for calculating delta movement
 
 
 const TOKEN_PRESETS = [
@@ -1836,30 +1838,25 @@ function animate(time) {
 
 function handleMouseDown(e) {
     // 1. IGNORE UI CLICKS
-    // This allows the "UPPER/LOWER" buttons to work without triggering a map drag
     if (e.target.closest('button') || e.target.closest('input')) return;
 
-    // 2. GLOBAL MATH: Calculate coordinates based on the VISUAL canvas size
+    // 2. GLOBAL MATH
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
     
-    // Convert screen pixels to canvas pixels
     const rawX = (e.clientX - rect.left) * scaleX;
     const rawY = (e.clientY - rect.top) * scaleY;
 
-    // Convert to logical game coordinates (taking Zoom into account)
     const logicalMouseX = rawX / (RENDER_SCALE * zoomLevel);
     const logicalMouseY = rawY / (RENDER_SCALE * zoomLevel);
     
-    // Apply the Map Pan Offset
     const pannedLogicalX = logicalMouseX - mapOffsetX;
     const pannedLogicalY = logicalMouseY - mapOffsetY;
 
-    // 3. RIGHT-CLICK HANDLER (Toggle Token Labels)
+    // 3. RIGHT-CLICK HANDLER (Toggle Labels)
     if (e.button === 2) {
         e.preventDefault();
-        
         for (let i = tokens.length - 1; i >= 0; i--) {
             const t = tokens[i];
             const dist = Math.hypot(pannedLogicalX - t.x, pannedLogicalY - t.y);
@@ -1874,34 +1871,80 @@ function handleMouseDown(e) {
                 return;
             }
         }
-        return; // Prevent panning after right-click
-    }
-
-    // 4. MEASUREMENT TOOL (Shift + Left Click)
-    if (e.shiftKey) {
-        isMeasuring = true;
-        measureStart = { x: pannedLogicalX, y: pannedLogicalY };
-        measureEnd = { x: pannedLogicalX, y: pannedLogicalY };
         return; 
     }
 
-    // 5. CHECK TOKEN DRAG START (GM ONLY)
+    // 4. MEASUREMENT TOOL
+    if (e.shiftKey && isClient) { // Clients use shift for measure, GM uses shift for group select
+         isMeasuring = true;
+         measureStart = { x: pannedLogicalX, y: pannedLogicalY };
+         measureEnd = { x: pannedLogicalX, y: pannedLogicalY };
+         return; 
+    }
+    // GM Measure Override: Ctrl+Shift or just toggle tool? 
+    // Let's keep Shift for GM Selection priority, maybe Ctrl+Click for measure? 
+    // For now, let's assume GM prioritizes Selection over Measure with Shift.
+
+    // 5. CHECK TOKEN DRAG / SELECTION (GM ONLY)
     if (!isClient) {
         const isDeleteAttempt = e.altKey || e.ctrlKey || e.metaKey;
+        let hitToken = null;
+
+        // Find clicked token
         for (let t of tokens) {
             const dx = pannedLogicalX - t.x;
             const dy = pannedLogicalY - t.y;
             if (dx * dx + dy * dy < 400) { // 20px hit radius
-                if (isDeleteAttempt) {
-                    // Deletion is handled in MouseUp/Click
+                hitToken = t;
+                break; // Prioritize top token
+            }
+        }
+
+        if (hitToken) {
+            if (isDeleteAttempt) {
+                // Let MouseUp handle delete/ambush logic
+            } else {
+                // [V'S FIX]: GROUP SELECTION LOGIC
+                if (e.shiftKey) {
+                    // Toggle Selection
+                    if (selectedTokens.has(hitToken)) {
+                        selectedTokens.delete(hitToken);
+                        // If we clicked to deselect, don't initiate a drag on this token
+                        draggedToken = null; 
+                    } else {
+                        selectedTokens.add(hitToken);
+                        draggedToken = hitToken;
+                    }
                 } else {
-                    draggedToken = t;
+                    // Normal Click
+                    // If we clicked a token NOT in the current group, clear group and select only this one
+                    if (!selectedTokens.has(hitToken)) {
+                        selectedTokens.clear();
+                        selectedTokens.add(hitToken);
+                    }
+                    // If it WAS in the group, we leave the group alone so we can drag them all
+                    draggedToken = hitToken;
+                }
+
+                if (draggedToken) {
                     screenContainer.classList.remove('crosshair');
                     screenContainer.classList.add('grabbing');
-                    lastPanX = e.clientX;
+                    
+                    // Track position for relative movement
+                    lastDragUpdate = { x: pannedLogicalX, y: pannedLogicalY };
+                    
+                    // Track for click detection (ambush/delete)
+                    lastPanX = e.clientX; 
                     lastPanY = e.clientY;
-                    return;
                 }
+                drawCurrentLevel(); // Redraw to show selection ring
+                return;
+            }
+        } else {
+            // Clicked Empty Space -> Clear Selection
+            if (!e.shiftKey) {
+                selectedTokens.clear();
+                drawCurrentLevel();
             }
         }
     }
@@ -1948,10 +1991,28 @@ function handleMouseMove(e) {
         return;
     }
 
-    // === TOKEN DRAG ===
+    // === TOKEN DRAG (GROUP & RELATIVE) ===
     if (draggedToken) {
-        draggedToken.x = pannedLogicalX;
-        draggedToken.y = pannedLogicalY;
+        // Calculate how much the mouse moved since the last frame (Delta)
+        const dx = pannedLogicalX - lastDragUpdate.x;
+        const dy = pannedLogicalY - lastDragUpdate.y;
+
+        // Apply that movement to the group
+        if (selectedTokens.size > 0 && selectedTokens.has(draggedToken)) {
+            // If dragging a member of the group, move the WHOLE group
+            selectedTokens.forEach(t => {
+                t.x += dx;
+                t.y += dy;
+            });
+        } else {
+            // Fallback: If for some reason a token isn't in the group set, just move it individually
+            draggedToken.x += dx;
+            draggedToken.y += dy;
+        }
+
+        // Update the tracker for the next frame
+        lastDragUpdate = { x: pannedLogicalX, y: pannedLogicalY };
+
         drawCurrentLevel();
         screenContainer.classList.add('grabbing');
         return;
@@ -2006,8 +2067,8 @@ function handleMouseMove(e) {
                 tooltip.style.top = (e.clientY + 15) + 'px';
                 
                 let status;
-                if (item.looted) { status = `[ EMPTY ]`; }     
-                else if (item.isLocked) { status = `[ LOCKED: ${item.lockDetail.replace(/\[|\]/g, '')} ${item.containerName} ]`; }     
+                if (item.looted) { status = `[ EMPTY ]`; }      
+                else if (item.isLocked) { status = `[ LOCKED: ${item.lockDetail.replace(/\[|\]/g, '')} ${item.containerName} ]`; }      
                 else { status = `[ ${item.containerName} ]`; }
 
                 tooltip.innerText = status;
@@ -4873,9 +4934,20 @@ for (let t of tokens) {
         // Use Amber for hidden labels so you don't forget they're stealthed
         ctx.fillStyle = (t.isVisibleToPlayers === false) ? "#fbbf24" : "#ffffff";
         ctx.fillText(t.label, tx, labelY);
-    } 
-} 
-
+    }
+// [V'S FIX]: SELECTION RING
+    // Only show for GM to avoid cluttering player screen, or show for everyone if you want players to see who GM grabbed.
+    // Usually only the GM needs to see their selection.
+    if (!isClient && selectedTokens.has(t)) {
+        ctx.strokeStyle = '#06b6d4'; // Cyan
+        ctx.lineWidth = 2 * RENDER_SCALE * zoomLevel;
+        ctx.setLineDash([5, 5]); // Dashed line
+        ctx.beginPath();
+        ctx.arc(tx, ty, tokenRadius + (5 * zoomLevel), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]); // Reset dash
+    }
+}
 // --- MEASUREMENT TOOL (The Ruler) ---
 if (isMeasuring) {
     const sx = (measureStart.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
