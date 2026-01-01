@@ -268,8 +268,8 @@ function openGMTokenDeploy() {
     const modal = document.getElementById('gmTokenDeployModal');
     const grid = document.getElementById('tokenGrid');
     grid.innerHTML = '';
-	
-	 // === ADD SYNC BUTTON HERE ===
+    
+     // === ADD SYNC BUTTON HERE ===
     const syncBtn = document.createElement('button');
     syncBtn.innerHTML = '[SYNC ENEMIES]';
     syncBtn.className = 'pip-btn w-full mb-4 bg-green-600 hover:bg-green-700';
@@ -280,8 +280,11 @@ function openGMTokenDeploy() {
     // Category dropdown with ALL categories
     const select = document.createElement('select');
     select.className = "pip-input w-full mb-4";
+    
+    // V'S FIX: Added the CUSTOM option here
     select.innerHTML = `
         <option value="players">PLAYERS</option>
+        <option value="custom">CUSTOM UNIT</option> 
         <option value="ghouls">GHOULS</option>
         <option value="supermutants">SUPER MUTANTS</option>
         <option value="raiders">RAIDERS</option>
@@ -304,11 +307,14 @@ function openGMTokenDeploy() {
 function showTokenCategory(category, grid) {
     grid.innerHTML = '';
 
-    // Re-add category selector
+    // Re-add category selector so it doesn't disappear
     const select = document.createElement('select');
     select.className = "pip-input w-full mb-4";
+    
+    // V'S FIX: Added the CUSTOM option here too
     select.innerHTML = `
         <option value="players">PLAYERS</option>
+        <option value="custom">CUSTOM UNIT</option>
         <option value="ghouls">GHOULS</option>
         <option value="supermutants">SUPER MUTANTS</option>
         <option value="raiders">RAIDERS</option>
@@ -332,22 +338,25 @@ function showTokenCategory(category, grid) {
             div.onclick = () => spawnToken(p.name, p.color, p.src);
             grid.appendChild(div);
         });
-    } // Locate this section inside your showTokenCategory function under 'custom'
-else if (category === 'custom') {
-    const div = document.createElement('div');
-    div.className = "col-span-full p-4 border border-[var(--dim-color)]";
-    div.innerHTML = `
-        <label class="block mb-2 text-sm">NAME:</label>
-        <input type="text" id="customName" class="pip-input mb-3" placeholder="Enemy Name">
-        <label class="block mb-2 text-sm">IMAGE URL:</label>
-        <input type="text" id="customUrl" class="pip-input mb-3" placeholder="https://...">
-        <div class="flex gap-2">
-            <button onclick="spawnCustomToken(false)" class="pip-btn flex-1">[DEPLOY VISIBLE]</button>
-            <button onclick="spawnCustomToken(true)" class="pip-btn flex-1 border-yellow-600 text-yellow-500">[DEPLOY HIDDEN]</button>
-        </div>
-    `;
-    grid.appendChild(div);
-} else {
+    } 
+    // === V'S FIX: THIS IS THE MISSING UI ===
+    else if (category === 'custom') {
+        const div = document.createElement('div');
+        div.className = "col-span-full p-4 border border-[var(--dim-color)]";
+        div.innerHTML = `
+            <label class="block mb-2 text-sm">NAME:</label>
+            <input type="text" id="customName" class="pip-input mb-3" placeholder="Enemy Name">
+            <label class="block mb-2 text-sm">IMAGE URL:</label>
+            <input type="text" id="customUrl" class="pip-input mb-3" placeholder="https://...">
+            <div class="flex gap-2">
+                <button onclick="spawnCustomToken(false)" class="pip-btn flex-1">[DEPLOY VISIBLE]</button>
+                <button onclick="spawnCustomToken(true)" class="pip-btn flex-1 border-yellow-600 text-yellow-500">[DEPLOY HIDDEN]</button>
+            </div>
+        `;
+        grid.appendChild(div);
+    } 
+    // ======================================
+    else {
         // Map category value to ENEMY_PRESETS key
         const categoryMap = {
             'ghouls': 'Ghouls',
