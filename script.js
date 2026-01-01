@@ -1568,6 +1568,7 @@ function syncData() {
         src: t.src,
         multiplier: t.multiplier || 1.0,
         dead: t.dead || false // Ensure dead flag is sent
+		isVisibleToPlayers: (t.isVisibleToPlayers === undefined) ? true : t.isVisibleToPlayers
     }));
 
     const payload = {
