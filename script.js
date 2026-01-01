@@ -1879,6 +1879,7 @@ function handleMouseDown(e) {
     }
 
     // 4. DETECT TOKEN HIT (GM ONLY)
+    // We calculate this first so we know if we are clicking a unit or the floor
     let hitToken = null;
     if (!isClient) {
         const isDeleteAttempt = e.altKey || e.ctrlKey || e.metaKey;
@@ -1895,8 +1896,7 @@ function handleMouseDown(e) {
         
         // Handle Delete/Ambush logic here if clicked with Alt/Ctrl
         if (isDeleteAttempt && hitToken) {
-             // Let MouseUp handle the actual delete/reveal action to prevent dragging conflicts
-             // We just return here to stop Panning
+             // Let MouseUp handle the actual delete/reveal action
              return; 
         }
     }
