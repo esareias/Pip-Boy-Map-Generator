@@ -332,18 +332,22 @@ function showTokenCategory(category, grid) {
             div.onclick = () => spawnToken(p.name, p.color, p.src);
             grid.appendChild(div);
         });
-    } else if (category === 'custom') {
-        const div = document.createElement('div');
-        div.className = "col-span-full p-4 border border-[var(--dim-color)]";
-        div.innerHTML = `
-            <label class="block mb-2 text-sm">NAME:</label>
-            <input type="text" id="customName" class="pip-input mb-3" placeholder="Enemy Name">
-            <label class="block mb-2 text-sm">IMAGE URL:</label>
-            <input type="text" id="customUrl" class="pip-input mb-3" placeholder="https://...">
-            <button onclick="spawnCustomToken()" class="pip-btn w-full">[DEPLOY]</button>
-        `;
-        grid.appendChild(div);
-    } else {
+    } // Locate this section inside your showTokenCategory function under 'custom'
+else if (category === 'custom') {
+    const div = document.createElement('div');
+    div.className = "col-span-full p-4 border border-[var(--dim-color)]";
+    div.innerHTML = `
+        <label class="block mb-2 text-sm">NAME:</label>
+        <input type="text" id="customName" class="pip-input mb-3" placeholder="Enemy Name">
+        <label class="block mb-2 text-sm">IMAGE URL:</label>
+        <input type="text" id="customUrl" class="pip-input mb-3" placeholder="https://...">
+        <div class="flex gap-2">
+            <button onclick="spawnCustomToken(false)" class="pip-btn flex-1">[DEPLOY VISIBLE]</button>
+            <button onclick="spawnCustomToken(true)" class="pip-btn flex-1 border-yellow-600 text-yellow-500">[DEPLOY HIDDEN]</button>
+        </div>
+    `;
+    grid.appendChild(div);
+} else {
         // Map category value to ENEMY_PRESETS key
         const categoryMap = {
             'ghouls': 'Ghouls',
@@ -412,7 +416,7 @@ function spawnMultipleEnemies(baseName, color, src) {
 }
 
 
-function spawnTokenAtPosition(name, color, src, x, y, multiplier = 1.0) {
+function spawnTokenAtPosition(name, color, src, x, y, multiplier = 1.0, isHidden = false) {
     const t = {
         id: Date.now() + Math.random(),
         x: x,
@@ -421,7 +425,8 @@ function spawnTokenAtPosition(name, color, src, x, y, multiplier = 1.0) {
         color: color,
         src: src || "",
         img: null,
-        multiplier: multiplier // <--- THE DNA: 0.75, 1.0, 1.5, or 2.0
+        multiplier: multiplier,
+        isVisibleToPlayers: !isHidden // If hidden is true, visibility is false
     };
 
     if (src) {
@@ -431,18 +436,11 @@ function spawnTokenAtPosition(name, color, src, x, y, multiplier = 1.0) {
             drawCurrentLevel();
             if (typeof syncData === "function") syncData();
         };
-        img.onerror = () => {
-            t.img = null;
-            t.color = "#ef4444";
-            log(`Image failed for ${name}`, "#ef4444");
-        };
         img.src = src;
-        t.img = img;
     }
 
     tokens.push(t);
     if (typeof syncData === "function") syncData();
-    log(`Spawned: ${name} [Size x${multiplier}]`, color);
 }
 
 // Modified original spawnToken to use the new function
@@ -451,11 +449,29 @@ function spawnToken(name, color, src) {
     closeGMTokenDeploy();
 }
 
-function spawnCustomToken() {
+// --- REPLACED: Single, multi-purpose spawn function ---
+function spawnCustomToken(isHidden = false) {
     const name = document.getElementById('customName').value || "CUSTOM UNIT";
     const url = document.getElementById('customUrl').value || "";
-    spawnToken(name, "#ffffff", url);
+    
+    // We use the position-based spawn to handle the 'hidden' logic
+    spawnTokenAtPosition(
+        name, 
+        "#ffffff", 
+        url, 
+        config.width / 2, 
+        config.height / 2, 
+        1.0, 
+        isHidden // The secret sauce
+    );
+    
     closeGMTokenDeploy();
+
+    if (isHidden) {
+        log(`DEPLOYED HIDDEN UNIT: ${name}`, 'var(--pip-amber)');
+    } else {
+        log(`DEPLOYED UNIT: ${name}`, 'var(--pip-green)');
+    }
 }
 
 function closeGMTokenDeploy() {
@@ -2076,8 +2092,9 @@ function handleCanvasAction(e) {
     let clicked = false;
     const currentTime = Date.now();
     
-    // 1. CHECK TOKEN DELETE (GM ONLY)
+    // --- GM ONLY ACTIONS: DELETION & AMBUSH REVEAL ---
     if (!isClient) {
+        // 1. CHECK TOKEN DELETE (Alt/Ctrl/Meta + Click)
         const isDeleteAttempt = e.altKey || e.ctrlKey || e.metaKey;     
         if (isDeleteAttempt) {
             for (let i = 0; i < tokens.length; i++) {
@@ -2093,9 +2110,27 @@ function handleCanvasAction(e) {
                 }
             }
         }
+
+        // 2. V's AMBUSH REVEAL LOGIC
+        // This checks if you clicked a hidden token to manifest it for players
+        for (let t of tokens) {
+            const dx = pannedLogicalX - t.x;
+            const dy = pannedLogicalY - t.y;
+
+            // If you click a hidden token (20px radius)
+            if (dx * dx + dy * dy < 400 && t.isVisibleToPlayers === false) {
+                t.isVisibleToPlayers = true; // Manifest!
+                
+                log(`[!] AMBUSH TRIGGERED: ${t.label} has manifested!`, 'var(--pip-green)');
+                
+                if (typeof syncData === 'function') syncData(); 
+                drawCurrentLevel(); // Immediate visual update
+                return; // Stop here so we don't trigger other clicks
+            }
+        }
     }
 
-    // 2. CLIENT RESTRICTION CHECK
+    // 3. CLIENT RESTRICTION CHECK
     if (isClient) {
         if (viewMode === 'sector') {
             for (let lbl of data.labels) {
@@ -2112,7 +2147,7 @@ function handleCanvasAction(e) {
         return; 
     }
 
-    // --- GM ONLY ACTIONS BELOW ---
+    // --- GM ONLY ACTIONS BELOW (Fog, Loot, Radio, Nav) ---
 
     // FOG REVEAL
     if (config.fogEnabled && data.rooms) {
