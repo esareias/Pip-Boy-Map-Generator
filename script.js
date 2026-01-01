@@ -1873,38 +1873,41 @@ function handleMouseDown(e) {
     }
 
     // 4. DETECT TOKEN HIT (GM ONLY)
-    // We calculate this first so we know if we are clicking a unit or the floor
     let hitToken = null;
     if (!isClient) {
         const isDeleteAttempt = e.altKey || e.ctrlKey || e.metaKey;
-        if (!isDeleteAttempt) {
-             for (let t of tokens) {
-                const dx = pannedLogicalX - t.x;
-                const dy = pannedLogicalY - t.y;
-                if (dx * dx + dy * dy < 400) { // 20px hit radius
-                    hitToken = t;
-                    break; 
-                }
+        // Only look for tokens if we aren't trying to force a measure on empty ground
+        // (This loop is fine to run, we just handle the action later)
+        for (let t of tokens) {
+            const dx = pannedLogicalX - t.x;
+            const dy = pannedLogicalY - t.y;
+            if (dx * dx + dy * dy < 400) { // 20px hit radius
+                hitToken = t;
+                break; 
             }
         }
         
-        // Handle Delete/Ambush logic here if clicked with Alt/Ctrl
-        if (isDeleteAttempt && hitToken) {
-             // Let MouseUp handle the actual delete/reveal action
+        // Handle Delete/Ambush logic here ONLY if Shift is NOT held.
+        // [V'S FIX]: If Shift is held, we skip this so we can check for Force Measure.
+        if (isDeleteAttempt && hitToken && !e.shiftKey) {
              return; 
         }
     }
 
     // 5. THE "SMART" SHIFT LOGIC (Measurement vs. Grouping)
     if (e.shiftKey) {
-        // A. If GM clicks a TOKEN with Shift -> GROUP SELECT
-        if (hitToken && !isClient) {
+        // [V'S FIX]: FORCE MEASURE CHECK
+        // If holding CTRL (or CMD) + SHIFT, ignore the token and measure anyway.
+        const isForceMeasure = e.ctrlKey || e.metaKey;
+
+        // A. If GM clicks a TOKEN with Shift (AND NOT FORCING MEASURE) -> GROUP SELECT
+        if (hitToken && !isClient && !isForceMeasure) {
             if (selectedTokens.has(hitToken)) {
                 selectedTokens.delete(hitToken);
                 draggedToken = null; 
             } else {
                 selectedTokens.add(hitToken);
-                draggedToken = hitToken; // Allow immediate drag of the new group
+                draggedToken = hitToken; 
             }
             
             if (draggedToken) {
@@ -1918,8 +1921,11 @@ function handleMouseDown(e) {
             return;
         } 
         
-        // B. If ANYONE clicks EMPTY GROUND with Shift -> MEASURE
-        // (Or if a Client clicks anything with Shift)
+        // B. MEASURE LOGIC (Fallthrough)
+        // Happens if: 
+        // 1. We clicked empty ground + Shift
+        // 2. We clicked a token + Shift + Ctrl (Force Measure)
+        // 3. We are a Client + Shift
         else {
             isMeasuring = true;
             measureStart = { x: pannedLogicalX, y: pannedLogicalY };
@@ -1930,12 +1936,10 @@ function handleMouseDown(e) {
 
     // 6. NO SHIFT KEY (Normal Logic)
     if (hitToken && !isClient) {
-        // If clicking a token NOT in the group, clear group and select only this one
         if (!selectedTokens.has(hitToken)) {
             selectedTokens.clear();
             selectedTokens.add(hitToken);
         }
-        // Initiate Drag
         draggedToken = hitToken;
         screenContainer.classList.remove('crosshair');
         screenContainer.classList.add('grabbing');
@@ -1945,12 +1949,10 @@ function handleMouseDown(e) {
         drawCurrentLevel();
         return;
     } else {
-        // Clicked Empty Space without Shift -> Clear Selection & Pan
         if (!isClient) {
             selectedTokens.clear();
             drawCurrentLevel();
         }
-        
         isPanning = true;
         lastPanX = e.clientX;
         lastPanY = e.clientY;
