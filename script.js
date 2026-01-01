@@ -1836,6 +1836,10 @@ function animate(time) {
 // --- NEW MOUSE HANDLER IMPLEMENTATION ---
 // --- NEW MOUSE HANDLER IMPLEMENTATION (FINAL COMMAND CENTER VERSION) ---
 
+// --- GROUP SELECTION GLOBALS (Make sure these are at the top of your script) ---
+let selectedTokens = new Set(); 
+let lastDragUpdate = { x: 0, y: 0 }; 
+
 function handleMouseDown(e) {
     // 1. IGNORE UI CLICKS
     if (e.target.closest('button') || e.target.closest('input')) return;
@@ -1874,86 +1878,90 @@ function handleMouseDown(e) {
         return; 
     }
 
-    // 4. MEASUREMENT TOOL
-    if (e.shiftKey && isClient) { // Clients use shift for measure, GM uses shift for group select
-         isMeasuring = true;
-         measureStart = { x: pannedLogicalX, y: pannedLogicalY };
-         measureEnd = { x: pannedLogicalX, y: pannedLogicalY };
-         return; 
-    }
-    // GM Measure Override: Ctrl+Shift or just toggle tool? 
-    // Let's keep Shift for GM Selection priority, maybe Ctrl+Click for measure? 
-    // For now, let's assume GM prioritizes Selection over Measure with Shift.
-
-    // 5. CHECK TOKEN DRAG / SELECTION (GM ONLY)
+    // 4. DETECT TOKEN HIT (GM ONLY)
+    let hitToken = null;
     if (!isClient) {
         const isDeleteAttempt = e.altKey || e.ctrlKey || e.metaKey;
-        let hitToken = null;
-
-        // Find clicked token
-        for (let t of tokens) {
-            const dx = pannedLogicalX - t.x;
-            const dy = pannedLogicalY - t.y;
-            if (dx * dx + dy * dy < 400) { // 20px hit radius
-                hitToken = t;
-                break; // Prioritize top token
+        if (!isDeleteAttempt) {
+             for (let t of tokens) {
+                const dx = pannedLogicalX - t.x;
+                const dy = pannedLogicalY - t.y;
+                if (dx * dx + dy * dy < 400) { // 20px hit radius
+                    hitToken = t;
+                    break; 
+                }
             }
         }
-
-        if (hitToken) {
-            if (isDeleteAttempt) {
-                // Let MouseUp handle delete/ambush logic
-            } else {
-                // [V'S FIX]: GROUP SELECTION LOGIC
-                if (e.shiftKey) {
-                    // Toggle Selection
-                    if (selectedTokens.has(hitToken)) {
-                        selectedTokens.delete(hitToken);
-                        // If we clicked to deselect, don't initiate a drag on this token
-                        draggedToken = null; 
-                    } else {
-                        selectedTokens.add(hitToken);
-                        draggedToken = hitToken;
-                    }
-                } else {
-                    // Normal Click
-                    // If we clicked a token NOT in the current group, clear group and select only this one
-                    if (!selectedTokens.has(hitToken)) {
-                        selectedTokens.clear();
-                        selectedTokens.add(hitToken);
-                    }
-                    // If it WAS in the group, we leave the group alone so we can drag them all
-                    draggedToken = hitToken;
-                }
-
-                if (draggedToken) {
-                    screenContainer.classList.remove('crosshair');
-                    screenContainer.classList.add('grabbing');
-                    
-                    // Track position for relative movement
-                    lastDragUpdate = { x: pannedLogicalX, y: pannedLogicalY };
-                    
-                    // Track for click detection (ambush/delete)
-                    lastPanX = e.clientX; 
-                    lastPanY = e.clientY;
-                }
-                drawCurrentLevel(); // Redraw to show selection ring
-                return;
-            }
-        } else {
-            // Clicked Empty Space -> Clear Selection
-            if (!e.shiftKey) {
-                selectedTokens.clear();
-                drawCurrentLevel();
-            }
+        
+        // Handle Delete/Ambush logic here if clicked with Alt/Ctrl
+        if (isDeleteAttempt && hitToken) {
+             // Let MouseUp handle the actual delete/reveal action to prevent dragging conflicts
+             // We just return here to stop Panning
+             return; 
         }
     }
 
-    // 6. START PANNING (Default fallback)
-    isPanning = true;
-    lastPanX = e.clientX;
-    lastPanY = e.clientY;
-    screenContainer.classList.add('grabbing');
+    // 5. THE "SMART" SHIFT LOGIC (Measurement vs. Grouping)
+    if (e.shiftKey) {
+        // A. If GM clicks a TOKEN with Shift -> GROUP SELECT
+        if (hitToken && !isClient) {
+            if (selectedTokens.has(hitToken)) {
+                selectedTokens.delete(hitToken);
+                draggedToken = null; 
+            } else {
+                selectedTokens.add(hitToken);
+                draggedToken = hitToken; // Allow immediate drag of the new group
+            }
+            
+            if (draggedToken) {
+                screenContainer.classList.remove('crosshair');
+                screenContainer.classList.add('grabbing');
+                lastDragUpdate = { x: pannedLogicalX, y: pannedLogicalY };
+                lastPanX = e.clientX; 
+                lastPanY = e.clientY;
+            }
+            drawCurrentLevel();
+            return;
+        } 
+        
+        // B. If ANYONE clicks EMPTY GROUND with Shift -> MEASURE
+        // (Or if a Client clicks anything with Shift)
+        else {
+            isMeasuring = true;
+            measureStart = { x: pannedLogicalX, y: pannedLogicalY };
+            measureEnd = { x: pannedLogicalX, y: pannedLogicalY };
+            return;
+        }
+    }
+
+    // 6. NO SHIFT KEY (Normal Logic)
+    if (hitToken && !isClient) {
+        // If clicking a token NOT in the group, clear group and select only this one
+        if (!selectedTokens.has(hitToken)) {
+            selectedTokens.clear();
+            selectedTokens.add(hitToken);
+        }
+        // Initiate Drag
+        draggedToken = hitToken;
+        screenContainer.classList.remove('crosshair');
+        screenContainer.classList.add('grabbing');
+        lastDragUpdate = { x: pannedLogicalX, y: pannedLogicalY };
+        lastPanX = e.clientX; 
+        lastPanY = e.clientY;
+        drawCurrentLevel();
+        return;
+    } else {
+        // Clicked Empty Space without Shift -> Clear Selection & Pan
+        if (!isClient) {
+            selectedTokens.clear();
+            drawCurrentLevel();
+        }
+        
+        isPanning = true;
+        lastPanX = e.clientX;
+        lastPanY = e.clientY;
+        screenContainer.classList.add('grabbing');
+    }
 }
 
 function handleMouseMove(e) {
