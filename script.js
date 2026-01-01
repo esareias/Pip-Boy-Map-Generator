@@ -4722,119 +4722,142 @@ function drawCurrentLevel(time = 0) {
         }
     }
     
-    // --- DRAW TOKENS ---
-    for (let t of tokens) {
-        let tx = (t.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
-        let ty = (t.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
+    // --- DRAW TOKENS (V's Ambush-Ready Version) ---
+for (let t of tokens) {
+    // 1. PLAYER VISIBILITY CHECK
+    // If this is a client (player) and the token is hidden, we skip drawing it entirely.
+    if (isClient && t.isVisibleToPlayers === false) continue;
 
-        if (t.hitTimer > 0) {
-            tx += (Math.random() - 0.5) * (15 * zoomLevel); 
-            ty += (Math.random() - 0.5) * (15 * zoomLevel);
-            ctx.shadowColor = '#ff0000';
-            ctx.shadowBlur = 25 * zoomLevel;
-            t.hitTimer--; 
-        }
+    let tx = (t.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
+    let ty = (t.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
 
-        const isPlayer = TOKEN_PRESETS.some(p => p.name === t.label);
-        let baseSize = isPlayer ? 15 : 25;
-
-        if (t.label.includes("Behemoth") || t.label.includes("Sentry Bot") || t.label.includes("Deathclaw")) {
-            baseSize = 45;
-        }
-        if (t.label.includes("Radroach") || t.label.includes("Bloatfly") || t.label.includes("Ant")) {
-            baseSize = 12;
-        }
-
-        const difficultyMultiplier = t.multiplier || 1.0;
-        const tokenRadius = (baseSize * difficultyMultiplier) * RENDER_SCALE * zoomLevel;
-        const imgSize = tokenRadius * 2;
-
-        if (t.img) {
-            ctx.save(); 
-            if (t.dead || t.color === '#4b5563') {
-                ctx.globalAlpha = 0.5;
-                ctx.filter = 'grayscale(100%)';
-            }
-            ctx.beginPath();
-            ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2);
-            ctx.clip(); 
-            ctx.drawImage(t.img, tx - tokenRadius, ty - tokenRadius, imgSize, imgSize);
-            ctx.restore(); 
-        } else {
-            ctx.fillStyle = t.color;
-            ctx.beginPath();
-            ctx.arc(tx, ty, tokenRadius * 0.8, 0, Math.PI*2);
-            ctx.fill();
-            ctx.strokeStyle = t.color;
-            ctx.lineWidth = 2 * RENDER_SCALE * zoomLevel;
-            ctx.beginPath();
-            ctx.arc(tx, ty, (10 + Math.sin(time/200)*2) * RENDER_SCALE * zoomLevel, 0, Math.PI*2);
-            ctx.stroke();
-        }
-
-        ctx.shadowBlur = 0;
-
-        if (config.showLabels && tokenLabelsVisible[t.id] !== false) {
-            ctx.textAlign = "center";
-            ctx.textBaseline = "top";
-            const fontSize = 14 * RENDER_SCALE * zoomLevel;
-            ctx.font = `bold ${fontSize}px monospace`;
-            const labelY = ty + tokenRadius + 5 * zoomLevel;
-            ctx.strokeStyle = "rgba(0,0,0,0.8)";
-            ctx.lineWidth = 4 * zoomLevel;
-            ctx.lineJoin = "round";
-            ctx.strokeText(t.label, tx, labelY);
-            ctx.fillStyle = "#ffffff";
-            ctx.fillText(t.label, tx, labelY);
-        } 
-    } 
-
-    if (isMeasuring) {
-        const sx = (measureStart.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
-        const sy = (measureStart.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
-        const ex = (measureEnd.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
-        const ey = (measureEnd.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
-
-        const dx = measureEnd.x - measureStart.x;
-        const dy = measureEnd.y - measureStart.y;
-        const pixelDist = Math.sqrt(dx*dx + dy*dy);
-        const gridSquares = pixelDist / config.gridSize;
-        const yards = (gridSquares * (5 / 3)).toFixed(1); 
-
-        ctx.beginPath();
-        ctx.moveTo(sx, sy);
-        ctx.lineTo(ex, ey);
-        ctx.strokeStyle = "#16ff60"; 
-        ctx.lineWidth = 2 * RENDER_SCALE;
-        ctx.setLineDash([10, 5]); 
-        ctx.stroke();
-        ctx.setLineDash([]); 
-
-        ctx.fillStyle = "#16ff60";
-        ctx.beginPath(); ctx.arc(sx, sy, 4 * RENDER_SCALE, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(ex, ey, 4 * RENDER_SCALE, 0, Math.PI*2); ctx.fill();
-
-        const midX = (sx + ex) / 2;
-        const midY = (sy + ey) / 2;
-
-        ctx.font = `bold ${32 * RENDER_SCALE}px monospace`;
-        const label = `${yards} yds`;
-        const textMetrics = ctx.measureText(label);
-        const padding = 6 * RENDER_SCALE;
-
-        ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-        ctx.fillRect(midX - textMetrics.width/2 - padding, midY - 10 * RENDER_SCALE - padding, textMetrics.width + padding*2, 20 * RENDER_SCALE + padding);
-
-        ctx.fillStyle = "#16ff60";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(label, midX, midY);
-        
-        if (parseFloat(yards) > 35) {
-             ctx.fillStyle = "#ef4444"; 
-             ctx.fillText(label, midX, midY);
-        }
+    // 2. HIT ANIMATION (JUICE)
+    if (t.hitTimer > 0) {
+        tx += (Math.random() - 0.5) * (15 * zoomLevel); 
+        ty += (Math.random() - 0.5) * (15 * zoomLevel);
+        ctx.shadowColor = '#ff0000';
+        ctx.shadowBlur = 25 * zoomLevel;
+        t.hitTimer--; 
     }
+
+    const isPlayer = TOKEN_PRESETS.some(p => p.name === t.label);
+    let baseSize = isPlayer ? 15 : 25;
+
+    // Size logic for big/small bastards
+    if (t.label.includes("Behemoth") || t.label.includes("Sentry Bot") || t.label.includes("Deathclaw")) {
+        baseSize = 45;
+    }
+    if (t.label.includes("Radroach") || t.label.includes("Bloatfly") || t.label.includes("Ant")) {
+        baseSize = 12;
+    }
+
+    const difficultyMultiplier = t.multiplier || 1.0;
+    const tokenRadius = (baseSize * difficultyMultiplier) * RENDER_SCALE * zoomLevel;
+    const imgSize = tokenRadius * 2;
+
+    // 3. THE GHOST EFFECT (GM ONLY)
+    ctx.save();
+    
+    // If the token is hidden from players, make it look ghostly to the Overseer
+    if (t.isVisibleToPlayers === false) {
+        ctx.globalAlpha = 0.4; // 40% opacity so you can see through it
+        ctx.filter = 'sepia(1) hue-rotate(90deg) brightness(1.2)'; // Makes it look "digital" or ghostly
+    }
+
+    if (t.img) {
+        if (t.dead || t.color === '#4b5563') {
+            ctx.globalAlpha = (t.isVisibleToPlayers === false) ? 0.2 : 0.5;
+            ctx.filter = 'grayscale(100%)';
+        }
+        ctx.beginPath();
+        ctx.arc(tx, ty, tokenRadius, 0, Math.PI*2);
+        ctx.clip(); 
+        ctx.drawImage(t.img, tx - tokenRadius, ty - tokenRadius, imgSize, imgSize);
+    } else {
+        ctx.fillStyle = t.color;
+        ctx.beginPath();
+        ctx.arc(tx, ty, tokenRadius * 0.8, 0, Math.PI*2);
+        ctx.fill();
+        // Pulsing Ring for abstract tokens
+        ctx.strokeStyle = t.color;
+        ctx.lineWidth = 2 * RENDER_SCALE * zoomLevel;
+        ctx.beginPath();
+        ctx.arc(tx, ty, (10 + Math.sin(time/200)*2) * RENDER_SCALE * zoomLevel, 0, Math.PI*2);
+        ctx.stroke();
+    }
+
+    ctx.restore(); // Reset Alpha/Filter for the next token
+    ctx.shadowBlur = 0;
+
+    // 4. LABEL DRAWING
+    if (config.showLabels && tokenLabelsVisible[t.id] !== false) {
+        if (isClient && t.isVisibleToPlayers === false) continue;
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        const fontSize = 14 * RENDER_SCALE * zoomLevel;
+        ctx.font = `bold ${fontSize}px monospace`;
+        const labelY = ty + tokenRadius + 5 * zoomLevel;
+        
+        ctx.strokeStyle = "rgba(0,0,0,0.8)";
+        ctx.lineWidth = 4 * zoomLevel;
+        ctx.lineJoin = "round";
+        ctx.strokeText(t.label, tx, labelY);
+        
+        // Use Amber for hidden labels so you don't forget they're stealthed
+        ctx.fillStyle = (t.isVisibleToPlayers === false) ? "#fbbf24" : "#ffffff";
+        ctx.fillText(t.label, tx, labelY);
+    } 
+} 
+
+// --- MEASUREMENT TOOL (The Ruler) ---
+if (isMeasuring) {
+    const sx = (measureStart.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
+    const sy = (measureStart.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
+    const ex = (measureEnd.x + mapOffsetX) * RENDER_SCALE * zoomLevel;
+    const ey = (measureEnd.y + mapOffsetY) * RENDER_SCALE * zoomLevel;
+
+    const dx = measureEnd.x - measureStart.x;
+    const dy = measureEnd.y - measureStart.y;
+    const pixelDist = Math.sqrt(dx*dx + dy*dy);
+    const gridSquares = pixelDist / config.gridSize;
+    const yards = (gridSquares * (5 / 3)).toFixed(1); 
+
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(ex, ey);
+    ctx.strokeStyle = "#16ff60"; 
+    ctx.lineWidth = 2 * RENDER_SCALE;
+    ctx.setLineDash([10, 5]); 
+    ctx.stroke();
+    ctx.setLineDash([]); 
+
+    ctx.fillStyle = "#16ff60";
+    ctx.beginPath(); ctx.arc(sx, sy, 4 * RENDER_SCALE, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(ex, ey, 4 * RENDER_SCALE, 0, Math.PI*2); ctx.fill();
+
+    const midX = (sx + ex) / 2;
+    const midY = (sy + ey) / 2;
+
+    ctx.font = `bold ${32 * RENDER_SCALE}px monospace`;
+    const label = `${yards} yds`;
+    const textMetrics = ctx.measureText(label);
+    const padding = 6 * RENDER_SCALE;
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+    ctx.fillRect(midX - textMetrics.width/2 - padding, midY - 10 * RENDER_SCALE - padding, textMetrics.width + padding*2, 20 * RENDER_SCALE + padding);
+
+    ctx.fillStyle = "#16ff60";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, midX, midY);
+    
+    // Out of range indicator
+    if (parseFloat(yards) > 35) {
+         ctx.fillStyle = "#ef4444"; 
+         ctx.fillText(label, midX, midY);
+    }
+}
     
     ctx.restore();
 } // Close function drawCurrentLevel
